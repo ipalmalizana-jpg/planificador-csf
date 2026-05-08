@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -599,7 +598,7 @@ async function cargarDatosCatalogo() {
   }
 }
 
-const NV_KEYS = Object.keys(NV_LIGHT);
+// NV_KEYS ya declarado arriba
 
 // ── Grupos ────────────────────────────────────────────────────
 let gruposHoy = JSON.parse(localStorage.getItem('pl_grupos_'+new Date().toISOString().slice(0,10)) || '[]');
