@@ -213,133 +213,115 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
     <!-- JEFE: Planificar -->
     <div class="sec" id="sec-planificar">
 
-  <!-- Métricas -->
-  <div class="metrics" id="met-planificar"></div>
+  <!-- Métricas top -->
+  <div class="metrics" id="met-planificar" style="margin-bottom:16px"></div>
 
-  <!-- Grupos del día -->
-  <div class="card">
-    <div class="ct">
-      <span>Grupos del día</span>
-      <button class="btn sm primary" onclick="showModalGrupo()">+ Nuevo grupo</button>
+  <!-- Barra superior: filtros + acción -->
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px">
+      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Ver</span>
+      <select id="filtro-plan-modo" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none;cursor:pointer" onchange="toggleFiltroPlanFecha()">
+        <option value="todos">Todos</option>
+        <option value="fecha" selected>Por fecha</option>
+      </select>
+      <input type="date" id="filtro-fecha-plan" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none" onchange="cargarPlanDia()">
     </div>
-    <div id="grupos-lista" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px">
-      <span style="font-size:12px;color:var(--text3)">Sin grupos definidos.</span>
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px">
+      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Orden</span>
+      <select id="orden-plan" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none;cursor:pointer">
+        <option value="prio">Prioridad</option>
+        <option value="sinergia">Sinergia</option>
+        <option value="cliente">Cliente</option>
+      </select>
+    </div>
+    <button class="btn sm" onclick="cargarPlanDia()" style="height:34px">↻ Actualizar</button>
+    <button class="btn sm blue" onclick="exportarExcelPlan()" style="height:34px">Excel</button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn sm" onclick="showModalGrupo()" style="height:34px">⚙ Grupos</button>
+      <button class="btn primary" onclick="toggleFormulario()" style="height:34px;padding:0 18px" id="btn-toggle-form">+ Nuevo pedido</button>
     </div>
   </div>
 
-  <!-- Formulario colapsable -->
-  <div class="card" style="padding:0">
-    <button onclick="toggleFormulario()" id="btn-toggle-form"
-      style="width:100%;background:none;border:none;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--text)">
-      <span style="font-size:13px;font-weight:500">+ Agregar pedido al plan</span>
-      <span id="icon-toggle-form" style="font-size:18px;color:var(--green);transition:transform .2s">▾</span>
-    </button>
-    <div id="form-agregar" style="display:none;padding:0 20px 20px;border-top:1px solid var(--border)">
-      <div style="height:14px"></div>
+  <!-- Grupos activos (compacto) -->
+  <div id="grupos-lista" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;min-height:24px"></div>
 
-      <!-- Fila 1: Código -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-        <div class="fg">
+  <!-- Formulario colapsable -->
+  <div id="form-agregar" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <div class="fg" style="margin-bottom:10px">
           <label>Código de caja</label>
           <div class="rel">
-            <input type="text" id="p-codigo" placeholder="Ej: F0999TL1" autocomplete="off"
-              oninput="suggestCodigo(this.value)" style="width:100%">
+            <input type="text" id="p-codigo" placeholder="Ej: F0999TL1" autocomplete="off" oninput="suggestCodigo(this.value)" style="width:100%">
             <div id="sugg-codigo" class="suggest-box" style="display:none"></div>
           </div>
           <div id="cod-info" style="font-size:11px;color:var(--text2);min-height:14px;margin-top:4px"></div>
         </div>
-        <div class="fg">
+        <div class="fg" style="margin-bottom:10px">
           <label>Cliente</label>
           <input type="text" id="p-cliente" placeholder="Nombre del cliente" style="width:100%">
         </div>
-      </div>
-
-      <!-- Fila 2: Destino + Cantidad -->
-      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:12px">
         <div class="fg">
           <label>Destino</label>
           <input type="text" id="p-destino" placeholder="Ciudad / dirección" style="width:100%">
         </div>
-        <div class="fg">
-          <label>Cantidad</label>
-          <input type="number" id="p-cantidad" placeholder="5000" style="width:120px">
-        </div>
       </div>
-
-      <!-- Fila 3: Grupo, Turno, Máquina, Prioridad -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
-        <div class="fg">
-          <label>Grupo</label>
-          <select id="p-grupo" style="width:130px"><option value="">Sin grupo</option></select>
+      <div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div class="fg">
+            <label>Cantidad</label>
+            <input type="number" id="p-cantidad" placeholder="5000" style="width:100%">
+          </div>
+          <div class="fg">
+            <label>Prioridad</label>
+            <select id="p-prioridad" style="width:100%">
+              <option value="Alta">Alta</option>
+              <option value="Media" selected>Media</option>
+              <option value="Baja">Baja</option>
+            </select>
+          </div>
         </div>
-        <div class="fg">
-          <label>Turno</label>
-          <select id="p-turno" style="width:100px">
-            <option value="Mañana">Mañana</option>
-            <option value="Tarde">Tarde</option>
-          </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div class="fg">
+            <label>Grupo</label>
+            <select id="p-grupo" style="width:100%"><option value="">Sin grupo</option></select>
+          </div>
+          <div class="fg">
+            <label>Turno</label>
+            <select id="p-turno" style="width:100%">
+              <option value="Mañana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+            </select>
+          </div>
         </div>
         <div class="fg">
           <label>Máquina</label>
-          <select id="p-maquina" style="width:130px"><option value="">Sin asignar</option></select>
-        </div>
-        <div class="fg">
-          <label>Prioridad</label>
-          <select id="p-prioridad" style="width:100px">
-            <option value="Alta">Alta</option>
-            <option value="Media" selected>Media</option>
-            <option value="Baja">Baja</option>
-          </select>
+          <select id="p-maquina" style="width:100%"><option value="">Sin asignar</option></select>
         </div>
       </div>
-
-      <!-- Fila 4: Fechas -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding-top:12px;border-top:1px solid var(--border)">
-        <div class="fg">
-          <label>Fecha armado</label>
-          <input type="date" id="p-fecha-armado" style="width:155px">
-        </div>
-        <div class="fg">
-          <label>Fecha despacho</label>
-          <input type="date" id="p-fecha-desp" style="width:155px">
-        </div>
-        <div class="fg">
-          <label>Hora despacho</label>
-          <input type="time" id="p-hora-desp" style="width:120px">
-        </div>
-        <div class="fg" style="margin-left:auto">
-          <label>&nbsp;</label>
-          <button class="btn primary" onclick="agregarPedido()" style="padding:0 24px">
-            + Agregar
-          </button>
-        </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;padding-top:14px;border-top:1px solid var(--border)">
+      <div class="fg">
+        <label>Fecha armado</label>
+        <input type="date" id="p-fecha-armado" style="width:155px">
+      </div>
+      <div class="fg">
+        <label>Fecha despacho</label>
+        <input type="date" id="p-fecha-desp" style="width:155px">
+      </div>
+      <div class="fg">
+        <label>Hora despacho</label>
+        <input type="time" id="p-hora-desp" style="width:120px">
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn" onclick="toggleFormulario()" style="height:34px">Cancelar</button>
+        <button class="btn primary" onclick="agregarPedido()" style="height:34px;padding:0 24px">Agregar pedido</button>
       </div>
     </div>
   </div>
 
   <!-- Plan de armado -->
-  <div class="card">
-    <div class="ct">
-      <span>Plan de armado</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <div style="display:flex;gap:6px;align-items:center">
-          <select id="filtro-plan-modo" style="width:90px;height:30px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm)" onchange="toggleFiltroPlanFecha()">
-            <option value="todos">Todos</option>
-            <option value="fecha" selected>Por fecha</option>
-          </select>
-          <input type="date" id="filtro-fecha-plan" style="width:150px;height:30px;font-size:12px" onchange="cargarPlanDia()">
-        </div>
-        <select id="orden-plan" style="width:185px;font-size:12px;height:30px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm)">
-          <option value="prio">Prioridad + ingreso</option>
-          <option value="sinergia">Máxima sinergia</option>
-          <option value="cliente">Por cliente</option>
-        </select>
-        <button class="btn sm primary" onclick="cargarPlanDia()">↻</button>
-        <button class="btn sm blue" onclick="exportarExcelPlan()">Excel</button>
-      </div>
-    </div>
-    <div id="plan-dia-output"><div class="empty">Cargando plan...</div></div>
-  </div>
+  <div id="plan-dia-output"><div class="empty">Cargando plan...</div></div>
 
 </div>
 
@@ -1045,6 +1027,22 @@ async function cargarPlanDia() {
       : '?or=(fecha_armado.eq.'+fechaPlan+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan+'))&order=creado_en.asc&select=*';
     const pedidos = await sb('pedidos_dia','GET',null, queryPlan);
     pedidosCache = pedidos || [];
+
+    // Cargar despachos para mostrar progreso
+    const ids = (pedidos||[]).map(function(p){return p.id;}).filter(Boolean);
+    if(ids.length) {
+      const despQuery = '?pedido_id=in.('+ids.join(',')+')&select=pedido_id,cantidad_despachar,cantidad_despachada,estado';
+      const desps = await sb('plan_despacho','GET',null, despQuery);
+      // Indexar por pedido_id
+      window._despCache = {};
+      (desps||[]).forEach(function(d){
+        if(!window._despCache[d.pedido_id]) window._despCache[d.pedido_id]={total:0,despachado:0};
+        window._despCache[d.pedido_id].total += d.cantidad_despachar||0;
+        window._despCache[d.pedido_id].despachado += d.cantidad_despachada||0;
+      });
+    } else {
+      window._despCache = {};
+    }
     renderPlanDia();
     // Poblar select modal despacho
     const sel = document.getElementById('md-pedido');
@@ -1120,6 +1118,22 @@ function renderPlanDia() {
         out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
         out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
         if(p.fecha_armado) out += '<span class="nv-tag" style="font-size:10px">'+p.fecha_armado+'</span>';
+
+        // Barra de progreso despacho vs solicitado
+        var despInfo = window._despCache && window._despCache[p.id];
+        var cantSol = p.cantidad_pedida || 0;
+        if(despInfo && cantSol > 0) {
+          var despachado = despInfo.despachado || 0;
+          var pctD = Math.min(100, Math.round(despachado / cantSol * 100));
+          var colD = pctD >= 100 ? 'var(--green)' : pctD >= 50 ? 'var(--yellow)' : 'var(--red)';
+          out += '<div style="display:flex;align-items:center;gap:5px;margin-left:4px" title="'+despachado.toLocaleString()+' de '+cantSol.toLocaleString()+' despachadas">';
+          out += '<div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">';
+          out += '<div style="width:'+pctD+'%;height:100%;background:'+colD+';border-radius:3px"></div></div>';
+          out += '<span style="font-size:11px;color:'+colD+';font-weight:500">'+pctD+'% desp.</span>';
+          out += '</div>';
+        } else {
+          out += '<span style="font-size:11px;color:var(--text3);margin-left:4px">0% desp.</span>';
+        }
         if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
         if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
         if(despachado>0) {
