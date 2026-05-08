@@ -668,9 +668,12 @@ function initApp() {
 
   // Fecha por defecto en informes
   renderGruposLista();
-  document.getElementById('filtro-fecha-plan').value = hoy();
-  document.getElementById('filtro-fecha-desp').value = hoy();
-  if(document.getElementById('md-fecha-desp')) document.getElementById('md-fecha-desp').value = hoy();
+  const fpPlan = document.getElementById('filtro-fecha-plan');
+  if(fpPlan) fpPlan.value = hoy();
+  const fpDesp = document.getElementById('filtro-fecha-desp');
+  if(fpDesp) fpDesp.value = hoy();
+  const fpMd = document.getElementById('md-fecha-desp');
+  if(fpMd) fpMd.value = hoy();
   document.getElementById('inf-fecha').value = hoy();
   document.getElementById('inf-desde').value = hoy();
   document.getElementById('inf-hasta').value = hoy();
@@ -954,7 +957,8 @@ async function cargarMetricas() {
   if(!el) return;
   try {
     const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    const pedidos = await sb('pedidos_dia','GET',null,`?fecha_armado=eq.${fechaPlan2}&select=*`);
+    const pedidos = await sb('pedidos_dia','GET',null,
+      '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*');
     pedidosCache = pedidos || [];
     const activos = pedidos.filter(p=>p.estado==='Activo').length;
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
@@ -975,8 +979,11 @@ async function cargarPlanDia() {
   if(!el) return;
   try {
     const fechaPlan = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    document.getElementById('fecha-plan') && (document.getElementById('fecha-plan').textContent = fechaPlan);
-    const pedidos = await sb('pedidos_dia','GET',null,`?fecha_armado=eq.${fechaPlan}&order=creado_en.asc&select=*`);
+    const fechaPlanEl = document.getElementById('fecha-plan');
+    if(fechaPlanEl) fechaPlanEl.textContent = fechaPlan;
+    // Buscar por fecha_armado, si es null buscar por fecha
+    const pedidos = await sb('pedidos_dia','GET',null,
+      '?or=(fecha_armado.eq.'+fechaPlan+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan+'))&order=creado_en.asc&select=*');
     pedidosCache = pedidos || [];
     renderPlanDia();
     // Poblar select modal despacho
@@ -1402,7 +1409,8 @@ async function cargarPlanDespacho() {
   if(!el) return;
   try {
     const fechaDesp = document.getElementById('filtro-fecha-desp')?.value || hoy();
-    const items = await sb('plan_despacho','GET',null,`?fecha_despacho=eq.${fechaDesp}&order=creado_en.desc&select=*&limit=200`);
+    const items = await sb('plan_despacho','GET',null,
+      '?or=(fecha_despacho.eq.'+fechaDesp+',and(fecha_despacho.is.null,fecha.eq.'+fechaDesp+'))&order=creado_en.desc&select=*&limit=200');
     if(!items||!items.length) { el.innerHTML='<div class="empty">No hay despachos programados aún. Usa el botón + para agregar.</div>'; return; }
 
     const porCliente = {};
