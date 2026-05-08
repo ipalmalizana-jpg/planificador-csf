@@ -200,6 +200,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
     <div class="topbar-sep"></div>
     <span id="tb-fecha" style="font-size:12px;color:var(--text2)"></span>
     <div class="topbar-user">
+      <span id="conn-indicator" title="Sin conexión a Supabase" style="display:none;font-size:11px;background:rgba(232,85,85,.15);color:#e85555;padding:3px 8px;border-radius:99px;border:1px solid rgba(232,85,85,.3)">&#9888; Sin conexión</span>
       <span id="tb-nombre" style="font-size:13px;font-weight:500"></span>
       <span class="topbar-rol" id="tb-rol"></span>
       <button class="btn-logout" onclick="doLogout()">Salir</button>
@@ -670,6 +671,15 @@ function doLogout() {
   document.getElementById('app').classList.remove('visible');
 }
 
+function mostrarSinConexion() {
+  const ind = document.getElementById('conn-indicator');
+  if(ind) {
+    ind.style.display = 'inline-block';
+    clearTimeout(window._connTimer);
+    window._connTimer = setTimeout(function(){ ind.style.display='none'; }, 8000);
+  }
+}
+
 function setEl(id, prop, val) {
   var el = document.getElementById(id);
   if(el) el[prop] = val;
@@ -1002,8 +1012,8 @@ async function cargarPlanDia() {
       `<option value="${p.id}">${p.cliente} -- ${p.codigo} (${p.cantidad_pedida.toLocaleString('es-CL')} u.)</option>`
     ).join('');
   } catch(e) {
-    const elErr = document.getElementById('plan-dia-output');
-    if(elErr) elErr.innerHTML=`<div class="wbox">Error cargando plan: ${e.message}</div>`;
+    mostrarSinConexion();
+    console.warn('cargarPlanDia error:', e.message);
   }
 }
 
@@ -1499,7 +1509,7 @@ async function cargarPlanDespacho() {
           </div>`;
         }).join('')}
       </div>`).join('');
-  } catch(e) { if(el) el.innerHTML=`<div class="wbox">Error cargando despachos: ${e.message}</div>`; console.error(e); }
+  } catch(e) { mostrarSinConexion(); console.warn('cargarPlanDespacho:', e.message); }
 }
 
 async function guardarDespacho() {
