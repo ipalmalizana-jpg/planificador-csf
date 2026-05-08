@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -373,7 +374,15 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
         <div class="card-title">
           <span>Plan de despacho</span>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <div class="fg"><label>Fecha despacho</label><input type="date" id="filtro-fecha-desp" style="width:150px;height:30px;font-size:12px" onchange="cargarPlanDespacho()"></div>
+            <div class="fg"><label>Fecha despacho</label>
+              <div style="display:flex;gap:6px">
+                <select id="filtro-desp-modo" style="width:90px;height:30px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm)" onchange="toggleFiltroDespFecha()">
+                  <option value="todos">Todos</option>
+                  <option value="fecha" selected>Por fecha</option>
+                </select>
+                <input type="date" id="filtro-fecha-desp" style="width:150px;height:30px;font-size:12px" onchange="cargarPlanDespacho()">
+              </div>
+            </div>
             <button class="btn sm blue" onclick="exportarExcelDespacho()">Excel despacho</button>
             <button class="btn sm primary" id="btn-add-desp" onclick="showModalDespacho()" style="display:none">+ Despacho adicional</button>
           </div>
@@ -1407,13 +1416,23 @@ async function guardarArmado(id) {
 }
 
 // -- Plan despacho ---------------------------------------------
+function toggleFiltroDespFecha() {
+  const modo = document.getElementById('filtro-desp-modo')?.value;
+  const fechaInput = document.getElementById('filtro-fecha-desp');
+  if(fechaInput) fechaInput.style.display = modo==='todos' ? 'none' : '';
+  cargarPlanDespacho();
+}
+
 async function cargarPlanDespacho() {
   const el = document.getElementById('plan-despacho-output');
   if(!el) return;
   try {
+    const modoDesp = document.getElementById('filtro-desp-modo')?.value || 'fecha';
     const fechaDesp = document.getElementById('filtro-fecha-desp')?.value || hoy();
-    const items = await sb('plan_despacho','GET',null,
-      '?fecha_despacho=eq.'+fechaDesp+'&order=creado_en.desc&select=*&limit=200');
+    const queryDesp = modoDesp==='todos'
+      ? '?order=fecha_despacho.asc,creado_en.desc&select=*&limit=500'
+      : '?fecha_despacho=eq.'+fechaDesp+'&order=creado_en.desc&select=*&limit=200';
+    const items = await sb('plan_despacho','GET',null, queryDesp);
     if(!items||!items.length) { el.innerHTML='<div class="empty">No hay despachos programados aún. Usa el botón + para agregar.</div>'; return; }
 
     const porCliente = {};
@@ -1454,6 +1473,8 @@ async function cargarPlanDespacho() {
               <span style="font-size:11px;color:var(--text3)">Pendiente</span>
               <span style="font-weight:500;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} u.</span>
             </div>
+            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
+            ${d.fecha_despacho && d.fecha_despacho !== '${fechaDesp}'?`<span class="nv-tag">${d.fecha_despacho}</span>`:''}
             ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
             <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}">${d.estado}</span>
             <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:10px">Ver salidas</button>
