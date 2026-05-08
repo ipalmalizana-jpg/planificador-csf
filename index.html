@@ -1035,10 +1035,11 @@ function renderPlanDia() {
         }
         if(USER.rol==='jefe') {
           out += '<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">';
-          out += '<button class="btn sm" onclick="verHistorial(\''+p.id+'\')">Historial</button>';
-          out += '<button class="btn sm warning" onclick="abrirCambio(\''+p.id+'\')">Cambio</button>';
-          if(p.estado!=='Cancelado') out += '<button class="btn sm danger" onclick="cancelarPedido(\''+p.id+'\')">Cancelar</button>';
-          out += '<button class="btn sm danger" onclick="eliminarPedido(\''+p.id+'\')">🗑</button>';
+          out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'">Historial</button>';
+          out += '<button class="btn sm warning" data-action="cambio" data-id="'+p.id+'">Cambio</button>';
+          if(p.estado!=='Cancelado') out += '<button class="btn sm danger" data-action="cancelar" data-id="'+p.id+'">Cancelar</button>';
+          out += '<button class="btn sm danger" data-action="eliminar" data-id="'+p.id+'">🗑</button>';
+          out += '</div>';
           out += '</div>';
         }
         out += '</div>';
@@ -1820,7 +1821,19 @@ function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Mo
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
-document.addEventListener('click',e=>{if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
+document.addEventListener('click',e=>{
+  // Manejar botones de acción del plan
+  const btn = e.target.closest('[data-action]');
+  if(btn) {
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    if(action==='historial') { verHistorial(id); return; }
+    if(action==='cambio') { abrirCambio(id); return; }
+    if(action==='cancelar') { cancelarPedido(id); return; }
+    if(action==='eliminar') { eliminarPedido(id); return; }
+  }
+  // Cerrar suggest boxes
+  if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
 
 // ── Auto-login si hay sesión guardada ─────────────────────────
 const saved = localStorage.getItem('pl_session');
