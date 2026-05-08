@@ -260,6 +260,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
                 </select>
               </div>
               <div class="fg"><label>Fecha armado</label><input type="date" id="p-fecha-armado" style="width:150px"></div>
+              <div class="fg"><label>Fecha despacho</label><input type="date" id="p-fecha-desp" style="width:150px"></div>
+              <div class="fg"><label>Hora despacho</label><input type="time" id="p-hora-desp" style="width:110px"></div>
               <div class="fg"><label>Hora entrega</label><input type="time" id="p-hora" style="width:110px"></div>
               <div class="fg"><label>&nbsp;</label><button class="btn primary" onclick="agregarPedido()">+ Agregar</button></div>
             </div>
@@ -1106,6 +1108,8 @@ async function agregarPedido() {
     nv_referencia: nv||null,
     hora_entrega: document.getElementById('p-hora').value||null,
     fecha_armado: document.getElementById('p-fecha-armado').value||hoy(),
+    fecha_despacho: document.getElementById('p-fecha-desp').value||null,
+    hora_despacho: document.getElementById('p-hora-desp').value||null,
     grupo: document.getElementById('p-grupo').value||null,
     turno: document.getElementById('p-turno').value||'Mañana',
   };
@@ -1122,7 +1126,8 @@ async function agregarPedido() {
       await sb('plan_despacho','POST',{
         pedido_id: p.id,
         fecha: p.fecha,
-        fecha_despacho: p.fecha_armado||p.fecha,
+        fecha_despacho: p.fecha_despacho||p.fecha_armado||p.fecha,
+        hora_despacho: p.hora_despacho||null,
         cliente: p.cliente,
         destino: p.destino||'',
         codigo: p.codigo,
@@ -1147,6 +1152,8 @@ async function agregarPedido() {
     }
     ['p-codigo','p-cliente','p-destino','p-cantidad','p-nv'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('p-hora').value='';
+    document.getElementById('p-fecha-desp').value='';
+    document.getElementById('p-hora-desp').value='';
     document.getElementById('p-grupo').value='';
     document.getElementById('p-fecha-armado').value='';
     document.getElementById('cod-info').textContent='';
@@ -1449,6 +1456,7 @@ async function cargarPlanDespacho() {
               <span style="font-size:11px;color:var(--text3)">Pendiente</span>
               <span style="font-weight:500;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} u.</span>
             </div>
+            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
             <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}">${d.estado}</span>
             <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:10px">Ver salidas</button>
             <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:6px"></div>
