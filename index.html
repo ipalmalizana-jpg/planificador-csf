@@ -1093,7 +1093,6 @@ async function agregarPedido() {
   const cantidad = parseInt(document.getElementById('p-cantidad').value)||0;
   const maquina  = document.getElementById('p-maquina').value;
   const prio     = document.getElementById('p-prioridad').value;
-  const nv       = document.getElementById('p-nv').value.trim();
 
   if(!codigo||!cliente||!cantidad) { alert('Completa código, cliente y cantidad.'); return; }
 
@@ -1151,7 +1150,7 @@ async function agregarPedido() {
         nota: ''
       });
     }
-    ['p-codigo','p-cliente','p-destino','p-cantidad','p-nv'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    ['p-codigo','p-cliente','p-destino','p-cantidad'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
     var _el_p_fecha_desp=document.getElementById('p-fecha-desp');if(_el_p_fecha_desp)_el_p_fecha_desp.value='';
     var _el_p_hora_desp=document.getElementById('p-hora-desp');if(_el_p_hora_desp)_el_p_hora_desp.value='';
     var _el_p_grupo=document.getElementById('p-grupo');if(_el_p_grupo)_el_p_grupo.value='';
@@ -1822,26 +1821,7 @@ function selectCodigo(cod) {
   }
 }
 
-function suggestNVRef(q) {
-  const box=document.getElementById('sugg-nvref');
-  if(!q||q.length<3) { box.style.display='none'; return; }
-  const ql=q.toLowerCase();
-  const matches=NV_KEYS.filter(k=>k.startsWith(q)||NV_LIGHT[k].cliente.toLowerCase().includes(ql)).slice(0,8);
-  if(!matches.length) { box.style.display='none'; return; }
-  box.innerHTML=matches.map(nv=>`
-    <div class="sitem" onclick="selectNVRef('${nv}')">
-      <span class="snv">NV ${nv}</span>
-      <span class="smeta"> . ${NV_LIGHT[nv].cliente} . ${NV_LIGHT[nv].creacion}</span>
-    </div>`).join('');
-  box.style.display='block';
-}
 
-function selectNVRef(nv) {
-  document.getElementById('p-nv').value=nv;
-  document.getElementById('sugg-nvref').style.display='none';
-  const d=NV_LIGHT[nv];
-  if(d&&!document.getElementById('p-cliente').value) document.getElementById('p-cliente').value=d.cliente;
-}
 
 // -- Helpers ---------------------------------------------------
 function compat(a,b) {
