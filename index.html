@@ -1106,36 +1106,73 @@ function renderPlanDia() {
         var despachado = despNV[p.codigo]||0;
         var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
 
-        out += '<div class="pfila">';
-        out += '<div class="dot" style="background:'+colorPrio(p.prioridad)+'"></div>';
-        out += '<span class="nv-tag">'+(p.nv_referencia||'--')+'</span>';
-        out += '<span style="font-weight:500;min-width:110px">'+p.cliente+'</span>';
-        out += '<code style="font-size:11px;color:var(--text2)">'+p.codigo+'</code>';
-        out += '<span style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.descripcion||'')+'</span>';
-        out += '<span style="color:var(--text2)">'+(p.destino||'')+'</span>';
-        out += '<span class="chip '+chipTipo(p.codigo)+'">'+tipo+'</span>';
-        out += '<span style="color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+' u.</span>';
-        out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
-        out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
-        if(p.fecha_armado) out += '<span class="nv-tag" style="font-size:10px">'+p.fecha_armado+'</span>';
+        // Iconos prioridad y estado
+        var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
+        var estadoIcon = p.estado==='Activo'?'&#9654;':p.estado==='Modificado'?'&#9998;':p.estado==='Cancelado'?'&#10005;':'&#10003;';
+        var estadoCol = p.estado==='Activo'?'var(--green)':p.estado==='Modificado'?'var(--yellow)':p.estado==='Cancelado'?'var(--red)':'var(--blue)';
 
-        // Barra de progreso despacho vs solicitado
+        // Barras de progreso
+        var pctArm = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
+        var colArm = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
         var despInfo = window._despCache && window._despCache[p.id];
-        var cantSol = p.cantidad_pedida || 0;
-        if(despInfo && cantSol > 0) {
-          var despachado = despInfo.despachado || 0;
-          var pctD = Math.min(100, Math.round(despachado / cantSol * 100));
-          var colD = pctD >= 100 ? 'var(--green)' : pctD >= 50 ? 'var(--yellow)' : 'var(--red)';
-          out += '<div style="display:flex;align-items:center;gap:5px;margin-left:4px" title="'+despachado.toLocaleString()+' de '+cantSol.toLocaleString()+' despachadas">';
-          out += '<div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">';
-          out += '<div style="width:'+pctD+'%;height:100%;background:'+colD+';border-radius:3px"></div></div>';
-          out += '<span style="font-size:11px;color:'+colD+';font-weight:500">'+pctD+'% desp.</span>';
-          out += '</div>';
-        } else {
-          out += '<span style="font-size:11px;color:var(--text3);margin-left:4px">0% desp.</span>';
-        }
-        if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
-        if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
+        var despachado = despInfo?(despInfo.despachado||0):0;
+        var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
+        var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
+
+        out += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);flex-wrap:nowrap">';
+
+        // Col 1: Prioridad + Estado
+        out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
+        out += '<span title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
+        out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
+        out += '</div>';
+
+        // Col 2: Info principal
+        out += '<div style="flex:1;min-width:0">';
+        // Línea 1: cliente + código
+        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">';
+        out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
+        out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
+        out += '</div>';
+        // Línea 2: descripción (corta) + destino destacado
+        out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+p.descripcion+'</span>';
+        if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
+        out += '</div>';
+        // Línea 3: fechas más grandes
+        out += '<div style="display:flex;gap:12px">';
+        if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
+        if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
+        out += '</div>';
+        out += '</div>';
+
+        // Col 3: Cantidad
+        out += '<div style="flex-shrink:0;text-align:right;min-width:70px">';
+        out += '<div style="font-size:15px;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
+        out += '<div style="font-size:10px;color:var(--text3)">unidades</div>';
+        out += '</div>';
+
+        // Col 4: Barras de progreso
+        out += '<div style="flex-shrink:0;width:100px">';
+        // Armado
+        out += '<div style="margin-bottom:5px">';
+        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+        out += '<span style="font-size:10px;color:var(--text3)">Armado</span>';
+        out += '<span style="font-size:10px;color:'+colArm+';font-weight:600">'+pctArm+'%</span>';
+        out += '</div>';
+        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
+        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div>';
+        out += '</div></div>';
+        // Despachado
+        out += '<div>';
+        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+        out += '<span style="font-size:10px;color:var(--text3)">Despachado</span>';
+        out += '<span style="font-size:10px;color:'+colDesp+';font-weight:600">'+pctDesp+'%</span>';
+        out += '</div>';
+        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
+        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div>';
+        out += '</div></div>';
+        out += '</div>';
         if(despachado>0) {
           var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
           var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
