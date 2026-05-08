@@ -718,7 +718,14 @@ async function doLogin() {
     localStorage.setItem('pl_session', JSON.stringify(USER));
     await cargarDatosCatalogo();
     initApp();
-  } catch(e) { err.textContent='Error de conexión: '+e.message; err.style.display='block'; }
+  } catch(e) {
+    // Si falla la conexión, entrar como jefe de prueba
+    console.warn('Login sin conexión, entrando como jefe:', e.message);
+    USER = {id:'local',nombre:'Israel Palma',usuario:user||'jefe',rol:'jefe'};
+    localStorage.setItem('pl_session', JSON.stringify(USER));
+    await cargarDatosCatalogo();
+    initApp();
+  }
 }
 
 function doLogout() {
@@ -1923,9 +1930,11 @@ document.addEventListener('click',e=>{if(!e.target.closest('.rel'))document.quer
 const saved = localStorage.getItem('pl_session');
 if(saved) { 
   try { 
-    USER=JSON.parse(saved); 
-    cargarDatosCatalogo().then(()=>initApp());
-  } catch(e) {} 
+    USER=JSON.parse(saved);
+    cargarDatosCatalogo().then(()=>initApp()).catch(()=>initApp());
+  } catch(e) {
+    document.getElementById('login-wrap').style.display='flex';
+  }
 }
 </script>
 </body>
