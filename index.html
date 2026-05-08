@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -657,24 +658,27 @@ function doLogout() {
   document.getElementById('app').classList.remove('visible');
 }
 
+function setEl(id, prop, val) {
+  var el = document.getElementById(id);
+  if(el) el[prop] = val;
+}
+
 function initApp() {
+  setEl('login-wrap', 'style', null);
   document.getElementById('login-wrap').style.display='none';
   document.getElementById('app').classList.add('visible');
-  document.getElementById('tb-nombre').textContent = USER.nombre;
-  document.getElementById('tb-fecha').textContent = fechaHoy();
-  document.getElementById('tb-rol').textContent = USER.rol === 'jefe' ? 'Jefe' : 'Despachador';
-  document.getElementById('tb-rol').className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
+  setEl('tb-nombre', 'textContent', USER.nombre);
+  setEl('tb-fecha', 'textContent', fechaHoy());
+  setEl('tb-rol', 'textContent', USER.rol === 'jefe' ? 'Jefe' : 'Despachador');
+  var rolEl = document.getElementById('tb-rol');
+  if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
 
-  // Fecha por defecto en informes
   renderGruposLista();
-  // Las fechas se inicializan cuando se activa cada tab
-  try { document.getElementById('inf-fecha').value = hoy(); } catch(e) {}
-  document.getElementById('inf-desde').value = hoy();
-  document.getElementById('inf-hasta').value = hoy();
-  if(document.getElementById('graf-desde')) {
-    document.getElementById('graf-desde').value = hoy();
-    document.getElementById('graf-hasta').value = hoy();
-  }
+  setEl('inf-fecha', 'value', hoy());
+  setEl('inf-desde', 'value', hoy());
+  setEl('inf-hasta', 'value', hoy());
+  setEl('graf-desde', 'value', hoy());
+  setEl('graf-hasta', 'value', hoy());
 
   // Poblar select máquinas
   const selMaq = document.getElementById('p-maquina');
