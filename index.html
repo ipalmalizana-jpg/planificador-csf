@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -705,26 +706,44 @@ function horaStr() { return new Date().toLocaleTimeString('es-CL', {hour:'2-digi
 function fechaHoy() { return new Date().toLocaleDateString('es-CL', {weekday:'long',day:'numeric',month:'long'}); }
 
 // ── Login ─────────────────────────────────────────────────────
+const USUARIOS_LOCAL = {
+  'jefe':  {id:'u1',nombre:'Israel Palma',   usuario:'jefe',  password:'jefe123', rol:'jefe'},
+  'diego': {id:'u2',nombre:'Diego Quezada',  usuario:'diego', password:'diego123',rol:'jefe'},
+  'desp1': {id:'u3',nombre:'Despachador 1',  usuario:'desp1', password:'desp123', rol:'despachador'},
+  'desp2': {id:'u4',nombre:'Despachador 2',  usuario:'desp2', password:'desp123', rol:'despachador'},
+  'desp3': {id:'u5',nombre:'Despachador 3',  usuario:'desp3', password:'desp123', rol:'despachador'},
+};
+
 async function doLogin() {
-  const user = document.getElementById('l-user').value.trim();
+  const user = document.getElementById('l-user').value.trim().toLowerCase();
   const pass = document.getElementById('l-pass').value.trim();
   const err  = document.getElementById('l-err');
   err.style.display = 'none';
+
+  // Verificar credenciales locales primero
+  const u = USUARIOS_LOCAL[user];
+  if(u && u.password === pass) {
+    USER = u;
+    localStorage.setItem('pl_session', JSON.stringify(USER));
+    document.getElementById('login-wrap').style.display='none';
+    await cargarDatosCatalogo();
+    initApp();
+    return;
+  }
+
+  // Si no está en local, intentar Supabase
   try {
-    const res = await sb('usuarios', 'GET', null,
+    const res = await sb('usuarios','GET',null,
       `?usuario=eq.${encodeURIComponent(user)}&password=eq.${encodeURIComponent(pass)}&select=*`);
-    if (!res || !res.length) { err.style.display='block'; return; }
+    if(!res||!res.length) { err.style.display='block'; return; }
     USER = res[0];
     localStorage.setItem('pl_session', JSON.stringify(USER));
+    document.getElementById('login-wrap').style.display='none';
     await cargarDatosCatalogo();
     initApp();
   } catch(e) {
-    // Si falla la conexión, entrar como jefe de prueba
-    console.warn('Login sin conexión, entrando como jefe:', e.message);
-    USER = {id:'local',nombre:'Israel Palma',usuario:user||'jefe',rol:'jefe'};
-    localStorage.setItem('pl_session', JSON.stringify(USER));
-    await cargarDatosCatalogo();
-    initApp();
+    err.textContent = 'Sin conexión. Verifica tu usuario y contraseña.';
+    err.style.display = 'block';
   }
 }
 
@@ -1926,15 +1945,14 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
 document.addEventListener('click',e=>{if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
 
-// ── Auto-login si hay sesión guardada ─────────────────────────
+// ── Auto-login directo ────────────────────────────────────────
 const saved = localStorage.getItem('pl_session');
-if(saved) { 
-  try { 
-    USER=JSON.parse(saved);
+if(saved) {
+  try {
+    USER = JSON.parse(saved);
+    document.getElementById('login-wrap').style.display='none';
     cargarDatosCatalogo().then(()=>initApp()).catch(()=>initApp());
-  } catch(e) {
-    document.getElementById('login-wrap').style.display='flex';
-  }
+  } catch(e) {}
 }
 </script>
 </body>
