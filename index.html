@@ -976,9 +976,12 @@ async function cargarMetricas() {
   const el = document.getElementById('met-planificar');
   if(!el) return;
   try {
+    const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
     const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    const pedidos = await sb('pedidos_dia','GET',null,
-      '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*');
+    const queryMet = modoPlan2==='todos'
+      ? '?select=*&limit=500'
+      : '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*';
+    const pedidos = await sb('pedidos_dia','GET',null, queryMet);
     pedidosCache = pedidos || [];
     const activos = pedidos.filter(p=>p.estado==='Activo').length;
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
@@ -998,12 +1001,12 @@ async function cargarPlanDia() {
   const el = document.getElementById('plan-dia-output');
   if(!el) return;
   try {
+    const modoPlan = document.getElementById('filtro-plan-modo')?.value || 'fecha';
     const fechaPlan = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    const fechaPlanEl = document.getElementById('fecha-plan');
-    if(fechaPlanEl) fechaPlanEl.textContent = fechaPlan;
-    // Buscar por fecha_armado, si es null buscar por fecha
-    const pedidos = await sb('pedidos_dia','GET',null,
-      '?or=(fecha_armado.eq.'+fechaPlan+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan+'))&order=creado_en.asc&select=*');
+    const queryPlan = modoPlan==='todos'
+      ? '?order=fecha_armado.asc,creado_en.asc&select=*&limit=500'
+      : '?or=(fecha_armado.eq.'+fechaPlan+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan+'))&order=creado_en.asc&select=*';
+    const pedidos = await sb('pedidos_dia','GET',null, queryPlan);
     pedidosCache = pedidos || [];
     renderPlanDia();
     // Poblar select modal despacho
@@ -1079,6 +1082,7 @@ function renderPlanDia() {
         out += '<span style="color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+' u.</span>';
         out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
         out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
+        if(p.fecha_armado) out += '<span class="nv-tag" style="font-size:10px">'+p.fecha_armado+'</span>';
         if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
         if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
         if(despachado>0) {
@@ -1426,6 +1430,13 @@ async function guardarArmado(id) {
 }
 
 // -- Plan despacho ---------------------------------------------
+function toggleFiltroPlanFecha() {
+  const modo = document.getElementById('filtro-plan-modo')?.value;
+  const fechaInput = document.getElementById('filtro-fecha-plan');
+  if(fechaInput) fechaInput.style.display = modo==='todos' ? 'none' : '';
+  cargarPlanDia();
+}
+
 function toggleFiltroDespFecha() {
   const modo = document.getElementById('filtro-desp-modo')?.value;
   const fechaInput = document.getElementById('filtro-fecha-desp');
