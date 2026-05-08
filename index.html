@@ -191,7 +191,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
     <div class="fg"><label>Usuario</label><input type="text" id="l-user" placeholder="ej: jefe" autocomplete="username"></div>
     <div class="fg"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="login-err" id="l-err">Usuario o contraseña incorrectos</div>
-    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <button class="btn-login" id="btn-login">Ingresar</button>
   </div>
 </div>
 
@@ -522,6 +522,14 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 </div>
 
 <script>
+// Inicializar botón login cuando cargue el DOM
+document.addEventListener('DOMContentLoaded', function() {
+  const btnLogin = document.getElementById('btn-login');
+  if(btnLogin) btnLogin.addEventListener('click', doLogin);
+  const passInput = document.getElementById('l-pass');
+  if(passInput) passInput.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+});
+
 const SB_URL = 'https://uzioiyxrtoaeqfqhypci.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6aW9peXhydG9hZXFmcWh5cGNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODEyMzcsImV4cCI6MjA5Mjk1NzIzN30.94SGcya9IO5xmUxnDf7qRENcI0wBnG2eZZk7jcaP-b0';
 // ── Datos del catálogo (cargados desde Supabase) ─────────────
@@ -621,13 +629,15 @@ function renderGruposLista() {
     el.innerHTML='<span style="font-size:12px;color:var(--text3);padding:8px 0">Sin grupos definidos para hoy. Usa "+ Nuevo grupo" para agregar.</span>';
     return;
   }
-  el.innerHTML = gruposHoy.map(g=>`
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px">
-      <span style="font-weight:500">${g.nombre}</span>
-      <span class="chip ${g.turno==='Mañana'?'blue':'purple'}">${g.turno}</span>
-      ${g.maquina?`<span class="chip green" style="font-size:10px">${g.maquina}</span>`:''}
-      <button class="btn sm danger" onclick="eliminarGrupo('${g.nombre}')">✕</button>
-    </div>`).join('');
+  el.innerHTML = gruposHoy.map(g=>{
+    const maqChip = g.maquina ? '<span class="chip green" style="font-size:10px">'+g.maquina+'</span>' : '';
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px">'+
+      '<span style="font-weight:500">'+g.nombre+'</span>'+
+      '<span class="chip '+(g.turno==='Mañana'?'blue':'purple')+'">'+g.turno+'</span>'+
+      maqChip+
+      '<button class="btn sm danger" onclick="eliminarGrupo(''+g.nombre+'')">✕</button>'+
+    '</div>';
+  }).join('');
 }
 
 function showModalGrupo() {
@@ -645,14 +655,14 @@ function renderMgLista() {
   const el = document.getElementById('mg-lista');
   if(!el) return;
   if(!gruposHoy.length) { el.innerHTML='<p class="empty">Sin grupos aún.</p>'; return; }
-  el.innerHTML=`<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Máquina</th><th></th></tr></thead><tbody>
-    ${gruposHoy.map(g=>`<tr>
-      <td style="font-weight:500">${g.nombre}</td>
-      <td><span class="chip ${g.turno==='Mañana'?'blue':'purple'}">${g.turno}</span></td>
-      <td>${g.maquina||'—'}</td>
-      <td><button class="btn sm danger" onclick="eliminarGrupo('${g.nombre}')">Quitar</button></td>
-    </tr>`).join('')}
-  </tbody></table>`;
+  const rows = gruposHoy.map(g=>{
+    const cls = g.turno==='Mañana'?'blue':'purple';
+    return '<tr><td style="font-weight:500">'+g.nombre+'</td>'+
+      '<td><span class="chip '+cls+'">'+g.turno+'</span></td>'+
+      '<td>'+(g.maquina||'—')+'</td>'+
+      '<td><button class="btn sm danger" onclick="eliminarGrupo(''+g.nombre+'')">Quitar</button></td></tr>';
+  }).join('');
+  el.innerHTML = '<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Máquina</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 function agregarGrupo() {
