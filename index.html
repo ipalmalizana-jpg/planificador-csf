@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -662,7 +663,6 @@ function initApp() {
   document.getElementById('app').classList.add('visible');
   document.getElementById('tb-nombre').textContent = USER.nombre;
   document.getElementById('tb-fecha').textContent = fechaHoy();
-  document.getElementById('fecha-plan').textContent = new Date().toLocaleDateString('es-CL');
   document.getElementById('tb-rol').textContent = USER.rol === 'jefe' ? 'Jefe' : 'Despachador';
   document.getElementById('tb-rol').className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
 
