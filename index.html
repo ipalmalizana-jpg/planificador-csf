@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -211,91 +210,116 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
   <div class="content">
     <!-- JEFE: Planificar -->
     <div class="sec" id="sec-planificar">
-      <div class="metrics" id="met-planificar"></div>
 
-      <div class="card">
-        <div class="card-title"><span>Agregar pedido al plan del día</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-          <div>
-            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Buscar por código o NV de referencia</p>
-            <div class="frow">
-              <div class="fg rel" style="flex:1">
-                <label>Código de caja</label>
-                <input type="text" id="p-codigo" placeholder="Ej: F0999TL1" autocomplete="off" oninput="suggestCodigo(this.value)" style="width:100%">
-                <div id="sugg-codigo" class="suggest-box" style="display:none"></div>
-              </div>
-              <div class="fg rel" style="flex:1">
-                <label>NV referencia (opcional)</label>
-                <input type="text" id="p-nv" placeholder="Ej: 261422" autocomplete="off" oninput="suggestNVRef(this.value)" style="width:100%">
-                <div id="sugg-nvref" class="suggest-box" style="display:none"></div>
-              </div>
-            </div>
-            <div id="cod-info" style="font-size:12px;color:var(--text2);min-height:16px;margin-bottom:8px"></div>
-          </div>
-          <div>
-            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Datos del pedido</p>
-            <div class="frow">
-              <div class="fg" style="flex:1"><label>Cliente</label><input type="text" id="p-cliente" placeholder="Nombre cliente" style="width:100%"></div>
-              <div class="fg" style="flex:1"><label>Destino</label><input type="text" id="p-destino" placeholder="Ciudad / dirección" style="width:100%"></div>
-            </div>
-            <div class="frow">
-              <div class="fg"><label>Cantidad cajas</label><input type="number" id="p-cantidad" placeholder="5000" style="width:110px"></div>
-              <div class="fg"><label>Grupo</label>
-                <select id="p-grupo" style="width:120px">
-                  <option value="">Sin grupo</option>
-                </select>
-              </div>
-              <div class="fg"><label>Turno</label>
-                <select id="p-turno" style="width:100px">
-                  <option value="Mañana">Mañana</option>
-                  <option value="Tarde">Tarde</option>
-                </select>
-              </div>
-              <div class="fg"><label>Máquina</label><select id="p-maquina" style="width:130px"><option value="">Sin asignar</option></select></div>
-              <div class="fg"><label>Prioridad</label>
-                <select id="p-prioridad" style="width:100px">
-                  <option value="Alta">Alta</option>
-                  <option value="Media" selected>Media</option>
-                  <option value="Baja">Baja</option>
-                </select>
-              </div>
-              <div class="fg"><label>Fecha armado</label><input type="date" id="p-fecha-armado" style="width:150px"></div>
-              <div class="fg"><label>Fecha despacho</label><input type="date" id="p-fecha-desp" style="width:150px"></div>
-              <div class="fg"><label>Hora despacho</label><input type="time" id="p-hora-desp" style="width:110px"></div>
-              <div class="fg"><label>Hora entrega</label><input type="time" id="p-hora" style="width:110px"></div>
-              <div class="fg"><label>&nbsp;</label><button class="btn primary" onclick="agregarPedido()">+ Agregar</button></div>
-            </div>
-          </div>
+  <!-- Métricas -->
+  <div class="metrics" id="met-planificar"></div>
+
+  <!-- Grupos del día -->
+  <div class="card">
+    <div class="ct">
+      <span>Grupos del día</span>
+      <button class="btn sm primary" onclick="showModalGrupo()">+ Nuevo grupo</button>
+    </div>
+    <div id="grupos-lista" style="display:flex;gap:8px;flex-wrap:wrap;min-height:36px">
+      <span style="font-size:12px;color:var(--text3);padding:8px 0">Cargando grupos...</span>
+    </div>
+  </div>
+
+  <!-- Formulario agregar pedido -->
+  <div class="card">
+    <div class="ct"><span>Agregar pedido al plan</span></div>
+
+    <!-- Fila 1: Búsqueda -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="fg">
+        <label>Código de caja</label>
+        <div class="rel">
+          <input type="text" id="p-codigo" placeholder="Ej: F0999TL1" autocomplete="off" oninput="suggestCodigo(this.value)" style="width:100%">
+          <div id="sugg-codigo" class="suggest-box" style="display:none"></div>
         </div>
+        <div id="cod-info" style="font-size:11px;color:var(--text2);min-height:14px;margin-top:4px"></div>
       </div>
-
-      <div class="card">
-        <div class="card-title">
-          <span>Grupos del día</span>
-          <button class="btn sm primary" onclick="showModalGrupo()">+ Nuevo grupo</button>
+      <div class="fg">
+        <label>NV referencia (opcional)</label>
+        <div class="rel">
+          <input type="text" id="p-nv" placeholder="Ej: 261422" autocomplete="off" oninput="suggestNVRef(this.value)" style="width:100%">
+          <div id="sugg-nvref" class="suggest-box" style="display:none"></div>
         </div>
-        <div id="grupos-lista" style="display:flex;gap:8px;flex-wrap:wrap;min-height:36px">
-          <span style="font-size:12px;color:var(--text3);padding:8px 0">Cargando grupos...</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">
-          <span>Plan de armado</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <div class="fg"><label>Fecha</label><input type="date" id="filtro-fecha-plan" style="width:150px;height:30px;font-size:12px" onchange="cargarPlanDia()"></div>
-            <select id="orden-plan" style="width:190px;font-size:12px;height:30px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm)">
-              <option value="prio">Prioridad + hora ingreso</option>
-              <option value="sinergia">Máxima sinergia de máquina</option>
-              <option value="cliente">Por cliente</option>
-            </select>
-            <button class="btn sm primary" onclick="renderPlanDia()">Actualizar</button>
-            <button class="btn sm blue" onclick="exportarExcelPlan()">Excel plan</button>
-          </div>
-        </div>
-        <div id="plan-dia-output"><div class="empty">Cargando plan del día...</div></div>
       </div>
     </div>
+
+    <!-- Fila 2: Cliente y destino -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="fg"><label>Cliente</label><input type="text" id="p-cliente" placeholder="Nombre del cliente" style="width:100%"></div>
+      <div class="fg"><label>Destino</label><input type="text" id="p-destino" placeholder="Ciudad / dirección" style="width:100%"></div>
+    </div>
+
+    <!-- Fila 3: Cantidad, grupo, turno, máquina, prioridad -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
+      <div class="fg"><label>Cantidad</label><input type="number" id="p-cantidad" placeholder="5000" style="width:110px"></div>
+      <div class="fg"><label>Grupo</label>
+        <select id="p-grupo" style="width:130px"><option value="">Sin grupo</option></select>
+      </div>
+      <div class="fg"><label>Turno</label>
+        <select id="p-turno" style="width:100px">
+          <option value="Mañana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+        </select>
+      </div>
+      <div class="fg"><label>Máquina</label>
+        <select id="p-maquina" style="width:130px"><option value="">Sin asignar</option></select>
+      </div>
+      <div class="fg"><label>Prioridad</label>
+        <select id="p-prioridad" style="width:100px">
+          <option value="Alta">Alta</option>
+          <option value="Media" selected>Media</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Fila 4: Fechas y horas -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding-top:10px;border-top:1px solid var(--border)">
+      <div class="fg">
+        <label>Fecha armado</label>
+        <input type="date" id="p-fecha-armado" style="width:155px">
+      </div>
+      <div class="fg">
+        <label>Fecha despacho</label>
+        <input type="date" id="p-fecha-desp" style="width:155px">
+      </div>
+      <div class="fg">
+        <label>Hora despacho</label>
+        <input type="time" id="p-hora-desp" style="width:120px">
+      </div>
+      <div class="fg"><label>&nbsp;</label>
+        <button class="btn primary" onclick="agregarPedido()" style="height:34px;padding:0 20px">+ Agregar pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan del día -->
+  <div class="card">
+    <div class="ct">
+      <span>Plan de armado</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="fg">
+          <label>Fecha</label>
+          <input type="date" id="filtro-fecha-plan" style="width:150px;height:30px;font-size:12px" onchange="cargarPlanDia()">
+        </div>
+        <select id="orden-plan" style="width:190px;font-size:12px;height:30px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm)">
+          <option value="prio">Prioridad + hora ingreso</option>
+          <option value="sinergia">Máxima sinergia de máquina</option>
+          <option value="cliente">Por cliente</option>
+        </select>
+        <button class="btn sm primary" onclick="renderPlanDia()">Actualizar</button>
+        <button class="btn sm blue" onclick="exportarExcelPlan()">Excel plan</button>
+      </div>
+    </div>
+    <div id="plan-dia-output"><div class="empty">Cargando plan del día...</div></div>
+  </div>
+
+</div>
 
     <!-- JEFE: Cambios -->
     <div class="sec" id="sec-cambios">
@@ -1106,10 +1130,10 @@ async function agregarPedido() {
     prioridad: prio,
     estado: 'Activo',
     nv_referencia: nv||null,
-    hora_entrega: document.getElementById('p-hora').value||null,
     fecha_armado: document.getElementById('p-fecha-armado').value||hoy(),
     fecha_despacho: document.getElementById('p-fecha-desp').value||null,
     hora_despacho: document.getElementById('p-hora-desp').value||null,
+    hora_entrega: document.getElementById('p-hora-desp').value||null,
     grupo: document.getElementById('p-grupo').value||null,
     turno: document.getElementById('p-turno').value||'Mañana',
   };
