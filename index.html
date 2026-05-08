@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1174,12 +1175,11 @@ async function agregarPedido() {
         nota: nv ? `NV ref: ${nv}` : ''
       });
     }
-    ['p-codigo','p-cliente','p-destino','p-cantidad','p-nv'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('p-hora').value='';
-    document.getElementById('p-fecha-desp').value='';
-    document.getElementById('p-hora-desp').value='';
-    document.getElementById('p-grupo').value='';
-    document.getElementById('p-fecha-armado').value='';
+    ['p-codigo','p-cliente','p-destino','p-cantidad','p-nv'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    var _el_p_fecha_desp=document.getElementById('p-fecha-desp');if(_el_p_fecha_desp)_el_p_fecha_desp.value='';
+    var _el_p_hora_desp=document.getElementById('p-hora-desp');if(_el_p_hora_desp)_el_p_hora_desp.value='';
+    var _el_p_grupo=document.getElementById('p-grupo');if(_el_p_grupo)_el_p_grupo.value='';
+    var _el_p_fecha_armado=document.getElementById('p-fecha-armado');if(_el_p_fecha_armado)_el_p_fecha_armado.value='';
     document.getElementById('cod-info').textContent='';
     cargarPlanDia(); cargarMetricas();
   } catch(e) { alert('Error: '+e.message); }
