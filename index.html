@@ -668,13 +668,8 @@ function initApp() {
 
   // Fecha por defecto en informes
   renderGruposLista();
-  const fpPlan = document.getElementById('filtro-fecha-plan');
-  if(fpPlan) fpPlan.value = hoy();
-  const fpDesp = document.getElementById('filtro-fecha-desp');
-  if(fpDesp) fpDesp.value = hoy();
-  const fpMd = document.getElementById('md-fecha-desp');
-  if(fpMd) fpMd.value = hoy();
-  document.getElementById('inf-fecha').value = hoy();
+  // Las fechas se inicializan cuando se activa cada tab
+  try { document.getElementById('inf-fecha').value = hoy(); } catch(e) {}
   document.getElementById('inf-desde').value = hoy();
   document.getElementById('inf-hasta').value = hoy();
   if(document.getElementById('graf-desde')) {
