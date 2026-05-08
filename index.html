@@ -175,7 +175,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- ═══ LOGIN ═══ -->
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,17,23,.96);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-  <div style="font-size:20px;font-weight:600;color:#22c98a">CSF Planificador</div>
+  <div style="font-size:22px;font-weight:600;color:#22c98a">CSF Planificador</div>
   <div style="width:180px;height:4px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden">
     <div style="height:100%;background:#22c98a;border-radius:3px;animation:pbar 1.5s ease-in-out infinite"></div>
   </div>
@@ -527,91 +527,6 @@ let NV_LIGHT = {};
 let DESP_HIST = {};
 let NV_KEYS = [];
 
-const USUARIOS_LOCAL = {
-  'jefe':  {id:'u1',nombre:'Israel Palma',  usuario:'jefe',  password:'jefe123', rol:'jefe'},
-  'diego': {id:'u2',nombre:'Diego Quezada', usuario:'diego', password:'diego123',rol:'jefe'},
-  'desp1': {id:'u3',nombre:'Despachador 1', usuario:'desp1', password:'desp123', rol:'despachador'},
-  'desp2': {id:'u4',nombre:'Despachador 2', usuario:'desp2', password:'desp123', rol:'despachador'},
-  'desp3': {id:'u5',nombre:'Despachador 3', usuario:'desp3', password:'desp123', rol:'despachador'},
-};
-
-async function cargarDatosCatalogo() {
-  const cached = localStorage.getItem('pl_cat_ts');
-  if(cached && (Date.now()-parseInt(cached)) < 86400000) {
-    try {
-      const c = localStorage.getItem('pl_cat_cod');
-      const n = localStorage.getItem('pl_cat_nv');
-      if(c) { const obj=JSON.parse(c); Object.assign(COD_IDX,obj); }
-      if(n) { const obj=JSON.parse(n); Object.assign(NV_LIGHT,obj); NV_KEYS=Object.keys(NV_LIGHT); }
-      console.log('Cache: ',Object.keys(COD_IDX).length,'codes',NV_KEYS.length,'nvs');
-      return;
-    } catch(e) {}
-  }
-  const overlay = document.getElementById('carga-overlay');
-  const status = document.getElementById('carga-status');
-  if(overlay) overlay.style.display='flex';
-  try {
-    if(status) status.textContent='Cargando catálogo...';
-    let offset=0; const limit=1000;
-    while(true) {
-      const res = await sb('catalogo_codigos','GET',null,`?select=*&limit=${limit}&offset=${offset}`);
-      if(!res||!res.length) break;
-      res.forEach(c=>{COD_IDX[c.codigo]=c;});
-      offset+=limit;
-      if(status) status.textContent='Catálogo: '+Object.keys(COD_IDX).length+' códigos...';
-      if(res.length<limit) break;
-    }
-    if(status) status.textContent='Cargando NVs...';
-    offset=0;
-    while(true) {
-      const res = await sb('nv_index','GET',null,`?select=*&limit=${limit}&offset=${offset}&order=creacion.desc`);
-      if(!res||!res.length) break;
-      res.forEach(n=>{NV_LIGHT[n.nv]={cliente:n.cliente,creacion:n.creacion,esp:n.esp,n:n.n,codigos:n.codigos||[],tipos:n.tipos||[]};});
-      offset+=limit;
-      if(status) status.textContent='NVs: '+Object.keys(NV_LIGHT).length+'...';
-      if(res.length<limit) break;
-    }
-    NV_KEYS=Object.keys(NV_LIGHT);
-    try {
-      localStorage.setItem('pl_cat_cod',JSON.stringify(COD_IDX));
-      localStorage.setItem('pl_cat_nv',JSON.stringify(NV_LIGHT));
-      localStorage.setItem('pl_cat_ts',String(Date.now()));
-    } catch(e) { console.warn('Cache full'); }
-    console.log('Loaded:',Object.keys(COD_IDX).length,'codes',NV_KEYS.length,'nvs');
-  } catch(e) {
-    console.warn('Could not load catalog:',e.message);
-  }
-  if(overlay) overlay.style.display='none';
-}
-
-async function doLogin() {
-  const user = document.getElementById('l-user').value.trim().toLowerCase();
-  const pass = document.getElementById('l-pass').value.trim();
-  const err  = document.getElementById('l-err');
-  err.style.display='none';
-  const u = USUARIOS_LOCAL[user];
-  if(u && u.password===pass) {
-    USER=u;
-    localStorage.setItem('pl_session',JSON.stringify(USER));
-    await cargarDatosCatalogo();
-    initApp();
-    return;
-  }
-  try {
-    const res = await sb('usuarios','GET',null,`?usuario=eq.${encodeURIComponent(user)}&password=eq.${encodeURIComponent(pass)}&select=*`);
-    if(!res||!res.length){err.style.display='block';return;}
-    USER=res[0];
-    localStorage.setItem('pl_session',JSON.stringify(USER));
-    await cargarDatosCatalogo();
-    initApp();
-  } catch(e) {
-    err.textContent='Sin conexión. Verifica usuario y contraseña.';
-    err.style.display='block';
-  }
-}
-
-
-
 // ── Grupos ────────────────────────────────────────────────────
 let gruposHoy = JSON.parse(localStorage.getItem('pl_grupos_'+new Date().toISOString().slice(0,10)) || '[]');
 
@@ -632,16 +547,13 @@ function renderGruposLista() {
     el.innerHTML='<span style="font-size:12px;color:var(--text3);padding:8px 0">Sin grupos definidos para hoy. Usa "+ Nuevo grupo" para agregar.</span>';
     return;
   }
-  el.innerHTML = gruposHoy.map(function(g){
-    var maqChip = g.maquina ? '<span class="chip green" style="font-size:10px">'+g.maquina+'</span>' : '';
-    var cls = g.turno==='Ma\u00f1ana'?'blue':'purple';
-    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px">'+
-      '<span style="font-weight:500">'+g.nombre+'</span>'+
-      '<span class="chip '+cls+'">'+g.turno+'</span>'+
-      maqChip+
-      '<button class="btn sm danger" onclick="eliminarGrupo(&apos;'+g.nombre+'&apos;)">&#x2715;</button>'+
-    '</div>';
-  }).join('');
+  el.innerHTML = gruposHoy.map(g=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px">
+      <span style="font-weight:500">${g.nombre}</span>
+      <span class="chip ${g.turno==='Mañana'?'blue':'purple'}">${g.turno}</span>
+      ${g.maquina?`<span class="chip green" style="font-size:10px">${g.maquina}</span>`:''}
+      <button class="btn sm danger" onclick="eliminarGrupo('${g.nombre}')">✕</button>
+    </div>`).join('');
 }
 
 function showModalGrupo() {
@@ -659,14 +571,14 @@ function renderMgLista() {
   const el = document.getElementById('mg-lista');
   if(!el) return;
   if(!gruposHoy.length) { el.innerHTML='<p class="empty">Sin grupos aún.</p>'; return; }
-  var rows2 = gruposHoy.map(function(g){
-    var cls = g.turno==='Ma\u00f1ana'?'blue':'purple';
-    return '<tr><td style="font-weight:500">'+g.nombre+'</td>'+
-      '<td><span class="chip '+cls+'">'+g.turno+'</span></td>'+
-      '<td>'+(g.maquina||'&#8212;')+'</td>'+
-      '<td><button class="btn sm danger" onclick="eliminarGrupo(&apos;'+g.nombre+'&apos;)">Quitar</button></td></tr>';
-  }).join('');
-  el.innerHTML='<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>M\u00e1quina</th><th></th></tr></thead><tbody>'+rows2+'</tbody></table>';
+  el.innerHTML=`<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Máquina</th><th></th></tr></thead><tbody>
+    ${gruposHoy.map(g=>`<tr>
+      <td style="font-weight:500">${g.nombre}</td>
+      <td><span class="chip ${g.turno==='Mañana'?'blue':'purple'}">${g.turno}</span></td>
+      <td>${g.maquina||'—'}</td>
+      <td><button class="btn sm danger" onclick="eliminarGrupo('${g.nombre}')">Quitar</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
 }
 
 function agregarGrupo() {
@@ -720,6 +632,108 @@ function horaStr() { return new Date().toLocaleTimeString('es-CL', {hour:'2-digi
 function fechaHoy() { return new Date().toLocaleDateString('es-CL', {weekday:'long',day:'numeric',month:'long'}); }
 
 // ── Login ─────────────────────────────────────────────────────
+async function doLogin() {
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value.trim();
+  const err  = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await sb('usuarios', 'GET', null,
+      `?usuario=eq.${encodeURIComponent(user)}&password=eq.${encodeURIComponent(pass)}&select=*`);
+    if (!res || !res.length) { err.style.display='block'; return; }
+    USER = res[0];
+    localStorage.setItem('pl_session', JSON.stringify(USER));
+    initApp();
+  } catch(e) { err.textContent='Error de conexión: '+e.message; err.style.display='block'; }
+}
+
+function doLogout() {
+  USER = null;
+  localStorage.removeItem('pl_session');
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('app').classList.remove('visible');
+}
+
+function initApp() {
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('tb-nombre').textContent = USER.nombre;
+  document.getElementById('tb-fecha').textContent = fechaHoy();
+  document.getElementById('fecha-plan').textContent = new Date().toLocaleDateString('es-CL');
+  document.getElementById('tb-rol').textContent = USER.rol === 'jefe' ? 'Jefe' : 'Despachador';
+  document.getElementById('tb-rol').className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
+
+  // Fecha por defecto en informes
+  renderGruposLista();
+  document.getElementById('inf-fecha').value = hoy();
+  document.getElementById('inf-desde').value = hoy();
+  document.getElementById('inf-hasta').value = hoy();
+  if(document.getElementById('graf-desde')) {
+    document.getElementById('graf-desde').value = hoy();
+    document.getElementById('graf-hasta').value = hoy();
+  }
+
+  // Poblar select máquinas
+  const selMaq = document.getElementById('p-maquina');
+  maquinasConfig.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.nombre; o.textContent = m.nombre;
+    selMaq.appendChild(o);
+  });
+
+  // Tabs según rol
+  const tabs = USER.rol === 'jefe'
+    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['forecast','Forecast NV'],['graficos','Gráficos'],['informes','Informes']]
+    : [['desp-live','Plan del Día'],['despacho','Mis Despachos']];
+
+  const bar = document.getElementById('tabs-bar');
+  bar.innerHTML = tabs.map((t,i) =>
+    `<button class="tab ${i===0?'active':''}" onclick="showTab('${t[0]}')">${t[1]}</button>`
+  ).join('');
+
+  showTab(tabs[0][0]);
+  if (USER.rol === 'jefe') {
+    document.getElementById('btn-add-desp').style.display = 'inline-block';
+  }
+
+  // Auto-refresh cada 30s solo para despacho y desp-live
+  setInterval(() => {
+    try {
+      if(tabActual === 'despacho') cargarPlanDespacho();
+      else if(tabActual === 'desp-live') cargarDespLive();
+    } catch(e) { console.error('Auto-refresh error:', e); }
+  }, 30000);
+}
+
+function showTab(t) {
+  const tabNames = USER.rol==='jefe'
+    ? ['planificar','cambios','armados','despacho','forecast','graficos','informes']
+    : ['desp-live','despacho'];
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', tabNames[i]===t);
+  });
+  document.querySelectorAll('.sec').forEach(el => el.classList.remove('active'));
+  const sec = document.getElementById('sec-'+t);
+  if (sec) sec.classList.add('active');
+  tabActual = t;
+  setTimeout(()=>refreshActual(), 50);
+}
+
+let tabActual = '';
+function refreshActual() {
+  if(tabActual==='planificar') { cargarPlanDia(); cargarMetricas(); }
+  else if(tabActual==='cambios') { cargarCambiosDia(); }
+  else if(tabActual==='armados') { cargarArmados(); }
+  else if(tabActual==='despacho') { cargarPlanDespacho(); }
+  else if(tabActual==='informes') { cargarMetricasInforme(); }
+  else if(tabActual==='graficos') { cargarGraficos(); }
+  else if(tabActual==='desp-live') { cargarDespLive(); }
+  console.log('Tab activo:', tabActual);
+}
+
+let chartSolArm = null;
+let chartArmDesp = null;
+let chartClientes = null;
 
 async function cargarGraficos() {
   const desde = document.getElementById('graf-desde')?.value || hoy();
@@ -968,40 +982,42 @@ async function cargarPlanDia() {
 }
 
 function renderPlanDia() {
-  const el = document.getElementById('plan-dia-output');
+  var el = document.getElementById('plan-dia-output');
   if(!el) return;
-  const orden = document.getElementById('orden-plan').value;
-  let pedidos = [...pedidosCache];
-  if(orden==='prio') pedidos.sort((a,b)=>pp(a.prioridad)-pp(b.prioridad));
-  else if(orden==='cliente') pedidos.sort((a,b)=>a.cliente.localeCompare(b.cliente));
+  var orden = document.getElementById('orden-plan').value;
+  var pedidos = pedidosCache.slice();
+  if(orden==='prio') pedidos.sort(function(a,b){return pp(a.prioridad)-pp(b.prioridad);});
+  else if(orden==='cliente') pedidos.sort(function(a,b){return a.cliente.localeCompare(b.cliente);});
 
   if(!pedidos.length) { el.innerHTML='<div class="empty">No hay pedidos para hoy. Agrega el primero arriba.</div>'; return; }
 
-  const turnos = {'Mañana':{},'Tarde':{},'Sin turno':{}};
+  var turnos = {'Manana':[],'Tarde':[],'Sin turno':[]};
+  var turnoMap = {};
   pedidos.forEach(function(p) {
-    const t = p.turno||'Sin turno';
-    const g = p.grupo||'Sin grupo';
-    if(!turnos[t]) turnos[t]={};
-    if(!turnos[t][g]) turnos[t][g]=[];
-    turnos[t][g].push(p);
+    var t = p.turno==='Tarde'?'Tarde':p.turno?'Manana':'Sin turno';
+    var g = p.grupo||'Sin grupo';
+    if(!turnoMap[t]) turnoMap[t]={};
+    if(!turnoMap[t][g]) turnoMap[t][g]=[];
+    turnoMap[t][g].push(p);
   });
 
-  let out = '';
-  ['Mañana','Tarde','Sin turno'].forEach(function(turno) {
-    const grps = turnos[turno];
-    if(!Object.keys(grps).length) return;
-    const col = turno==='Mañana'?'var(--blue)':turno==='Tarde'?'var(--purple)':'var(--text3)';
+  var out = '';
+  ['Manana','Tarde','Sin turno'].forEach(function(turnoKey) {
+    var grps = turnoMap[turnoKey];
+    if(!grps||!Object.keys(grps).length) return;
+    var turnoLabel = turnoKey==='Manana'?'Mañana':turnoKey;
+    var col = turnoKey==='Manana'?'var(--blue)':turnoKey==='Tarde'?'var(--purple)':'var(--text3)';
     out += '<div style="margin-bottom:6px">';
     out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
-    out += '<span style="font-size:12px;font-weight:600;color:'+col+';text-transform:uppercase;letter-spacing:.06em">'+turno+'</span>';
+    out += '<span style="font-size:12px;font-weight:600;color:'+col+';text-transform:uppercase;letter-spacing:.06em">'+turnoLabel+'</span>';
     out += '<div style="flex:1;height:1px;background:var(--border)"></div></div>';
 
-    Object.entries(grps).forEach(function(entry) {
-      const grp = entry[0];
-      const items = entry[1];
-      const maqGrupo = (gruposHoy.find(function(g){return g.nombre===grp;})||{}).maquina || items[0]?.maquina || '';
-      const totalU = items.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
-      
+    Object.keys(grps).forEach(function(grp) {
+      var items = grps[grp];
+      var gObj = gruposHoy.filter(function(g){return g.nombre===grp;})[0] || {};
+      var maqGrupo = gObj.maquina || (items[0]?items[0].maquina:'')||'';
+      var totalU = items.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
+
       out += '<div class="grupo">';
       out += '<div class="grupo-hdr">';
       out += '<div class="dot" style="background:var(--green);width:10px;height:10px;border-radius:50%"></div>';
@@ -1010,27 +1026,28 @@ function renderPlanDia() {
       out += '<span class="grupo-meta">'+items.length+' pedido(s) · '+totalU.toLocaleString('es-CL')+' u.</span>';
       out += '</div>';
 
-      items.forEach(function(p, idx) {
-        const armadas = p.cantidad_armada||0;
-        const despNV = p.nv_referencia ? (DESP_HIST[String(p.nv_referencia)]||{}) : {};
-        const despachado = despNV[p.codigo]||0;
-        
+      items.forEach(function(p) {
+        var armadas = p.cantidad_armada||0;
+        var despNV = p.nv_referencia?(DESP_HIST[String(p.nv_referencia)]||{}):{};
+        var despachado = despNV[p.codigo]||0;
+        var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'—':'—';
+
         out += '<div class="pfila">';
         out += '<div class="dot" style="background:'+colorPrio(p.prioridad)+'"></div>';
         out += '<span class="nv-tag">'+(p.nv_referencia||'—')+'</span>';
         out += '<span style="font-weight:500;min-width:110px">'+p.cliente+'</span>';
         out += '<code style="font-size:11px;color:var(--text2)">'+p.codigo+'</code>';
-        out += '<span style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( p.descripcion||'')+'</span>';
+        out += '<span style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.descripcion||'')+'</span>';
         out += '<span style="color:var(--text2)">'+(p.destino||'')+'</span>';
-        out += '<span class="chip '+chipTipo(p.codigo)+'">'+(COD_IDX[p.codigo]?.tipo||'—')+'</span>';
+        out += '<span class="chip '+chipTipo(p.codigo)+'">'+tipo+'</span>';
         out += '<span style="color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+' u.</span>';
         out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
         out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
-        if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">🕐 '+p.hora_entrega+'</span>';
+        if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
         if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
         if(despachado>0) {
-          const pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
-          const col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+          var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
+          var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
           out += '<span style="font-size:11px;color:'+col2+';font-weight:500">'+despachado.toLocaleString('es-CL')+' desp. ('+pct+'%)</span>';
         }
         if(USER.rol==='jefe') {
@@ -1038,8 +1055,7 @@ function renderPlanDia() {
           out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'">Historial</button>';
           out += '<button class="btn sm warning" data-action="cambio" data-id="'+p.id+'">Cambio</button>';
           if(p.estado!=='Cancelado') out += '<button class="btn sm danger" data-action="cancelar" data-id="'+p.id+'">Cancelar</button>';
-          out += '<button class="btn sm danger" data-action="eliminar" data-id="'+p.id+'">🗑</button>';
-          out += '</div>';
+          out += '<button class="btn sm danger" data-action="eliminar" data-id="'+p.id+'">Eliminar</button>';
           out += '</div>';
         }
         out += '</div>';
@@ -1052,7 +1068,6 @@ function renderPlanDia() {
 }
 
 
-// ── Agregar pedido ────────────────────────────────────────────
 async function agregarPedido() {
   const codigo   = document.getElementById('p-codigo').value.trim();
   const cliente  = document.getElementById('p-cliente').value.trim();
@@ -1821,26 +1836,70 @@ function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Mo
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
-document.addEventListener('click',e=>{
-  // Manejar botones de acción del plan
-  const btn = e.target.closest('[data-action]');
-  if(btn) {
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
-    if(action==='historial') { verHistorial(id); return; }
-    if(action==='cambio') { abrirCambio(id); return; }
-    if(action==='cancelar') { cancelarPedido(id); return; }
-    if(action==='eliminar') { eliminarPedido(id); return; }
-  }
-  // Cerrar suggest boxes
-  if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
+document.addEventListener('click',e=>{if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
 
 // ── Auto-login si hay sesión guardada ─────────────────────────
+
+const USUARIOS_LOCAL = {
+  'jefe':  {id:'u1',nombre:'Israel Palma',  usuario:'jefe',  password:'jefe123', rol:'jefe'},
+  'diego': {id:'u2',nombre:'Diego Quezada', usuario:'diego', password:'diego123',rol:'jefe'},
+  'desp1': {id:'u3',nombre:'Despachador 1', usuario:'desp1', password:'desp123', rol:'despachador'},
+  'desp2': {id:'u4',nombre:'Despachador 2', usuario:'desp2', password:'desp123', rol:'despachador'},
+  'desp3': {id:'u5',nombre:'Despachador 3', usuario:'desp3', password:'desp123', rol:'despachador'},
+};
+
+async function cargarDatosCatalogo() {
+  const cached = localStorage.getItem('pl_cat_ts');
+  if(cached && (Date.now()-parseInt(cached)) < 86400000) {
+    try {
+      const c = localStorage.getItem('pl_cat_cod');
+      const n = localStorage.getItem('pl_cat_nv');
+      if(c) Object.assign(COD_IDX, JSON.parse(c));
+      if(n) { Object.assign(NV_LIGHT, JSON.parse(n)); NV_KEYS=Object.keys(NV_LIGHT); }
+      console.log('Cache: ', Object.keys(COD_IDX).length, 'codes', NV_KEYS.length, 'nvs');
+      return;
+    } catch(e) {}
+  }
+  const overlay = document.getElementById('carga-overlay');
+  const status = document.getElementById('carga-status');
+  if(overlay) overlay.style.display='flex';
+  try {
+    if(status) status.textContent='Cargando catálogo...';
+    let offset=0;
+    while(true) {
+      const res = await sb('catalogo_codigos','GET',null,'?select=*&limit=1000&offset='+offset);
+      if(!res||!res.length) break;
+      res.forEach(function(c){ COD_IDX[c.codigo]=c; });
+      offset+=1000;
+      if(status) status.textContent='Catálogo: '+Object.keys(COD_IDX).length+'...';
+      if(res.length<1000) break;
+    }
+    if(status) status.textContent='Cargando NVs...';
+    offset=0;
+    while(true) {
+      const res = await sb('nv_index','GET',null,'?select=*&limit=1000&offset='+offset+'&order=creacion.desc');
+      if(!res||!res.length) break;
+      res.forEach(function(n){ NV_LIGHT[n.nv]={cliente:n.cliente,creacion:n.creacion,esp:n.esp,n:n.n,codigos:n.codigos||[],tipos:n.tipos||[]}; });
+      offset+=1000;
+      if(status) status.textContent='NVs: '+Object.keys(NV_LIGHT).length+'...';
+      if(res.length<1000) break;
+    }
+    NV_KEYS=Object.keys(NV_LIGHT);
+    try {
+      localStorage.setItem('pl_cat_cod',JSON.stringify(COD_IDX));
+      localStorage.setItem('pl_cat_nv',JSON.stringify(NV_LIGHT));
+      localStorage.setItem('pl_cat_ts',String(Date.now()));
+    } catch(e) {}
+    console.log('Loaded:', Object.keys(COD_IDX).length, 'codes', NV_KEYS.length, 'nvs');
+  } catch(e) { console.warn('Catalog load error:', e.message); }
+  if(overlay) overlay.style.display='none';
+}
+
 const saved = localStorage.getItem('pl_session');
 if(saved) {
   try {
     USER=JSON.parse(saved);
-    cargarDatosCatalogo().then(()=>initApp()).catch(()=>initApp());
+    cargarDatosCatalogo().then(function(){ initApp(); }).catch(function(){ initApp(); });
   } catch(e) {}
 }
 </script>
