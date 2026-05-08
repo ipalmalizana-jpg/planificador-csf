@@ -1856,7 +1856,20 @@ function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Mo
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
-document.addEventListener('click',e=>{if(!e.target.closest('.rel'))document.querySelectorAll('.suggest-box').forEach(b=>b.style.display='none');});
+document.addEventListener('click',e=>{
+  // Manejar botones data-action del plan
+  var btn = e.target.closest('[data-action]');
+  if(btn) {
+    var action = btn.dataset.action;
+    var id = btn.dataset.id;
+    if(action==='historial') { verHistorial(id); return; }
+    if(action==='cambio') { abrirCambio(id); return; }
+    if(action==='cancelar') { cancelarPedido(id); return; }
+    if(action==='eliminar') { eliminarPedido(id); return; }
+  }
+  // Cerrar suggest boxes
+  if(!e.target.closest('.rel')) document.querySelectorAll('.suggest-box').forEach(function(b){b.style.display='none';});
+});
 
 // -- Auto-login si hay sesión guardada -------------------------
 
