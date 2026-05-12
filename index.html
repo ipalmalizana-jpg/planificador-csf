@@ -410,16 +410,32 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
   <!-- Barra de filtros -->
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Período</span>
+    <!-- Selector de modo -->
+    <div style="display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:3px">
+      <button id="inf-modo-dia" onclick="setInfModo('dia')"
+        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:var(--blue);color:#fff">
+        Un día
+      </button>
+      <button id="inf-modo-rango" onclick="setInfModo('rango')"
+        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text3)">
+        Rango
+      </button>
+    </div>
+
+    <!-- Modo un día -->
+    <div id="inf-filtro-dia" style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3)">Fecha</span>
+      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+
+    <!-- Modo rango -->
+    <div id="inf-filtro-rango" style="display:none;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3)">Desde</span>
       <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
       <span style="font-size:11px;color:var(--text3)">→</span>
       <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
     </div>
-    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3)">Fecha puntual</span>
-      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
+
     <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
     <button class="btn sm blue" onclick="exportarExcelInforme()" style="height:34px">Excel</button>
     <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:var(--red);color:#fff;border-color:var(--red)">&#128196; PDF</button>
@@ -1845,7 +1861,39 @@ function showInfTab(n) {
   });
 }
 
+function setInfModo(modo) {
+  var esDia = modo === 'dia';
+  document.getElementById('inf-filtro-dia').style.display = esDia ? 'flex' : 'none';
+  document.getElementById('inf-filtro-rango').style.display = esDia ? 'none' : 'flex';
+  var btnDia = document.getElementById('inf-modo-dia');
+  var btnRango = document.getElementById('inf-modo-rango');
+  if(btnDia) { btnDia.style.background = esDia?'var(--blue)':'transparent'; btnDia.style.color = esDia?'#fff':'var(--text3)'; }
+  if(btnRango) { btnRango.style.background = esDia?'transparent':'var(--blue)'; btnRango.style.color = esDia?'var(--text3)':'#fff'; }
+  // Sincronizar fechas
+  if(esDia) {
+    var f = document.getElementById('inf-fecha')?.value || hoy();
+    var desdeEl = document.getElementById('inf-desde');
+    var hastaEl = document.getElementById('inf-hasta');
+    if(desdeEl) desdeEl.value = f;
+    if(hastaEl) hastaEl.value = f;
+  } else {
+    var desde = document.getElementById('inf-desde')?.value || hoy();
+    var hasta = document.getElementById('inf-hasta')?.value || hoy();
+    var fechaEl = document.getElementById('inf-fecha');
+    if(fechaEl) fechaEl.value = desde;
+  }
+}
+
 async function cargarInformes() {
+  // Sincronizar fechas según modo activo
+  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  if(esDia) {
+    var f = document.getElementById('inf-fecha')?.value || hoy();
+    var desdeEl = document.getElementById('inf-desde');
+    var hastaEl = document.getElementById('inf-hasta');
+    if(desdeEl) desdeEl.value = f;
+    if(hastaEl) hastaEl.value = f;
+  }
   await cargarMetricasInforme();
   await cargarInformeCierre();
   await cargarInformeClientes();
