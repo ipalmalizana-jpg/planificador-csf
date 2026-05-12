@@ -1851,6 +1851,35 @@ async function verForecast(nv) {
 let chartCierreSolArm = null, chartCierreEstados = null;
 let chartDespCliente = null, chartGruposArm = null, chartMaqArm = null;
 
+// Plugin inline para etiquetas en dona
+const datalabelsPlugin = {
+  id:'datalabels',
+  afterDatasetsDraw:function(chart){
+    var ctx3 = chart.ctx;
+    chart.data.datasets.forEach(function(dataset, i){
+      var meta = chart.getDatasetMeta(i);
+      meta.data.forEach(function(arc, j){
+        var val = dataset.data[j];
+        if(!val) return;
+        var total = dataset.data.reduce(function(a,b){return a+b;},0);
+        var pct = Math.round(val/total*100);
+        if(pct < 5) return;
+        var angle = (arc.startAngle + arc.endAngle) / 2;
+        var r = (arc.outerRadius + arc.innerRadius) / 2;
+        var x = arc.x + Math.cos(angle) * r;
+        var y = arc.y + Math.sin(angle) * r;
+        ctx3.save();
+        ctx3.fillStyle = '#fff';
+        ctx3.font = 'bold 12px system-ui';
+        ctx3.textAlign = 'center';
+        ctx3.textBaseline = 'middle';
+        ctx3.fillText(val+' ('+pct+'%)', x, y);
+        ctx3.restore();
+      });
+    });
+  }
+};
+
 function showInfTab(n) {
   [1,2,3].forEach(function(i) {
     document.getElementById('inf-panel-'+i).style.display = i===n?'block':'none';
