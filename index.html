@@ -723,6 +723,30 @@ function toggleFormulario() {
   if(btn) btn.querySelector('span:first-child').textContent = visible ? '+ Agregar pedido al plan' : '− Agregar pedido al plan';
 }
 
+async function subirFotoGuia(despachoId, cliente, archivo) {
+  if(!archivo) return null;
+  const ext = archivo.name.split('.').pop().toLowerCase();
+  const nombre = 'guias/'+cliente.replace(/[^a-z0-9]/gi,'_')+'/'+despachoId+'_'+Date.now()+'.'+ext;
+  try {
+    const res = await fetch('https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/'+nombre, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer '+SB_KEY,
+        'Content-Type': archivo.type,
+        'x-upsert': 'true'
+      },
+      body: archivo
+    });
+    if(!res.ok) throw new Error(await res.text());
+    const url = 'https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/public/'+nombre;
+    return url;
+  } catch(e) {
+    console.error('Error subiendo foto:', e);
+    return null;
+  }
+}
+
 function mostrarSinConexion() {
   const ind = document.getElementById('conn-indicator');
   if(ind) {
@@ -1450,7 +1474,7 @@ async function verSalidas(id) {
     const salidas = await sb('salidas_despacho','GET',null,`?despacho_id=eq.${id}&order=creado_en.asc&select=*`);
     if(!salidas||!salidas.length) { el.innerHTML='<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>'; el.style.display='block'; return; }
     el.innerHTML=`<table class="dt" style="font-size:12px;margin-top:4px">
-      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Registrado por</th><th>Hora</th></tr></thead>
+      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th></tr></thead>
       <tbody>${salidas.map((s,i)=>`<tr>
         <td style="color:var(--text3)">${i+1}</td>
         <td style="font-weight:500">${s.cliente||'--'}</td>
@@ -1458,6 +1482,7 @@ async function verSalidas(id) {
         <td style="color:var(--text2)">${s.destino||'--'}</td>
         <td style="font-weight:500;color:var(--green)">${(s.cantidad||0).toLocaleString('es-CL')} u.</td>
         <td>${s.numero_guia?`<span class="nv-tag">${s.numero_guia}</span>`:'--'}</td>
+        <td>${s.foto_url?`<a href="${s.foto_url}" target="_blank" style="color:var(--blue);font-size:12px">&#128247; Ver foto</a>`:'--'}</td>
         <td style="color:var(--text2)">${s.registrado_por||'--'}</td>
         <td style="color:var(--text3)">${new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
       </tr>`).join('')}</tbody>
@@ -1633,10 +1658,14 @@ async function cargarPlanDespacho() {
               <input type="number" id="desp-cant-${d.id}" placeholder="Cantidad" 
                 style="width:110px;height:32px;font-size:13px" min="1">
               <input type="text" id="desp-guia-${d.id}" placeholder="N° guía (opcional)" 
-                style="width:140px;height:32px;font-size:13px">
+                style="width:130px;height:32px;font-size:13px">
+              <label style="display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);white-space:nowrap" title="Adjuntar foto de guía">
+                &#128247; Foto
+                <input type="file" id="desp-foto-${d.id}" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="this.parentElement.style.borderColor='var(--green)';this.parentElement.style.color='var(--green)'">
+              </label>
               <button class="btn primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})"
                 style="height:32px;padding:0 16px;font-size:12px">
-                &#10003; Registrar camión
+                &#10003; Registrar
               </button>
               ${pendiente===0?`<button class="btn green" onclick="marcarDespachado('${d.id}')"
                 style="height:32px;padding:0 16px;font-size:12px;background:var(--green);color:#0f1117;border-color:var(--green)">
@@ -1682,6 +1711,7 @@ async function guardarDespacho() {
 async function registrarSalida(id, totalPedido, yaEnviado) {
   const cantEl = document.getElementById('desp-cant-'+id);
   const guiaEl = document.getElementById('desp-guia-'+id);
+  const fotoEl = document.getElementById('desp-foto-'+id);
   const cant = parseInt(cantEl?.value)||0;
   const guia = guiaEl?.value?.trim()||'';
   if(!cant) { alert('Ingresa la cantidad que sale en este camión.'); return; }
@@ -1693,6 +1723,14 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
     const actual = await sb('plan_despacho','GET',null,`?id=eq.${id}&select=*`);
     const d = actual&&actual[0] ? actual[0] : {};
 
+    // Subir foto si existe
+    let fotoUrl = null;
+    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
+      const actual2 = await sb('plan_despacho','GET',null,'?id=eq.'+id+'&select=cliente');
+      const cli = actual2&&actual2[0]?actual2[0].cliente:'cliente';
+      fotoUrl = await subirFotoGuia(id, cli, fotoEl.files[0]);
+    }
+
     // Crear registro individual de salida
     await sb('salidas_despacho','POST',{
       despacho_id: id,
@@ -1701,6 +1739,7 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
       destino: d.destino||'',
       cantidad: cant,
       numero_guia: guia||null,
+      foto_url: fotoUrl||null,
       registrado_por: USER.nombre,
     });
 
@@ -1714,6 +1753,7 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
     // Limpiar campos
     if(cantEl) cantEl.value='';
     if(guiaEl) guiaEl.value='';
+    if(fotoEl) fotoEl.value='';
     cargarPlanDespacho();
   } catch(e) { alert('Error: '+e.message); }
 }
