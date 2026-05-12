@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg: #0f1117;
@@ -402,98 +404,79 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- JEFE: Informes -->
     <div class="sec" id="sec-informes">
-      <div class="metrics" id="met-informes"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="card">
-          <div class="card-title"><span>Reporte de cierre del día</span></div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Pedidos originales vs cambios vs despachado.</p>
-          <div class="frow">
-            <div class="fg"><label>Fecha</label><input type="date" id="inf-fecha" style="width:160px"></div>
-            <button class="btn primary" onclick="generarInformeDia()">Generar</button>
-            <button class="btn blue" onclick="exportarExcelInforme()">Excel</button>
-          </div>
-          <div id="informe-dia-output" style="margin-top:14px"></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span>Resumen de despachos por cliente</span></div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Total despachado agrupado por cliente en el período.</p>
-          <div class="frow">
-            <div class="fg"><label>Desde</label><input type="date" id="inf-desde" style="width:150px"></div>
-            <div class="fg"><label>Hasta</label><input type="date" id="inf-hasta" style="width:150px"></div>
-            <button class="btn primary" onclick="generarResumenClientes()">Generar</button>
-            <button class="btn blue" onclick="exportarExcelClientes()">Excel</button>
-          </div>
-          <div id="resumen-clientes-output" style="margin-top:14px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- JEFE: Gráficos -->
-    <div class="sec" id="sec-graficos">
-
-  <!-- Filtro de fechas -->
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Desde</span>
-      <input type="date" id="graf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-      <span style="font-size:11px;color:var(--text3)">hasta</span>
-      <input type="date" id="graf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
-    <button class="btn sm primary" onclick="cargarGraficos()" style="height:34px">↻ Actualizar</button>
-  </div>
 
   <!-- Métricas resumen -->
-  <div class="metrics" id="met-graficos" style="margin-bottom:16px"></div>
+  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
 
-  <!-- Gráficos de línea en grid 2x1 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:600">Solicitado vs Armado</div>
-          <div style="font-size:11px;color:var(--text3)" id="graf-fecha-1"></div>
-        </div>
-        <div style="display:flex;gap:12px">
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#4a9eff;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
-        </div>
+  <!-- Barra de filtros -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Período</span>
+      <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+      <span style="font-size:11px;color:var(--text3)">→</span>
+      <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3)">Fecha puntual</span>
+      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+    <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
+    <button class="btn sm blue" onclick="exportarExcelInforme()" style="height:34px">Excel</button>
+    <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:var(--red);color:#fff;border-color:var(--red)">&#128196; PDF</button>
+  </div>
+
+  <!-- 3 informes en tabs -->
+  <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)">
+    <button id="inf-tab-1" onclick="showInfTab(1)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--blue);border-bottom:2px solid var(--blue)">Cierre del día</button>
+    <button id="inf-tab-2" onclick="showInfTab(2)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Despachos por cliente</button>
+    <button id="inf-tab-3" onclick="showInfTab(3)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Rendimiento grupos</button>
+  </div>
+
+  <!-- Informe 1: Cierre del día -->
+  <div id="inf-panel-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Solicitado vs Armado — <span id="inf-fecha-label" style="color:var(--text3);font-weight:400"></span></div>
+        <div style="position:relative;height:220px"><canvas id="chart-cierre-sol-arm"></canvas></div>
       </div>
-      <div style="position:relative;height:200px">
-        <canvas id="chart-sol-arm"></canvas>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Estado de pedidos</div>
+        <div style="position:relative;height:220px"><canvas id="chart-cierre-estados"></canvas></div>
       </div>
     </div>
     <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:600">Armado vs Despachado</div>
-          <div style="font-size:11px;color:var(--text3)" id="graf-fecha-2"></div>
-        </div>
-        <div style="display:flex;gap:12px">
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#22c98a;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
-        </div>
-      </div>
-      <div style="position:relative;height:200px">
-        <canvas id="chart-arm-desp"></canvas>
-      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos del día</div>
+      <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
     </div>
   </div>
 
-  <!-- Gráfico por cliente -->
-  <div class="card" style="padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div>
-        <div style="font-size:13px;font-weight:600">Top 10 clientes</div>
-        <div style="font-size:11px;color:var(--text3)">Solicitado · Armado · Despachado</div>
+  <!-- Informe 2: Despachos por cliente -->
+  <div id="inf-panel-2" style="display:none">
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Despachos por cliente — período seleccionado</div>
+      <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por cliente</div>
+      <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- Informe 3: Rendimiento grupos -->
+  <div id="inf-panel-3" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Cajas armadas por grupo</div>
+        <div style="position:relative;height:250px"><canvas id="chart-grupos-arm"></canvas></div>
       </div>
-      <div style="display:flex;gap:12px">
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(74,158,255,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(240,180,41,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(34,201,138,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Armado por máquina</div>
+        <div style="position:relative;height:250px"><canvas id="chart-maq-arm"></canvas></div>
       </div>
     </div>
-    <div style="position:relative;height:300px">
-      <canvas id="chart-clientes"></canvas>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo y turno</div>
+      <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
     </div>
   </div>
 
@@ -830,7 +813,7 @@ function refreshActual() {
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
-  else if(tabActual==='informes') { cargarMetricasInforme(); }
+  else if(tabActual==='informes') { cargarInformes(); }
   else if(tabActual==='graficos') { cargarGraficos(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
@@ -1847,6 +1830,294 @@ async function verForecast(nv) {
 }
 
 // -- Informes --------------------------------------------------
+// Charts de informes
+let chartCierreSolArm = null, chartCierreEstados = null;
+let chartDespCliente = null, chartGruposArm = null, chartMaqArm = null;
+
+function showInfTab(n) {
+  [1,2,3].forEach(function(i) {
+    document.getElementById('inf-panel-'+i).style.display = i===n?'block':'none';
+    var btn = document.getElementById('inf-tab-'+i);
+    if(btn) {
+      btn.style.color = i===n?'var(--blue)':'var(--text3)';
+      btn.style.borderBottomColor = i===n?'var(--blue)':'transparent';
+    }
+  });
+}
+
+async function cargarInformes() {
+  await cargarMetricasInforme();
+  await cargarInformeCierre();
+  await cargarInformeClientes();
+  await cargarInformeGrupos();
+}
+
+async function cargarInformeCierre() {
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  const el = document.getElementById('inf-fecha-label');
+  if(el) el.textContent = fecha;
+
+  try {
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&select=*');
+    if(!pedidos||!pedidos.length) {
+      document.getElementById('inf-tabla-cierre').innerHTML='<p style="color:var(--text3);font-size:13px">Sin pedidos para esta fecha.</p>';
+      return;
+    }
+
+    // Gráfico barras sol vs arm por código
+    const labels = pedidos.map(function(p){return p.codigo;});
+    const sol = pedidos.map(function(p){return p.cantidad_pedida;});
+    const arm = pedidos.map(function(p){return p.cantidad_armada||0;});
+
+    const ctx1 = document.getElementById('chart-cierre-sol-arm');
+    if(chartCierreSolArm) chartCierreSolArm.destroy();
+    chartCierreSolArm = new Chart(ctx1, {
+      type:'bar',
+      data:{labels:labels,datasets:[
+        {label:'Solicitado',data:sol,backgroundColor:'rgba(74,158,255,.7)',borderColor:'#4a9eff',borderWidth:1},
+        {label:'Armado',data:arm,backgroundColor:'rgba(240,180,41,.7)',borderColor:'#f0b429',borderWidth:1}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
+        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Gráfico dona estados
+    const estados = {};
+    pedidos.forEach(function(p){ estados[p.estado]=(estados[p.estado]||0)+1; });
+    const ctx2 = document.getElementById('chart-cierre-estados');
+    if(chartCierreEstados) chartCierreEstados.destroy();
+    chartCierreEstados = new Chart(ctx2, {
+      type:'doughnut',
+      data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),
+        backgroundColor:['rgba(34,201,138,.8)','rgba(240,180,41,.8)','rgba(232,85,85,.8)','rgba(74,158,255,.8)'],
+        borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+        plugins:{legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:12}}}}
+    });
+
+    // Tabla detalle
+    var rows = pedidos.map(function(p){
+      var pct = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
+      var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+      return '<tr>'+
+        '<td style="font-weight:500">'+p.cliente+'</td>'+
+        '<td><code style="font-size:11px">'+p.codigo+'</code></td>'+
+        '<td>'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
+        '<td style="color:'+col+';font-weight:600">'+(p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct+'%)</td>'+
+        '<td>'+(p.grupo||'—')+'</td>'+
+        '<td>'+(p.maquina||'—')+'</td>'+
+        '<td><span class="chip '+(p.estado==='Activo'?'green':p.estado==='Cancelado'?'red':'yellow')+'">'+p.estado+'</span></td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-cierre').innerHTML =
+      '<table class="dt"><thead><tr><th>Cliente</th><th>Código</th><th>Solicitado</th><th>Armado</th><th>Grupo</th><th>Máquina</th><th>Estado</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe cierre:', e.message); }
+}
+
+async function cargarInformeClientes() {
+  const desde = document.getElementById('inf-desde')?.value || hoy();
+  const hasta = document.getElementById('inf-hasta')?.value || hoy();
+  try {
+    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=*');
+    if(!salidas||!salidas.length) {
+      document.getElementById('inf-tabla-clientes').innerHTML='<p style="color:var(--text3);font-size:13px">Sin despachos en el período.</p>';
+      return;
+    }
+
+    // Agrupar por cliente
+    var porCli = {};
+    salidas.forEach(function(s){
+      if(!porCli[s.cliente]) porCli[s.cliente]={cant:0,guias:new Set(),salidas:0};
+      porCli[s.cliente].cant += s.cantidad||0;
+      if(s.numero_guia) porCli[s.cliente].guias.add(s.numero_guia);
+      porCli[s.cliente].salidas++;
+    });
+    var sorted = Object.entries(porCli).sort(function(a,b){return b[1].cant-a[1].cant;});
+
+    // Gráfico
+    const ctx = document.getElementById('chart-desp-cliente');
+    if(chartDespCliente) chartDespCliente.destroy();
+    chartDespCliente = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels:sorted.map(function(e){return e[0];}),
+        datasets:[{label:'Unidades despachadas',data:sorted.map(function(e){return e[1].cant;}),
+          backgroundColor:'rgba(34,201,138,.7)',borderColor:'#22c98a',borderWidth:1}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Tabla
+    var rows = sorted.map(function(e){
+      return '<tr>'+
+        '<td style="font-weight:600">'+e[0]+'</td>'+
+        '<td style="color:var(--green);font-weight:700">'+e[1].cant.toLocaleString('es-CL')+'</td>'+
+        '<td>'+e[1].salidas+'</td>'+
+        '<td>'+e[1].guias.size+'</td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-clientes').innerHTML =
+      '<table class="dt"><thead><tr><th>Cliente</th><th>Unidades despachadas</th><th>Salidas</th><th>Guías</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe clientes:', e.message); }
+}
+
+async function cargarInformeGrupos() {
+  const desde = document.getElementById('inf-desde')?.value || hoy();
+  const hasta = document.getElementById('inf-hasta')?.value || hoy();
+  try {
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
+    if(!pedidos||!pedidos.length) {
+      document.getElementById('inf-tabla-grupos').innerHTML='<p style="color:var(--text3);font-size:13px">Sin datos en el período.</p>';
+      return;
+    }
+
+    // Agrupar por grupo
+    var porGrupo = {};
+    var porMaq = {};
+    pedidos.forEach(function(p){
+      var g = p.grupo||'Sin grupo';
+      var m = p.maquina||'Sin máquina';
+      if(!porGrupo[g]) porGrupo[g]={sol:0,arm:0,pedidos:0,turno:p.turno||''};
+      porGrupo[g].sol += p.cantidad_pedida;
+      porGrupo[g].arm += p.cantidad_armada||0;
+      porGrupo[g].pedidos++;
+      if(!porMaq[m]) porMaq[m]={sol:0,arm:0};
+      porMaq[m].sol += p.cantidad_pedida;
+      porMaq[m].arm += p.cantidad_armada||0;
+    });
+
+    // Gráfico grupos
+    var gSorted = Object.entries(porGrupo).sort(function(a,b){return b[1].arm-a[1].arm;});
+    const ctx1 = document.getElementById('chart-grupos-arm');
+    if(chartGruposArm) chartGruposArm.destroy();
+    chartGruposArm = new Chart(ctx1, {
+      type:'bar',
+      data:{labels:gSorted.map(function(e){return e[0];}),datasets:[
+        {label:'Solicitado',data:gSorted.map(function(e){return e[1].sol;}),backgroundColor:'rgba(74,158,255,.6)',borderWidth:0},
+        {label:'Armado',data:gSorted.map(function(e){return e[1].arm;}),backgroundColor:'rgba(240,180,41,.8)',borderWidth:0}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
+        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Gráfico máquinas (dona)
+    var mSorted = Object.entries(porMaq);
+    const ctx2 = document.getElementById('chart-maq-arm');
+    if(chartMaqArm) chartMaqArm.destroy();
+    chartMaqArm = new Chart(ctx2, {
+      type:'doughnut',
+      data:{labels:mSorted.map(function(e){return e[0];}),datasets:[{
+        data:mSorted.map(function(e){return e[1].arm;}),
+        backgroundColor:['rgba(74,158,255,.8)','rgba(240,180,41,.8)','rgba(34,201,138,.8)','rgba(168,85,247,.8)'],
+        borderWidth:0
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:10}}}}
+    });
+
+    // Tabla
+    var rows = gSorted.map(function(e){
+      var pct = e[1].sol>0?Math.round(e[1].arm/e[1].sol*100):0;
+      var col = pct>=100?'var(--green)':pct>=70?'var(--yellow)':'var(--red)';
+      return '<tr>'+
+        '<td style="font-weight:600">'+e[0]+'</td>'+
+        '<td style="color:var(--text3)">'+e[1].turno+'</td>'+
+        '<td>'+e[1].pedidos+'</td>'+
+        '<td>'+e[1].sol.toLocaleString('es-CL')+'</td>'+
+        '<td style="color:'+col+';font-weight:700">'+e[1].arm.toLocaleString('es-CL')+' ('+pct+'%)</td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-grupos').innerHTML =
+      '<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Pedidos</th><th>Solicitado</th><th>Armado</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe grupos:', e.message); }
+}
+
+async function exportarPDFInforme() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const w = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  let y = 20;
+
+  // Header
+  doc.setFillColor(15, 17, 23);
+  doc.rect(0, 0, w, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CSF Planificador — Informe', margin, 12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(139, 144, 167);
+  const desde = document.getElementById('inf-desde')?.value || hoy();
+  const hasta = document.getElementById('inf-hasta')?.value || hoy();
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  doc.text('Generado: '+new Date().toLocaleString('es-CL'), w-margin, 12, {align:'right'});
+  y = 28;
+
+  // Título del informe activo
+  const tabActiva = document.querySelector('[id^="inf-tab-"][style*="var(--blue)"]');
+  const tabNombre = tabActiva ? tabActiva.textContent.trim() : 'Informe';
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text(tabNombre, margin, y);
+  y += 8;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text('Período: '+desde+' → '+hasta+' | Fecha: '+fecha, margin, y);
+  y += 10;
+
+  // Capturar el panel activo como imagen
+  const panelActivo = [1,2,3].map(function(i){
+    var p = document.getElementById('inf-panel-'+i);
+    return p && p.style.display !== 'none' ? p : null;
+  }).filter(Boolean)[0];
+
+  if(panelActivo) {
+    try {
+      const canvas = await html2canvas(panelActivo, {
+        scale: 1.5,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const imgW = w - margin*2;
+      const imgH = canvas.height * imgW / canvas.width;
+
+      // Si no cabe en una página, escalar
+      const maxH = doc.internal.pageSize.getHeight() - y - 20;
+      const finalH = imgH > maxH ? maxH : imgH;
+      doc.addImage(imgData, 'PNG', margin, y, imgW, finalH);
+      y += finalH + 10;
+    } catch(e) {
+      console.warn('html2canvas error:', e);
+      doc.setTextColor(200, 50, 50);
+      doc.text('Error al capturar gráficos: '+e.message, margin, y);
+    }
+  }
+
+  // Footer
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFillColor(240, 240, 240);
+  doc.rect(0, pageH-10, w, 10, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Contenedores San Fernando SpA. — Sistema de Planificación', margin, pageH-3);
+  doc.text('Página 1', w-margin, pageH-3, {align:'right'});
+
+  doc.save('informe_csf_'+hoy()+'.pdf');
+}
+
 async function cargarMetricasInforme() {
   const el = document.getElementById('met-informes');
   if(!el) return;
