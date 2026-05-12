@@ -320,6 +320,15 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 
   <!-- Plan de armado -->
+  <div id="alertas-plan" style="display:none;background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px"></div>
+
+  <!-- Carga por máquina -->
+  <div id="carga-maquinas" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Carga por máquina</span>
+    </div>
+    <div id="carga-maquinas-content" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+  </div>
   <div id="plan-dia-output"><div class="empty">Cargando plan...</div></div>
 
 </div>
@@ -512,6 +521,27 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
+<!-- Modal cambio formato -->
+<div class="modal-overlay" id="modal-cambio-formato">
+  <div class="modal">
+    <div class="modal-title">
+      <span>Registrar cambio de formato</span>
+      <button class="btn sm" onclick="closeModal('modal-cambio-formato')">&#10005;</button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Registra el cambio de kit realizado en una máquina para tener estadísticas reales de tiempo.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="fg"><label>Máquina</label><select id="cf-maquina" style="width:100%"><option value="">Seleccionar...</option></select></div>
+      <div class="fg"><label>Minutos reales</label><input type="number" id="cf-minutos" placeholder="Ej: 20" style="width:100%" inputmode="numeric"></div>
+      <div class="fg"><label>Código anterior</label><input type="text" id="cf-antes" placeholder="Ej: F0999TL1" style="width:100%"></div>
+      <div class="fg"><label>Código nuevo</label><input type="text" id="cf-despues" placeholder="Ej: F0440G81" style="width:100%"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-cambio-formato')">Cancelar</button>
+      <button class="btn primary" onclick="guardarCambioFormato()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal despacho -->
 <div class="modal-overlay" id="modal-desp">
   <div class="modal">
@@ -687,6 +717,199 @@ function toggleFormulario() {
   form.style.display = visible ? 'none' : 'block';
   if(icon) icon.style.transform = visible ? 'rotate(0deg)' : 'rotate(180deg)';
   if(btn) btn.querySelector('span:first-child').textContent = visible ? '+ Agregar pedido al plan' : '− Agregar pedido al plan';
+}
+
+// ── Punto 3: Historial cambios de formato ────────────────────
+async function registrarCambioFormato(maquina, codigoAntes, codigoDespues, tipo, minutos) {
+  try {
+    await sb('cambios_formato','POST',{
+      maquina: maquina,
+      codigo_antes: codigoAntes,
+      codigo_despues: codigoDespues,
+      tipo_cambio: tipo,
+      minutos_reales: minutos,
+      usuario: USER.nombre,
+    });
+  } catch(e) { console.warn('Error registrando cambio formato:', e.message); }
+}
+
+async function verHistorialFormato() {
+  try {
+    const data = await sb('cambios_formato','GET',null,'?order=creado_en.desc&limit=100&select=*');
+    if(!data||!data.length) { alert('Sin historial de cambios de formato aún.'); return; }
+
+    // Calcular promedios por tipo
+    const promedios = {};
+    data.forEach(function(r){
+      if(!promedios[r.tipo_cambio]) promedios[r.tipo_cambio]={total:0,count:0};
+      if(r.minutos_reales) { promedios[r.tipo_cambio].total+=r.minutos_reales; promedios[r.tipo_cambio].count++; }
+    });
+
+    const modal = document.getElementById('modal-historial');
+    const body = document.getElementById('mh-body');
+    const title = document.getElementById('mh-title');
+    if(!modal||!body||!title) return;
+    title.textContent = 'Historial de cambios de formato';
+
+    var resumeHtml = '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
+    Object.entries(promedios).forEach(function(e){
+      var tipo=e[0], d=e[1];
+      var col = tipo==='solo-altura'?'var(--green)':tipo==='ajuste-mayor'?'var(--yellow)':'var(--red)';
+      var avg = d.count>0?Math.round(d.total/d.count):0;
+      resumeHtml += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center">'+
+        '<div style="font-size:11px;color:var(--text3)">'+tipo.replace('-',' ')+'</div>'+
+        '<div style="font-size:20px;font-weight:700;color:'+col+'">'+avg+' min</div>'+
+        '<div style="font-size:10px;color:var(--text3)">promedio ('+d.count+' cambios)</div>'+
+      '</div>';
+    });
+    resumeHtml += '</div>';
+
+    var rows = data.map(function(r){
+      var col = r.tipo_cambio==='solo-altura'?'green':r.tipo_cambio==='ajuste-mayor'?'yellow':'red';
+      return '<tr>'+
+        '<td style="font-size:11px;color:var(--text3)">'+new Date(r.creado_en).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</td>'+
+        '<td style="font-weight:600">'+r.maquina+'</td>'+
+        '<td><code style="font-size:11px">'+r.codigo_antes+'</code> → <code style="font-size:11px">'+r.codigo_despues+'</code></td>'+
+        '<td><span class="chip '+col+'">'+r.tipo_cambio.replace('-',' ')+'</span></td>'+
+        '<td style="font-weight:600">'+(r.minutos_reales||'—')+' min</td>'+
+        '<td style="font-size:11px;color:var(--text3)">'+r.usuario+'</td>'+
+      '</tr>';
+    }).join('');
+
+    body.innerHTML = resumeHtml+
+      '<table class="dt"><thead><tr><th>Fecha</th><th>Máquina</th><th>Códigos</th><th>Tipo</th><th>Duración</th><th>Registrado por</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table>';
+    modal.classList.add('open');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// Modal para registrar cambio de formato manualmente
+function showModalCambioFormato() {
+  const sel = document.getElementById('cf-maquina');
+  if(sel) {
+    sel.innerHTML = '<option value="">Seleccionar...</option>' +
+      maquinasConfig.map(function(m){return '<option value="'+m.nombre+'">'+m.nombre+'</option>';}).join('');
+  }
+  const modal = document.getElementById('modal-cambio-formato');
+  if(modal) modal.classList.add('open');
+}
+
+async function guardarCambioFormato() {
+  const maq = document.getElementById('cf-maquina')?.value;
+  const ant = document.getElementById('cf-antes')?.value?.trim();
+  const des = document.getElementById('cf-despues')?.value?.trim();
+  const min = parseInt(document.getElementById('cf-minutos')?.value)||0;
+  if(!maq||!ant||!des) { alert('Completa máquina y códigos.'); return; }
+
+  const ca = COD_IDX[ant];
+  const cb = COD_IDX[des];
+  const tipo = ca&&cb ? compat(ca,cb) : 'cambio-completo';
+
+  await registrarCambioFormato(maq, ant, des, tipo, min||null);
+  closeModal('modal-cambio-formato');
+  alert('Cambio de formato registrado.');
+}
+
+// ── Punto 4: Cierre del día ──────────────────────────────────
+async function generarCierreDelDia() {
+  const fecha = document.getElementById('filtro-fecha-plan')?.value || hoy();
+  try {
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&select=*');
+    const desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*');
+    const salidas = await sb('salidas_despacho','GET',null,'?select=*');
+    const formatos = await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
+
+    const activos = (pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
+    const cancelados = (pedidos||[]).filter(function(p){return p.estado==='Cancelado';});
+    const totalSol = activos.reduce(function(s,p){return s+p.cantidad_pedida;},0);
+    const totalArm = activos.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
+    const totalDesp = (salidas||[]).reduce(function(s,d){return s+d.cantidad;},0);
+    const pctArm = totalSol>0?Math.round(totalArm/totalSol*100):0;
+    const pctDesp = totalArm>0?Math.round(totalDesp/totalArm*100):0;
+    const formatosHoy = (formatos||[]).filter(function(f){return f.creado_en&&f.creado_en.startsWith(fecha);});
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','mm','a4');
+    const w = doc.internal.pageSize.getWidth();
+    const m = 15;
+    let y = 0;
+
+    // Header
+    doc.setFillColor(15,17,23);
+    doc.rect(0,0,w,22,'F');
+    doc.setTextColor(34,201,138);
+    doc.setFontSize(16); doc.setFont('helvetica','bold');
+    doc.text('CSF Planificador', m, 10);
+    doc.setTextColor(200,200,200);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text('Cierre del día — '+fecha, m, 17);
+    doc.setTextColor(150,150,150);
+    doc.text('Generado: '+new Date().toLocaleString('es-CL'), w-m, 17, {align:'right'});
+    y = 32;
+
+    // Métricas principales
+    doc.setTextColor(30,30,30);
+    doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text('Resumen del día', m, y); y+=8;
+
+    const metricas = [
+      ['Cajas solicitadas', totalSol.toLocaleString('es-CL')],
+      ['Cajas armadas', totalArm.toLocaleString('es-CL')+' ('+pctArm+'%)'],
+      ['Cajas despachadas', totalDesp.toLocaleString('es-CL')+' ('+pctDesp+'% de lo armado)'],
+      ['Pedidos activos', activos.length.toString()],
+      ['Pedidos cancelados', cancelados.length.toString()],
+      ['Cambios de formato', formatosHoy.length.toString()],
+    ];
+    doc.setFontSize(10);
+    metricas.forEach(function(m2){
+      doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+      doc.text(m2[0]+':', m, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+      doc.text(m2[1], 80, y);
+      y+=6;
+    });
+    y+=6;
+
+    // Tabla de pedidos
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30,30,30);
+    doc.text('Detalle de pedidos', m, y); y+=6;
+
+    // Cabecera tabla
+    doc.setFillColor(240,240,240);
+    doc.rect(m, y, w-m*2, 6, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
+    doc.text('Cliente', m+2, y+4);
+    doc.text('Código', 70, y+4);
+    doc.text('Solicitado', 100, y+4);
+    doc.text('Armado', 125, y+4);
+    doc.text('Estado', 155, y+4);
+    y+=7;
+
+    doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    activos.forEach(function(p){
+      if(y > 270) { doc.addPage(); y=20; }
+      var pct2 = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
+      var est = pct2>=100?'Completado':p.estado;
+      doc.setFontSize(8);
+      doc.text((p.cliente||'').substring(0,22), m+2, y+4);
+      doc.text(p.codigo||'', 70, y+4);
+      doc.text(p.cantidad_pedida.toLocaleString('es-CL'), 100, y+4);
+      doc.text((p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct2+'%)', 125, y+4);
+      doc.text(est, 155, y+4);
+      doc.setDrawColor(220,220,220);
+      doc.line(m, y+6, w-m, y+6);
+      y+=7;
+    });
+
+    // Footer
+    const ph = doc.internal.pageSize.getHeight();
+    doc.setFillColor(240,240,240);
+    doc.rect(0, ph-10, w, 10, 'F');
+    doc.setFontSize(8); doc.setTextColor(150,150,150);
+    doc.text('Contenedores San Fernando SpA. — Sistema de Planificacion', m, ph-3);
+
+    doc.save('cierre_'+fecha+'.pdf');
+  } catch(e) { alert('Error generando cierre: '+e.message); }
 }
 
 function mostrarSinConexion() {
@@ -1052,6 +1275,44 @@ async function cargarPlanDia() {
   }
 }
 
+function verificarAlertas(pedidos) {
+  var ahora = new Date();
+  var alertas = [];
+  pedidos.forEach(function(p) {
+    if(p.estado === 'Cancelado' || p.estado === 'Completado') return;
+    if(!p.hora_despacho || !p.fecha_despacho) return;
+    var fechaHoraDesp = new Date(p.fecha_despacho + 'T' + p.hora_despacho);
+    var diffMin = (fechaHoraDesp - ahora) / 60000;
+    var pctArm = p.cantidad_pedida > 0 ? Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100) : 0;
+    if(diffMin > 0 && diffMin <= 180 && pctArm < 80) {
+      alertas.push({p:p, diffMin:Math.round(diffMin), pctArm:pctArm});
+    }
+  });
+
+  var alertEl = document.getElementById('alertas-plan');
+  if(!alertEl) return;
+  if(!alertas.length) { alertEl.style.display='none'; return; }
+
+  alertEl.style.display='block';
+  alertEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+    '<span style="font-size:18px">&#9888;</span>'+
+    '<span style="font-size:13px;font-weight:700;color:#e85555">'+alertas.length+' pedido(s) en riesgo de no llegar a tiempo</span>'+
+    '</div>'+
+    alertas.map(function(a) {
+      var urgente = a.diffMin <= 60;
+      var col = urgente ? '#e85555' : '#f0b429';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(232,85,85,.08);border-radius:6px;border-left:3px solid '+col+';margin-bottom:6px">'+
+        '<span style="font-size:18px">'+(urgente?'&#128680;':'&#9201;')+'</span>'+
+        '<div style="flex:1">'+
+          '<span style="font-weight:600;font-size:13px">'+a.p.cliente+'</span>'+
+          '<span style="font-size:12px;color:var(--text2);margin-left:8px">'+a.p.codigo+'</span>'+
+        '</div>'+
+        '<span style="font-size:12px;color:'+col+';font-weight:600">'+a.pctArm+'% armado</span>'+
+        '<span style="font-size:12px;color:'+col+';font-weight:700;margin-left:8px">Despacha en '+a.diffMin+' min</span>'+
+      '</div>';
+    }).join('');
+}
+
 function renderPlanDia() {
   var el = document.getElementById('plan-dia-output');
   if(!el) return;
@@ -1177,6 +1438,49 @@ function renderPlanDia() {
     out += '</div>';
   });
   el.innerHTML = out || '<div class="empty">Sin pedidos.</div>';
+  verificarAlertas(pedidos);
+  renderCargaMaquinas(pedidos);
+}
+
+function renderCargaMaquinas(pedidos) {
+  var el = document.getElementById('carga-maquinas-content');
+  var wrap = document.getElementById('carga-maquinas');
+  if(!el||!wrap) return;
+
+  var activos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
+  if(!activos.length) { wrap.style.display='none'; return; }
+
+  // Agrupar por máquina
+  var porMaq = {};
+  activos.forEach(function(p){
+    var m = p.maquina||'Sin máquina';
+    if(!porMaq[m]) porMaq[m]={sol:0,arm:0,pedidos:0};
+    porMaq[m].sol += p.cantidad_pedida;
+    porMaq[m].arm += p.cantidad_armada||0;
+    porMaq[m].pedidos++;
+  });
+
+  wrap.style.display='block';
+  el.innerHTML = Object.entries(porMaq).map(function(e){
+    var maq=e[0], d=e[1];
+    var pct = d.sol>0?Math.min(100,Math.round(d.arm/d.sol*100)):0;
+    var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--text3)';
+    return '<div style="flex:1;min-width:150px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+        '<span style="font-size:12px;font-weight:700">'+maq+'</span>'+
+        '<span style="font-size:10px;color:var(--text3)">'+d.pedidos+' ped.</span>'+
+      '</div>'+
+      '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">'+d.sol.toLocaleString('es-CL')+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">unidades solicitadas</div>'+
+      '<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:4px">'+
+        '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px"></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between">'+
+        '<span style="font-size:10px;color:var(--text3)">'+d.arm.toLocaleString('es-CL')+' arm.</span>'+
+        '<span style="font-size:10px;color:'+col+';font-weight:700">'+pct+'%</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 
