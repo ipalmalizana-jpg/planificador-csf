@@ -430,41 +430,74 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- JEFE: Gráficos -->
     <div class="sec" id="sec-graficos">
-      <div class="metrics" id="met-graficos"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card">
-          <div class="card-title">
-            <span>Solicitado vs Armado</span>
-            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-1"></span>
-          </div>
-          <div style="position:relative;height:220px">
-            <canvas id="chart-sol-arm"></canvas>
-          </div>
+
+  <!-- Filtro de fechas -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Desde</span>
+      <input type="date" id="graf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+      <span style="font-size:11px;color:var(--text3)">hasta</span>
+      <input type="date" id="graf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+    <button class="btn sm primary" onclick="cargarGraficos()" style="height:34px">↻ Actualizar</button>
+  </div>
+
+  <!-- Métricas resumen -->
+  <div class="metrics" id="met-graficos" style="margin-bottom:16px"></div>
+
+  <!-- Gráficos de línea en grid 2x1 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Solicitado vs Armado</div>
+          <div style="font-size:11px;color:var(--text3)" id="graf-fecha-1"></div>
         </div>
-        <div class="card">
-          <div class="card-title">
-            <span>Armado vs Despachado</span>
-            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-2"></span>
-          </div>
-          <div style="position:relative;height:220px">
-            <canvas id="chart-arm-desp"></canvas>
-          </div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#4a9eff;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">
-          <span>Detalle por cliente</span>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div class="fg"><label>Desde</label><input type="date" id="graf-desde" style="width:145px;height:28px;font-size:12px"></div>
-            <div class="fg"><label>Hasta</label><input type="date" id="graf-hasta" style="width:145px;height:28px;font-size:12px"></div>
-            <button class="btn sm primary" onclick="cargarGraficos()">Actualizar</button>
-          </div>
-        </div>
-        <div style="position:relative;height:280px">
-          <canvas id="chart-clientes"></canvas>
-        </div>
+      <div style="position:relative;height:200px">
+        <canvas id="chart-sol-arm"></canvas>
       </div>
     </div>
+    <div class="card" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Armado vs Despachado</div>
+          <div style="font-size:11px;color:var(--text3)" id="graf-fecha-2"></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#22c98a;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
+        </div>
+      </div>
+      <div style="position:relative;height:200px">
+        <canvas id="chart-arm-desp"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico por cliente -->
+  <div class="card" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:600">Top 10 clientes</div>
+        <div style="font-size:11px;color:var(--text3)">Solicitado · Armado · Despachado</div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(74,158,255,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(240,180,41,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:rgba(34,201,138,.7);border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
+      </div>
+    </div>
+    <div style="position:relative;height:300px">
+      <canvas id="chart-clientes"></canvas>
+    </div>
+  </div>
+
+</div>
 
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
