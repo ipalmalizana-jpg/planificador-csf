@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -909,9 +910,17 @@ async function verHistorialFormato() {
 
 // ── Cierre del día PDF ────────────────────────────────────
 async function generarCierreDelDia() {
-  var fecha=document.getElementById('filtro-fecha-plan')?.value||hoy();
+  // Usar criterio de informes si estamos en esa pestaña, si no usar fecha del plan
+  var esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  var fecha = document.getElementById('inf-fecha')?.value || document.getElementById('filtro-fecha-plan')?.value || hoy();
+  var desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
+  var hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
+  var tituloFecha = esDia ? fecha : (desde + ' al ' + hasta);
   try{
-    var pedidos=await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&select=*');
+    var query = esDia
+      ? '?fecha_armado=eq.'+fecha+'&select=*'
+      : '?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*';
+    var pedidos=await sb('pedidos_dia','GET',null, query);
     var salidas=await sb('salidas_despacho','GET',null,'?select=*');
     var formatos=await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
     var activos=(pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
@@ -929,7 +938,7 @@ async function generarCierreDelDia() {
     doc.setTextColor(34,201,138);doc.setFontSize(16);doc.setFont('helvetica','bold');
     doc.text('CSF Planificador',m,11);
     doc.setTextColor(200,200,200);doc.setFontSize(10);doc.setFont('helvetica','normal');
-    doc.text('Cierre del dia - '+fecha,m,18);
+    doc.text('Cierre: '+tituloFecha,m,18);
     doc.setTextColor(150,150,150);
     doc.text('Generado: '+new Date().toLocaleString('es-CL'),w-m,18,{align:'right'});
     y=30;
@@ -972,7 +981,7 @@ async function generarCierreDelDia() {
     doc.setFillColor(240,240,240);doc.rect(0,ph-10,w,10,'F');
     doc.setFontSize(8);doc.setTextColor(150,150,150);
     doc.text('Contenedores San Fernando SpA.',m,ph-3);
-    doc.save('cierre_'+fecha+'.pdf');
+    doc.save('cierre_'+(esDia?fecha:desde+'_'+hasta)+'.pdf');
   }catch(e){alert('Error generando cierre: '+e.message);}
 }
 
