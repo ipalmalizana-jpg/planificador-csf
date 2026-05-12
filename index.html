@@ -1631,7 +1631,7 @@ async function cargarPlanDespacho() {
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
               <span style="font-size:11px;color:var(--text3);flex-shrink:0">Registrar salida:</span>
               <input type="number" id="desp-cant-${d.id}" placeholder="Cantidad" 
-                style="width:110px;height:32px;font-size:13px" min="1" max="${pendiente}">
+                style="width:110px;height:32px;font-size:13px" min="1">
               <input type="text" id="desp-guia-${d.id}" placeholder="N° guía (opcional)" 
                 style="width:140px;height:32px;font-size:13px">
               <button class="btn primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})"
@@ -1686,11 +1686,8 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
   const guia = guiaEl?.value?.trim()||'';
   if(!cant) { alert('Ingresa la cantidad que sale en este camión.'); return; }
   const nuevoDespachado = yaEnviado + cant;
-  if(nuevoDespachado > totalPedido) {
-    alert(`No puedes superar el total pedido (${totalPedido.toLocaleString('es-CL')} u.). Ya enviados: ${yaEnviado.toLocaleString('es-CL')}, intentas agregar: ${cant.toLocaleString('es-CL')}.`);
-    return;
-  }
-  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso';
+  // Sin límite - permite despachar más que lo solicitado (ej: cubicaje de cajas)
+  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso'; // puede superar total
   try {
     // Obtener info del despacho para copiar en la salida
     const actual = await sb('plan_despacho','GET',null,`?id=eq.${id}&select=*`);
