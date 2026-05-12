@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,8 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg: #0f1117;
@@ -403,99 +402,69 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- JEFE: Informes -->
     <div class="sec" id="sec-informes">
-
-  <!-- Métricas resumen -->
-  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
-
-  <!-- Barra de filtros -->
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <!-- Selector de modo -->
-    <div style="display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:3px">
-      <button id="inf-modo-dia" onclick="setInfModo('dia')"
-        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:var(--blue);color:#fff">
-        Un día
-      </button>
-      <button id="inf-modo-rango" onclick="setInfModo('rango')"
-        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text3)">
-        Rango
-      </button>
-    </div>
-
-    <!-- Modo un día -->
-    <div id="inf-filtro-dia" style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3)">Fecha</span>
-      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
-
-    <!-- Modo rango -->
-    <div id="inf-filtro-rango" style="display:none;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3)">Desde</span>
-      <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-      <span style="font-size:11px;color:var(--text3)">→</span>
-      <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
-
-    <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
-    <button class="btn sm blue" onclick="exportarExcelInforme()" style="height:34px">Excel</button>
-    <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:var(--red);color:#fff;border-color:var(--red)">&#128196; PDF</button>
-  </div>
-
-  <!-- 3 informes en tabs -->
-  <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)">
-    <button id="inf-tab-1" onclick="showInfTab(1)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--blue);border-bottom:2px solid var(--blue)">Cierre del día</button>
-    <button id="inf-tab-2" onclick="showInfTab(2)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Despachos por cliente</button>
-    <button id="inf-tab-3" onclick="showInfTab(3)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Rendimiento grupos</button>
-  </div>
-
-  <!-- Informe 1: Cierre del día -->
-  <div id="inf-panel-1">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Solicitado vs Armado — <span id="inf-fecha-label" style="color:var(--text3);font-weight:400"></span></div>
-        <div style="position:relative;height:220px"><canvas id="chart-cierre-sol-arm"></canvas></div>
-      </div>
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Estado de pedidos</div>
-        <div style="position:relative;height:220px"><canvas id="chart-cierre-estados"></canvas></div>
+      <div class="metrics" id="met-informes"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-title"><span>Reporte de cierre del día</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Pedidos originales vs cambios vs despachado.</p>
+          <div class="frow">
+            <div class="fg"><label>Fecha</label><input type="date" id="inf-fecha" style="width:160px"></div>
+            <button class="btn primary" onclick="generarInformeDia()">Generar</button>
+            <button class="btn blue" onclick="exportarExcelInforme()">Excel</button>
+          </div>
+          <div id="informe-dia-output" style="margin-top:14px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Resumen de despachos por cliente</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Total despachado agrupado por cliente en el período.</p>
+          <div class="frow">
+            <div class="fg"><label>Desde</label><input type="date" id="inf-desde" style="width:150px"></div>
+            <div class="fg"><label>Hasta</label><input type="date" id="inf-hasta" style="width:150px"></div>
+            <button class="btn primary" onclick="generarResumenClientes()">Generar</button>
+            <button class="btn blue" onclick="exportarExcelClientes()">Excel</button>
+          </div>
+          <div id="resumen-clientes-output" style="margin-top:14px"></div>
+        </div>
       </div>
     </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos del día</div>
-      <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
-    </div>
-  </div>
 
-  <!-- Informe 2: Despachos por cliente -->
-  <div id="inf-panel-2" style="display:none">
-    <div class="card" style="padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Despachos por cliente — período seleccionado</div>
-      <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por cliente</div>
-      <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
-    </div>
-  </div>
-
-  <!-- Informe 3: Rendimiento grupos -->
-  <div id="inf-panel-3" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Cajas armadas por grupo</div>
-        <div style="position:relative;height:250px"><canvas id="chart-grupos-arm"></canvas></div>
+    <!-- JEFE: Gráficos -->
+    <div class="sec" id="sec-graficos">
+      <div class="metrics" id="met-graficos"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-title">
+            <span>Solicitado vs Armado</span>
+            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-1"></span>
+          </div>
+          <div style="position:relative;height:220px">
+            <canvas id="chart-sol-arm"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <span>Armado vs Despachado</span>
+            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-2"></span>
+          </div>
+          <div style="position:relative;height:220px">
+            <canvas id="chart-arm-desp"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Armado por máquina</div>
-        <div style="position:relative;height:250px"><canvas id="chart-maq-arm"></canvas></div>
+      <div class="card">
+        <div class="card-title">
+          <span>Detalle por cliente</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="fg"><label>Desde</label><input type="date" id="graf-desde" style="width:145px;height:28px;font-size:12px"></div>
+            <div class="fg"><label>Hasta</label><input type="date" id="graf-hasta" style="width:145px;height:28px;font-size:12px"></div>
+            <button class="btn sm primary" onclick="cargarGraficos()">Actualizar</button>
+          </div>
+        </div>
+        <div style="position:relative;height:280px">
+          <canvas id="chart-clientes"></canvas>
+        </div>
       </div>
     </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo y turno</div>
-      <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
-    </div>
-  </div>
-
-</div>
 
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
@@ -721,30 +690,6 @@ function toggleFormulario() {
   if(btn) btn.querySelector('span:first-child').textContent = visible ? '+ Agregar pedido al plan' : '− Agregar pedido al plan';
 }
 
-async function subirFotoGuia(despachoId, cliente, archivo) {
-  if(!archivo) return null;
-  const ext = archivo.name.split('.').pop().toLowerCase();
-  const nombre = 'guias/'+cliente.replace(/[^a-z0-9]/gi,'_')+'/'+despachoId+'_'+Date.now()+'.'+ext;
-  try {
-    const res = await fetch('https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/'+nombre, {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': 'Bearer '+SB_KEY,
-        'Content-Type': archivo.type,
-        'x-upsert': 'true'
-      },
-      body: archivo
-    });
-    if(!res.ok) throw new Error(await res.text());
-    const url = 'https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/public/'+nombre;
-    return url;
-  } catch(e) {
-    console.error('Error subiendo foto:', e);
-    return null;
-  }
-}
-
 function mostrarSinConexion() {
   const ind = document.getElementById('conn-indicator');
   if(ind) {
@@ -786,7 +731,7 @@ function initApp() {
 
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
-    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['informes','Informes']]
+    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['graficos','Gráficos'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['despacho','Mis Despachos']];
 
   const bar = document.getElementById('tabs-bar');
@@ -810,7 +755,7 @@ function initApp() {
 
 function showTab(t) {
   const tabNames = USER.rol==='jefe'
-    ? ['planificar','cambios','armados','despacho','informes']
+    ? ['planificar','cambios','armados','despacho','graficos','informes']
     : ['desp-live','despacho'];
   document.querySelectorAll('.tab').forEach((el,i) => {
     el.classList.toggle('active', tabNames[i]===t);
@@ -828,7 +773,8 @@ function refreshActual() {
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
-  else if(tabActual==='informes') { cargarInformes(); }
+  else if(tabActual==='informes') { cargarMetricasInforme(); }
+  else if(tabActual==='graficos') { cargarGraficos(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
 }
@@ -1100,9 +1046,7 @@ async function cargarPlanDia() {
     renderPlanDia();
     // Poblar select modal despacho
     const sel = document.getElementById('md-pedido');
-    sel.innerHTML = pedidos.filter(p=>p.estado==='Activo').map(p=>
-      `<option value="${p.id}">${p.cliente} -- ${p.codigo} (${p.cantidad_pedida.toLocaleString('es-CL')} u.)</option>`
-    ).join('');
+    if(sel) sel.innerHTML = (pedidos||[]).filter(p=>p.estado==='Activo').map(p=>'<option value="'+p.id+'">'+p.cliente+' -- '+p.codigo+' ('+p.cantidad_pedida.toLocaleString('es-CL')+' u.)</option>').join('');
   } catch(e) {
     mostrarSinConexion();
     console.warn('cargarPlanDia error:', e.message);
@@ -1154,79 +1098,64 @@ function renderPlanDia() {
       out += '<span class="grupo-meta">'+items.length+' pedido(s) . '+totalU.toLocaleString('es-CL')+' u.</span>';
       out += '</div>';
 
-      items.forEach(function(p) {
+      items.forEach(function(p, pidx) {
         var armadas = p.cantidad_armada||0;
         var despNV = p.nv_referencia?(DESP_HIST[String(p.nv_referencia)]||{}):{};
         var despachado = despNV[p.codigo]||0;
+
+        if(pidx > 0 && orden === 'sinergia') {
+          var prev = items[pidx-1];
+          var ca = COD_IDX[prev.codigo];
+          var cb = COD_IDX[p.codigo];
+          if(ca && cb) {
+            var c = compat(ca, cb);
+            var sinLabel, sinColor, sinBg, sinIcon;
+            if(c==='solo-altura') { sinLabel='Solo altura'; sinColor='#22c98a'; sinBg='rgba(34,201,138,.12)'; sinIcon='&#8597;'; }
+            else if(c==='ajuste-mayor') { sinLabel='Ajuste mayor'; sinColor='#f0b429'; sinBg='rgba(240,180,41,.12)'; sinIcon='&#8644;'; }
+            else if(c==='maquina-diferente') { sinLabel='Maq. diferente'; sinColor='#a855f7'; sinBg='rgba(168,85,247,.12)'; sinIcon='&#9889;'; }
+            else { sinLabel='Cambio completo'; sinColor='#e85555'; sinBg='rgba(232,85,85,.12)'; sinIcon='&#9881;'; }
+            var tiempo = c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
+            var dims = (ca&&ca.largo&&cb&&cb.largo) ? ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto : '';
+            out += '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:3px 0;background:'+sinBg+';border-radius:6px;border-left:3px solid '+sinColor+'">';
+            out += '<span style="font-size:15px">'+sinIcon+'</span>';
+            out += '<span style="font-size:11px;color:'+sinColor+';font-weight:700">'+sinLabel+'</span>';
+            if(dims) out += '<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
+            if(tiempo) out += '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tiempo+'</span>';
+            out += '</div>';
+          }
+        }
         var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
 
-        // Iconos prioridad y estado
-        var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
-        var estadoIcon = p.estado==='Activo'?'&#9654;':p.estado==='Modificado'?'&#9998;':p.estado==='Cancelado'?'&#10005;':'&#10003;';
-        var estadoCol = p.estado==='Activo'?'var(--green)':p.estado==='Modificado'?'var(--yellow)':p.estado==='Cancelado'?'var(--red)':'var(--blue)';
+        out += '<div class="pfila">';
+        out += '<div class="dot" style="background:'+colorPrio(p.prioridad)+'"></div>';
+        out += '<span class="nv-tag">'+(p.nv_referencia||'--')+'</span>';
+        out += '<span style="font-weight:500;min-width:110px">'+p.cliente+'</span>';
+        out += '<code style="font-size:11px;color:var(--text2)">'+p.codigo+'</code>';
+        out += '<span style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.descripcion||'')+'</span>';
+        out += '<span style="color:var(--text2)">'+(p.destino||'')+'</span>';
+        out += '<span class="chip '+chipTipo(p.codigo)+'">'+tipo+'</span>';
+        out += '<span style="color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+' u.</span>';
+        out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
+        out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
+        if(p.fecha_armado) out += '<span class="nv-tag" style="font-size:10px">'+p.fecha_armado+'</span>';
 
-        // Barras de progreso
-        var pctArm = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
-        var colArm = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
+        // Barra de progreso despacho vs solicitado
         var despInfo = window._despCache && window._despCache[p.id];
-        var despachado = despInfo?(despInfo.despachado||0):0;
-        var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
-        var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
-
-        out += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);flex-wrap:nowrap">';
-
-        // Col 1: Prioridad + Estado
-        out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
-        out += '<span title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
-        out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
-        out += '</div>';
-
-        // Col 2: Info principal
-        out += '<div style="flex:1;min-width:0">';
-        // Línea 1: cliente + código
-        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">';
-        out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
-        out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
-        out += '</div>';
-        // Línea 2: descripción (corta) + destino destacado
-        out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
-        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+p.descripcion+'</span>';
-        if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
-        out += '</div>';
-        // Línea 3: fechas más grandes
-        out += '<div style="display:flex;gap:12px">';
-        if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
-        if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
-        out += '</div>';
-        out += '</div>';
-
-        // Col 3: Cantidad
-        out += '<div style="flex-shrink:0;text-align:right;min-width:70px">';
-        out += '<div style="font-size:15px;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
-        out += '<div style="font-size:10px;color:var(--text3)">unidades</div>';
-        out += '</div>';
-
-        // Col 4: Barras de progreso
-        out += '<div style="flex-shrink:0;width:100px">';
-        // Armado
-        out += '<div style="margin-bottom:5px">';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Armado</span>';
-        out += '<span style="font-size:10px;color:'+colArm+';font-weight:600">'+pctArm+'%</span>';
-        out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div>';
-        out += '</div></div>';
-        // Despachado
-        out += '<div>';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Despachado</span>';
-        out += '<span style="font-size:10px;color:'+colDesp+';font-weight:600">'+pctDesp+'%</span>';
-        out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div>';
-        out += '</div></div>';
-        out += '</div>';
+        var cantSol = p.cantidad_pedida || 0;
+        if(despInfo && cantSol > 0) {
+          var despachado = despInfo.despachado || 0;
+          var pctD = Math.min(100, Math.round(despachado / cantSol * 100));
+          var colD = pctD >= 100 ? 'var(--green)' : pctD >= 50 ? 'var(--yellow)' : 'var(--red)';
+          out += '<div style="display:flex;align-items:center;gap:5px;margin-left:4px" title="'+despachado.toLocaleString()+' de '+cantSol.toLocaleString()+' despachadas">';
+          out += '<div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">';
+          out += '<div style="width:'+pctD+'%;height:100%;background:'+colD+';border-radius:3px"></div></div>';
+          out += '<span style="font-size:11px;color:'+colD+';font-weight:500">'+pctD+'% desp.</span>';
+          out += '</div>';
+        } else {
+          out += '<span style="font-size:11px;color:var(--text3);margin-left:4px">0% desp.</span>';
+        }
+        if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
+        if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
         if(despachado>0) {
           var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
           var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
@@ -1471,7 +1400,7 @@ async function verSalidas(id) {
     const salidas = await sb('salidas_despacho','GET',null,`?despacho_id=eq.${id}&order=creado_en.asc&select=*`);
     if(!salidas||!salidas.length) { el.innerHTML='<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>'; el.style.display='block'; return; }
     el.innerHTML=`<table class="dt" style="font-size:12px;margin-top:4px">
-      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th></tr></thead>
+      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Registrado por</th><th>Hora</th></tr></thead>
       <tbody>${salidas.map((s,i)=>`<tr>
         <td style="color:var(--text3)">${i+1}</td>
         <td style="font-weight:500">${s.cliente||'--'}</td>
@@ -1479,7 +1408,6 @@ async function verSalidas(id) {
         <td style="color:var(--text2)">${s.destino||'--'}</td>
         <td style="font-weight:500;color:var(--green)">${(s.cantidad||0).toLocaleString('es-CL')} u.</td>
         <td>${s.numero_guia?`<span class="nv-tag">${s.numero_guia}</span>`:'--'}</td>
-        <td>${s.foto_url?`<a href="${s.foto_url}" target="_blank" style="color:var(--blue);font-size:12px">&#128247; Ver foto</a>`:'--'}</td>
         <td style="color:var(--text2)">${s.registrado_por||'--'}</td>
         <td style="color:var(--text3)">${new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
       </tr>`).join('')}</tbody>
@@ -1609,76 +1537,57 @@ async function cargarPlanDespacho() {
       <div class="grupo">
         <div class="grupo-hdr">
           <span class="grupo-name">${cli}</span>
-          <span class="grupo-meta">${desps.length} despacho(s) &middot; ${desps.reduce((s,d)=>s+d.cantidad_despachar,0).toLocaleString('es-CL')} u.</span>
+          <span class="grupo-meta">${desps.length} despacho(s) . ${desps.reduce((s,d)=>s+d.cantidad_despachar,0).toLocaleString('es-CL')} u.</span>
         </div>
         ${desps.map(d=>{
           const pendiente = d.cantidad_despachar - (d.cantidad_despachada||0);
           const pct = d.cantidad_despachar>0?Math.min(100,Math.round((d.cantidad_despachada||0)/d.cantidad_despachar*100)):0;
           const col = pct>=100?'var(--green)':pct>0?'var(--yellow)':'var(--text3)';
           return `
-          <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-
-            <!-- Info principal -->
-            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
-              <div style="flex:1;min-width:0">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-                  <code style="font-size:14px;font-weight:700;color:var(--text);background:var(--bg3);padding:3px 10px;border-radius:6px">${d.codigo||'--'}</code>
-                  <span style="font-size:13px;font-weight:600;color:var(--blue)">&#8594; ${d.destino||'--'}</span>
-                </div>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-                  ${d.hora_despacho?`<span style="font-size:13px;color:var(--yellow);font-weight:700">&#128666; ${d.hora_despacho}</span>`:''}
-                  ${d.fecha_despacho?`<span style="font-size:11px;color:var(--text3)">${d.fecha_despacho}</span>`:''}
-                  <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}" style="font-size:10px">${d.estado}</span>
-                </div>
-              </div>
-              <!-- Totales -->
-              <div style="text-align:right;flex-shrink:0;min-width:90px">
-                <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1">${d.cantidad_despachar.toLocaleString('es-CL')}</div>
-                <div style="font-size:10px;color:var(--text3);margin-bottom:4px">solicitadas</div>
-                <div style="font-size:13px;font-weight:700;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} pend.</div>
+          <div class="pfila" style="flex-wrap:wrap;gap:10px;padding:10px 0">
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:120px">
+              <code style="font-size:12px;color:var(--text2)">${d.codigo||'--'}</code>
+              <span style="font-size:12px;color:var(--text3)">${d.destino||'--'}</span>
+              ${d.nota?`<span style="font-size:11px;color:var(--text3)">${d.nota}</span>`:''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:11px;color:var(--text3)">Total pedido</span>
+              <span style="font-weight:600">${d.cantidad_despachar.toLocaleString('es-CL')} u.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:11px;color:var(--text3)">Despachado</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
+                <span style="font-size:12px;color:${col};font-weight:600">${(d.cantidad_despachada||0).toLocaleString('es-CL')} u. (${pct}%)</span>
               </div>
             </div>
-
-            <!-- Barra de progreso -->
-            <div style="margin-bottom:12px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                <span style="font-size:11px;color:var(--text3)">Progreso despacho</span>
-                <span style="font-size:12px;color:${col};font-weight:700">${(d.cantidad_despachada||0).toLocaleString('es-CL')} de ${d.cantidad_despachar.toLocaleString('es-CL')} &mdash; ${pct}%</span>
-              </div>
-              <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:${col};height:100%"></div></div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-size:11px;color:var(--text3)">Pendiente</span>
+              <span style="font-weight:500;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} u.</span>
             </div>
-
-            <!-- Acciones -->
+            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
+            ${d.fecha_despacho && d.fecha_despacho !== '${fechaDesp}'?`<span class="nv-tag">${d.fecha_despacho}</span>`:''}
+            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
+            <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}">${d.estado}</span>
+            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:10px">Ver salidas</button>
+            <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:6px"></div>
             ${d.estado!=='Despachado'&&d.estado!=='Cancelado'?`
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
-              <span style="font-size:11px;color:var(--text3);flex-shrink:0">Registrar salida:</span>
-              <input type="number" id="desp-cant-${d.id}" placeholder="Cantidad" 
-                style="width:110px;height:32px;font-size:13px" min="1"
-                inputmode="numeric" pattern="[0-9]*">
-              <input type="text" id="desp-guia-${d.id}" placeholder="N° guía (opcional)" 
-                style="width:130px;height:32px;font-size:13px"
-                inputmode="numeric" pattern="[0-9]*">
-              <label style="display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);white-space:nowrap" title="Adjuntar foto de guía">
-                &#128247; Foto
-                <input type="file" id="desp-foto-${d.id}" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="this.parentElement.style.borderColor='var(--green)';this.parentElement.style.color='var(--green)'">
-              </label>
-              <button class="btn primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})"
-                style="height:32px;padding:0 16px;font-size:12px">
-                &#10003; Registrar
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
+              <input type="number" id="desp-cant-${d.id}" placeholder="Cant. camión" 
+                style="width:120px;height:30px;font-size:12px" 
+                max="${pendiente}" min="1">
+              <input type="text" id="desp-guia-${d.id}" placeholder="N° guía" 
+                style="width:90px;height:30px;font-size:12px">
+              <button class="btn sm primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})">
+                Registrar salida
               </button>
-              ${pendiente===0?`<button class="btn green" onclick="marcarDespachado('${d.id}')"
-                style="height:32px;padding:0 16px;font-size:12px;background:var(--green);color:#0f1117;border-color:var(--green)">
-                &#128666; Marcar despachado
+              ${pendiente>0?`<button class="btn sm green" onclick="marcarDespachado('${d.id}')" style="background:var(--green);color:#0f1117;border-color:var(--green)">
+                ✓ Listo
               </button>`:''}
-            </div>
-            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
-            `:`
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:12px;color:var(--green);font-weight:600">&#10003; Completado</span>
-              <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
-            </div>
-            `}
-            <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:8px"></div>
+            </div>`:`
+            <div style="margin-left:auto;display:flex;gap:6px">
+              ${USER.rol==='jefe'?`<button class="btn sm danger" onclick="eliminarDespacho('${d.id}')">Quitar</button>`:''}
+            </div>`}
           </div>`;
         }).join('')}
       </div>`).join('');
@@ -1710,25 +1619,19 @@ async function guardarDespacho() {
 async function registrarSalida(id, totalPedido, yaEnviado) {
   const cantEl = document.getElementById('desp-cant-'+id);
   const guiaEl = document.getElementById('desp-guia-'+id);
-  const fotoEl = document.getElementById('desp-foto-'+id);
   const cant = parseInt(cantEl?.value)||0;
   const guia = guiaEl?.value?.trim()||'';
   if(!cant) { alert('Ingresa la cantidad que sale en este camión.'); return; }
   const nuevoDespachado = yaEnviado + cant;
-  // Sin límite - permite despachar más que lo solicitado (ej: cubicaje de cajas)
-  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso'; // puede superar total
+  if(nuevoDespachado > totalPedido) {
+    alert(`No puedes superar el total pedido (${totalPedido.toLocaleString('es-CL')} u.). Ya enviados: ${yaEnviado.toLocaleString('es-CL')}, intentas agregar: ${cant.toLocaleString('es-CL')}.`);
+    return;
+  }
+  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso';
   try {
     // Obtener info del despacho para copiar en la salida
     const actual = await sb('plan_despacho','GET',null,`?id=eq.${id}&select=*`);
     const d = actual&&actual[0] ? actual[0] : {};
-
-    // Subir foto si existe
-    let fotoUrl = null;
-    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
-      const actual2 = await sb('plan_despacho','GET',null,'?id=eq.'+id+'&select=cliente');
-      const cli = actual2&&actual2[0]?actual2[0].cliente:'cliente';
-      fotoUrl = await subirFotoGuia(id, cli, fotoEl.files[0]);
-    }
 
     // Crear registro individual de salida
     await sb('salidas_despacho','POST',{
@@ -1738,7 +1641,6 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
       destino: d.destino||'',
       cantidad: cant,
       numero_guia: guia||null,
-      foto_url: fotoUrl||null,
       registrado_por: USER.nombre,
     });
 
@@ -1752,7 +1654,6 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
     // Limpiar campos
     if(cantEl) cantEl.value='';
     if(guiaEl) guiaEl.value='';
-    if(fotoEl) fotoEl.value='';
     cargarPlanDespacho();
   } catch(e) { alert('Error: '+e.message); }
 }
@@ -1846,398 +1747,12 @@ async function verForecast(nv) {
 }
 
 // -- Informes --------------------------------------------------
-// Charts de informes
-let chartCierreSolArm = null, chartCierreEstados = null;
-let chartDespCliente = null, chartGruposArm = null, chartMaqArm = null;
-
-// Plugin inline para etiquetas en dona
-const datalabelsPlugin = {
-  id:'datalabels',
-  afterDatasetsDraw:function(chart){
-    var ctx3 = chart.ctx;
-    chart.data.datasets.forEach(function(dataset, i){
-      var meta = chart.getDatasetMeta(i);
-      meta.data.forEach(function(arc, j){
-        var val = dataset.data[j];
-        if(!val) return;
-        var total = dataset.data.reduce(function(a,b){return a+b;},0);
-        var pct = Math.round(val/total*100);
-        if(pct < 5) return;
-        var angle = (arc.startAngle + arc.endAngle) / 2;
-        var r = (arc.outerRadius + arc.innerRadius) / 2;
-        var x = arc.x + Math.cos(angle) * r;
-        var y = arc.y + Math.sin(angle) * r;
-        ctx3.save();
-        ctx3.fillStyle = '#fff';
-        ctx3.font = 'bold 12px system-ui';
-        ctx3.textAlign = 'center';
-        ctx3.textBaseline = 'middle';
-        ctx3.fillText(val+' ('+pct+'%)', x, y);
-        ctx3.restore();
-      });
-    });
-  }
-};
-
-function showInfTab(n) {
-  [1,2,3].forEach(function(i) {
-    document.getElementById('inf-panel-'+i).style.display = i===n?'block':'none';
-    var btn = document.getElementById('inf-tab-'+i);
-    if(btn) {
-      btn.style.color = i===n?'var(--blue)':'var(--text3)';
-      btn.style.borderBottomColor = i===n?'var(--blue)':'transparent';
-    }
-  });
-}
-
-function setInfModo(modo) {
-  var esDia = modo === 'dia';
-  document.getElementById('inf-filtro-dia').style.display = esDia ? 'flex' : 'none';
-  document.getElementById('inf-filtro-rango').style.display = esDia ? 'none' : 'flex';
-  var btnDia = document.getElementById('inf-modo-dia');
-  var btnRango = document.getElementById('inf-modo-rango');
-  if(btnDia) { btnDia.style.background = esDia?'var(--blue)':'transparent'; btnDia.style.color = esDia?'#fff':'var(--text3)'; }
-  if(btnRango) { btnRango.style.background = esDia?'transparent':'var(--blue)'; btnRango.style.color = esDia?'var(--text3)':'#fff'; }
-  // Sincronizar fechas
-  if(esDia) {
-    var f = document.getElementById('inf-fecha')?.value || hoy();
-    var desdeEl = document.getElementById('inf-desde');
-    var hastaEl = document.getElementById('inf-hasta');
-    if(desdeEl) desdeEl.value = f;
-    if(hastaEl) hastaEl.value = f;
-  } else {
-    var desde = document.getElementById('inf-desde')?.value || hoy();
-    var hasta = document.getElementById('inf-hasta')?.value || hoy();
-    var fechaEl = document.getElementById('inf-fecha');
-    if(fechaEl) fechaEl.value = desde;
-  }
-}
-
-async function cargarInformes() {
-  // Sincronizar fechas según modo activo
-  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
-  if(esDia) {
-    var f = document.getElementById('inf-fecha')?.value || hoy();
-    var desdeEl = document.getElementById('inf-desde');
-    var hastaEl = document.getElementById('inf-hasta');
-    if(desdeEl) desdeEl.value = f;
-    if(hastaEl) hastaEl.value = f;
-  }
-  await cargarMetricasInforme();
-  await cargarInformeCierre();
-  await cargarInformeClientes();
-  await cargarInformeGrupos();
-}
-
-async function cargarInformeCierre() {
-  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
-  const fecha = document.getElementById('inf-fecha')?.value || hoy();
-  const desde = document.getElementById('inf-desde')?.value || hoy();
-  const hasta = document.getElementById('inf-hasta')?.value || hoy();
-  const el = document.getElementById('inf-fecha-label');
-  if(el) el.textContent = esDia ? fecha : desde+' → '+hasta;
-
-  try {
-    const query = esDia
-      ? '?fecha_armado=eq.'+fecha+'&select=*'
-      : '?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*';
-    const pedidos = await sb('pedidos_dia','GET',null, query);
-    if(!pedidos||!pedidos.length) {
-      document.getElementById('inf-tabla-cierre').innerHTML='<p style="color:var(--text3);font-size:13px">Sin pedidos para esta fecha.</p>';
-      return;
-    }
-
-    // Separar activos/completados de cancelados
-    const pedidosActivos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
-    const pedidosCancelados = pedidos.filter(function(p){return p.estado==='Cancelado';});
-
-    // Gráfico barras sol vs arm — solo activos/completados
-    const labels = pedidosActivos.map(function(p){return p.codigo;});
-    const sol = pedidosActivos.map(function(p){return p.cantidad_pedida;});
-    const arm = pedidosActivos.map(function(p){return p.cantidad_armada||0;});
-
-    const ctx1 = document.getElementById('chart-cierre-sol-arm');
-    if(chartCierreSolArm) chartCierreSolArm.destroy();
-    chartCierreSolArm = new Chart(ctx1, {
-      type:'bar',
-      data:{labels:labels,datasets:[
-        {label:'Solicitado',data:sol,backgroundColor:'rgba(74,158,255,.7)',borderColor:'#4a9eff',borderWidth:1},
-        {label:'Armado',data:arm,backgroundColor:'rgba(240,180,41,.7)',borderColor:'#f0b429',borderWidth:1}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
-        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
-                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
-    });
-
-    // Gráfico dona estados — solo activos/completados/modificados
-    const estados = {};
-    pedidosActivos.forEach(function(p){
-      var e = (p.cantidad_pedida>0 && (p.cantidad_armada||0)>=p.cantidad_pedida && p.estado==='Activo') ? 'Completado' : p.estado;
-      estados[e]=(estados[e]||0)+1;
-    });
-    const ctx2 = document.getElementById('chart-cierre-estados');
-    if(chartCierreEstados) chartCierreEstados.destroy();
-    const colorEstado = function(e) {
-      if(e==='Activo') return 'rgba(34,201,138,.85)';
-      if(e==='Completado') return 'rgba(74,158,255,.85)';
-      if(e==='Modificado') return 'rgba(240,180,41,.85)';
-      if(e==='Cancelado') return 'rgba(232,85,85,.85)';
-      return 'rgba(139,144,167,.85)';
-    };
-    chartCierreEstados = new Chart(ctx2, {
-      type:'doughnut',
-      data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),
-        backgroundColor:Object.keys(estados).map(colorEstado),
-        borderWidth:0}]},
-      plugins:[datalabelsPlugin],
-      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-        plugins:{
-          legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:12}},
-          tooltip:{callbacks:{label:function(ctx){
-            var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
-            var pct = Math.round(ctx.parsed/total*100);
-            return ' '+ctx.label+': '+ctx.parsed+' ('+pct+'%)';
-          }}}
-        }
-      }
-    });
-
-    // Tabla detalle
-    var rows = pedidos.map(function(p){
-      var pct = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
-      var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-      return '<tr>'+
-        '<td style="font-weight:500">'+p.cliente+'</td>'+
-        '<td><code style="font-size:11px">'+p.codigo+'</code></td>'+
-        '<td>'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
-        '<td style="color:'+col+';font-weight:600">'+(p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct+'%)</td>'+
-        '<td>'+(p.grupo||'—')+'</td>'+
-        '<td>'+(p.maquina||'—')+'</td>'+
-        '<td><span class="chip '+(p.estado==='Activo'?'green':p.estado==='Cancelado'?'red':'yellow')+'">'+p.estado+'</span></td>'+
-      '</tr>';
-    }).join('');
-    document.getElementById('inf-tabla-cierre').innerHTML =
-      '<table class="dt"><thead><tr><th>Cliente</th><th>Código</th><th>Solicitado</th><th>Armado</th><th>Grupo</th><th>Máquina</th><th>Estado</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  } catch(e) { console.warn('Informe cierre:', e.message); }
-}
-
-async function cargarInformeClientes() {
-  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
-  const fecha = document.getElementById('inf-fecha')?.value || hoy();
-  const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
-  const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
-  try {
-    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=*');
-    if(!salidas||!salidas.length) {
-      document.getElementById('inf-tabla-clientes').innerHTML='<p style="color:var(--text3);font-size:13px">Sin despachos en el período.</p>';
-      return;
-    }
-
-    // Agrupar por cliente
-    var porCli = {};
-    salidas.forEach(function(s){
-      if(!porCli[s.cliente]) porCli[s.cliente]={cant:0,guias:new Set(),salidas:0};
-      porCli[s.cliente].cant += s.cantidad||0;
-      if(s.numero_guia) porCli[s.cliente].guias.add(s.numero_guia);
-      porCli[s.cliente].salidas++;
-    });
-    var sorted = Object.entries(porCli).sort(function(a,b){return b[1].cant-a[1].cant;});
-
-    // Gráfico
-    const ctx = document.getElementById('chart-desp-cliente');
-    if(chartDespCliente) chartDespCliente.destroy();
-    chartDespCliente = new Chart(ctx, {
-      type:'bar',
-      data:{
-        labels:sorted.map(function(e){return e[0];}),
-        datasets:[{label:'Unidades despachadas',data:sorted.map(function(e){return e[1].cant;}),
-          backgroundColor:'rgba(34,201,138,.7)',borderColor:'#22c98a',borderWidth:1}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-        plugins:{legend:{display:false}},
-        scales:{x:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}},
-                y:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}}}}
-    });
-
-    // Tabla
-    var rows = sorted.map(function(e){
-      return '<tr>'+
-        '<td style="font-weight:600">'+e[0]+'</td>'+
-        '<td style="color:var(--green);font-weight:700">'+e[1].cant.toLocaleString('es-CL')+'</td>'+
-        '<td>'+e[1].salidas+'</td>'+
-        '<td>'+e[1].guias.size+'</td>'+
-      '</tr>';
-    }).join('');
-    document.getElementById('inf-tabla-clientes').innerHTML =
-      '<table class="dt"><thead><tr><th>Cliente</th><th>Unidades despachadas</th><th>Salidas</th><th>Guías</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  } catch(e) { console.warn('Informe clientes:', e.message); }
-}
-
-async function cargarInformeGrupos() {
-  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
-  const fecha = document.getElementById('inf-fecha')?.value || hoy();
-  const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
-  const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
-  try {
-    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
-    if(!pedidos||!pedidos.length) {
-      document.getElementById('inf-tabla-grupos').innerHTML='<p style="color:var(--text3);font-size:13px">Sin datos en el período.</p>';
-      return;
-    }
-
-    // Agrupar por grupo
-    var porGrupo = {};
-    var porMaq = {};
-    pedidos.forEach(function(p){
-      var g = p.grupo||'Sin grupo';
-      var m = p.maquina||'Sin máquina';
-      if(!porGrupo[g]) porGrupo[g]={sol:0,arm:0,pedidos:0,turno:p.turno||''};
-      porGrupo[g].sol += p.cantidad_pedida;
-      porGrupo[g].arm += p.cantidad_armada||0;
-      porGrupo[g].pedidos++;
-      if(!porMaq[m]) porMaq[m]={sol:0,arm:0};
-      porMaq[m].sol += p.cantidad_pedida;
-      porMaq[m].arm += p.cantidad_armada||0;
-    });
-
-    // Gráfico grupos
-    var gSorted = Object.entries(porGrupo).sort(function(a,b){return b[1].arm-a[1].arm;});
-    const ctx1 = document.getElementById('chart-grupos-arm');
-    if(chartGruposArm) chartGruposArm.destroy();
-    chartGruposArm = new Chart(ctx1, {
-      type:'bar',
-      data:{labels:gSorted.map(function(e){return e[0];}),datasets:[
-        {label:'Solicitado',data:gSorted.map(function(e){return e[1].sol;}),backgroundColor:'rgba(74,158,255,.6)',borderWidth:0},
-        {label:'Armado',data:gSorted.map(function(e){return e[1].arm;}),backgroundColor:'rgba(240,180,41,.8)',borderWidth:0}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
-        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
-                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
-    });
-
-    // Gráfico máquinas (dona)
-    var mSorted = Object.entries(porMaq);
-    const ctx2 = document.getElementById('chart-maq-arm');
-    if(chartMaqArm) chartMaqArm.destroy();
-    chartMaqArm = new Chart(ctx2, {
-      type:'doughnut',
-      data:{labels:mSorted.map(function(e){return e[0];}),datasets:[{
-        data:mSorted.map(function(e){return e[1].arm;}),
-        backgroundColor:['rgba(74,158,255,.8)','rgba(240,180,41,.8)','rgba(34,201,138,.8)','rgba(168,85,247,.8)'],
-        borderWidth:0
-      }]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-        plugins:{legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:10}}}}
-    });
-
-    // Tabla
-    var rows = gSorted.map(function(e){
-      var pct = e[1].sol>0?Math.round(e[1].arm/e[1].sol*100):0;
-      var col = pct>=100?'var(--green)':pct>=70?'var(--yellow)':'var(--red)';
-      return '<tr>'+
-        '<td style="font-weight:600">'+e[0]+'</td>'+
-        '<td style="color:var(--text3)">'+e[1].turno+'</td>'+
-        '<td>'+e[1].pedidos+'</td>'+
-        '<td>'+e[1].sol.toLocaleString('es-CL')+'</td>'+
-        '<td style="color:'+col+';font-weight:700">'+e[1].arm.toLocaleString('es-CL')+' ('+pct+'%)</td>'+
-      '</tr>';
-    }).join('');
-    document.getElementById('inf-tabla-grupos').innerHTML =
-      '<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Pedidos</th><th>Solicitado</th><th>Armado</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  } catch(e) { console.warn('Informe grupos:', e.message); }
-}
-
-async function exportarPDFInforme() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const w = doc.internal.pageSize.getWidth();
-  const margin = 15;
-  let y = 20;
-
-  // Header
-  doc.setFillColor(15, 17, 23);
-  doc.rect(0, 0, w, 18, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(13);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CSF Planificador — Informe', margin, 12);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(139, 144, 167);
-  const desde = document.getElementById('inf-desde')?.value || hoy();
-  const hasta = document.getElementById('inf-hasta')?.value || hoy();
-  const fecha = document.getElementById('inf-fecha')?.value || hoy();
-  doc.text('Generado: '+new Date().toLocaleString('es-CL'), w-margin, 12, {align:'right'});
-  y = 28;
-
-  // Título del informe activo
-  const tabActiva = document.querySelector('[id^="inf-tab-"][style*="var(--blue)"]');
-  const tabNombre = tabActiva ? tabActiva.textContent.trim() : 'Informe';
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
-  doc.text(tabNombre, margin, y);
-  y += 8;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 100, 100);
-  doc.text('Período: '+desde+' → '+hasta+' | Fecha: '+fecha, margin, y);
-  y += 10;
-
-  // Capturar el panel activo como imagen
-  const panelActivo = [1,2,3].map(function(i){
-    var p = document.getElementById('inf-panel-'+i);
-    return p && p.style.display !== 'none' ? p : null;
-  }).filter(Boolean)[0];
-
-  if(panelActivo) {
-    try {
-      const canvas = await html2canvas(panelActivo, {
-        scale: 1.5,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const imgW = w - margin*2;
-      const imgH = canvas.height * imgW / canvas.width;
-
-      // Si no cabe en una página, escalar
-      const maxH = doc.internal.pageSize.getHeight() - y - 20;
-      const finalH = imgH > maxH ? maxH : imgH;
-      doc.addImage(imgData, 'PNG', margin, y, imgW, finalH);
-      y += finalH + 10;
-    } catch(e) {
-      console.warn('html2canvas error:', e);
-      doc.setTextColor(200, 50, 50);
-      doc.text('Error al capturar gráficos: '+e.message, margin, y);
-    }
-  }
-
-  // Footer
-  const pageH = doc.internal.pageSize.getHeight();
-  doc.setFillColor(240, 240, 240);
-  doc.rect(0, pageH-10, w, 10, 'F');
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text('Contenedores San Fernando SpA. — Sistema de Planificación', margin, pageH-3);
-  doc.text('Página 1', w-margin, pageH-3, {align:'right'});
-
-  doc.save('informe_csf_'+hoy()+'.pdf');
-}
-
 async function cargarMetricasInforme() {
   const el = document.getElementById('met-informes');
   if(!el) return;
   try {
-    const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
-    const fecha = document.getElementById('inf-fecha')?.value || hoy();
-    const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
-    const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
-    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
-    const desps = await sb('plan_despacho','GET',null,'?fecha_despacho=gte.'+desde+'&fecha_despacho=lte.'+hasta+'&select=*');
+    const pedidos = await sb('pedidos_dia','GET',null,`?fecha=eq.${hoy()}&select=*`);
+    const desps = await sb('plan_despacho','GET',null,`?fecha=eq.${hoy()}&select=*`);
     const totalPed = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
     const totalArm = (pedidos||[]).reduce((s,p)=>s+p.cantidad_armada,0);
     const totalDesp = (desps||[]).filter(d=>d.estado==='Despachado').reduce((s,d)=>s+d.cantidad_despachar,0);
