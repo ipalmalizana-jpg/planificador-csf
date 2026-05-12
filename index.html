@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1103,27 +1102,29 @@ function renderPlanDia() {
         var despNV = p.nv_referencia?(DESP_HIST[String(p.nv_referencia)]||{}):{};
         var despachado = despNV[p.codigo]||0;
 
-        if(pidx > 0 && orden === 'sinergia') {
-          var prev = items[pidx-1];
-          var ca = COD_IDX[prev.codigo];
-          var cb = COD_IDX[p.codigo];
-          if(ca && cb) {
-            var c = compat(ca, cb);
-            var sinLabel, sinColor, sinBg, sinIcon;
-            if(c==='solo-altura') { sinLabel='Solo altura'; sinColor='#22c98a'; sinBg='rgba(34,201,138,.12)'; sinIcon='&#8597;'; }
-            else if(c==='ajuste-mayor') { sinLabel='Ajuste mayor'; sinColor='#f0b429'; sinBg='rgba(240,180,41,.12)'; sinIcon='&#8644;'; }
-            else if(c==='maquina-diferente') { sinLabel='Maq. diferente'; sinColor='#a855f7'; sinBg='rgba(168,85,247,.12)'; sinIcon='&#9889;'; }
-            else { sinLabel='Cambio completo'; sinColor='#e85555'; sinBg='rgba(232,85,85,.12)'; sinIcon='&#9881;'; }
-            var tiempo = c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
-            var dims = (ca&&ca.largo&&cb&&cb.largo) ? ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto : '';
-            out += '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:3px 0;background:'+sinBg+';border-radius:6px;border-left:3px solid '+sinColor+'">';
-            out += '<span style="font-size:15px">'+sinIcon+'</span>';
-            out += '<span style="font-size:11px;color:'+sinColor+';font-weight:700">'+sinLabel+'</span>';
-            if(dims) out += '<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
-            if(tiempo) out += '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tiempo+'</span>';
-            out += '</div>';
+        try {
+          if(pidx > 0 && orden === 'sinergia') {
+            var prev = items[pidx-1];
+            var ca = COD_IDX[prev.codigo];
+            var cb = COD_IDX[p.codigo];
+            if(ca && cb) {
+              var c = compat(ca, cb);
+              var sinLabel, sinColor, sinBg, sinIcon;
+              if(c==='solo-altura') { sinLabel='Solo altura'; sinColor='#22c98a'; sinBg='rgba(34,201,138,.12)'; sinIcon='&#8597;'; }
+              else if(c==='ajuste-mayor') { sinLabel='Ajuste mayor'; sinColor='#f0b429'; sinBg='rgba(240,180,41,.12)'; sinIcon='&#8644;'; }
+              else if(c==='maquina-diferente') { sinLabel='Maq. diferente'; sinColor='#a855f7'; sinBg='rgba(168,85,247,.12)'; sinIcon='&#9889;'; }
+              else { sinLabel='Cambio completo'; sinColor='#e85555'; sinBg='rgba(232,85,85,.12)'; sinIcon='&#9881;'; }
+              var tiempo = c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
+              var dims = (ca&&ca.largo&&cb&&cb.largo) ? ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto : '';
+              out += '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:3px 0;background:'+sinBg+';border-radius:6px;border-left:3px solid '+sinColor+'">';
+              out += '<span style="font-size:15px">'+sinIcon+'</span>';
+              out += '<span style="font-size:11px;color:'+sinColor+';font-weight:700">'+sinLabel+'</span>';
+              if(dims) out += '<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
+              if(tiempo) out += '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tiempo+'</span>';
+              out += '</div>';
+            }
           }
-        }
+        } catch(eSin) { console.warn('Sinergia error:', eSin.message); }
         var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
 
         out += '<div class="pfila">';
