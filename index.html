@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg: #0f1117;
@@ -212,41 +215,55 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
     <!-- JEFE: Planificar -->
     <div class="sec" id="sec-planificar">
 
-  <!-- Métricas top -->
-  <div class="metrics" id="met-planificar" style="margin-bottom:16px"></div>
+  <!-- Métricas -->
+  <div class="metrics" id="met-planificar" style="margin-bottom:14px"></div>
 
-  <!-- Barra superior: filtros + acción -->
-  <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px">
-      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Ver</span>
-      <select id="filtro-plan-modo" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none;cursor:pointer" onchange="toggleFiltroPlanFecha()">
+  <!-- Alertas -->
+  <div id="alertas-plan" style="display:none;background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.25);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px"></div>
+
+  <!-- Carga por máquina -->
+  <div id="carga-maquinas" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Carga por máquina</div>
+    <div id="carga-maquinas-content" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+  </div>
+
+  <!-- Barra de control -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <!-- Filtro fecha/todos -->
+    <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <select id="filtro-plan-modo" onchange="toggleFiltroPlanFecha()"
+        style="height:34px;font-size:12px;padding:0 10px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--text);outline:none;cursor:pointer">
         <option value="todos">Todos</option>
         <option value="fecha" selected>Por fecha</option>
       </select>
-      <input type="date" id="filtro-fecha-plan" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none" onchange="cargarPlanDia()">
+      <input type="date" id="filtro-fecha-plan" onchange="cargarPlanDia()"
+        style="height:34px;font-size:12px;padding:0 10px;background:transparent;border:none;color:var(--text);outline:none">
     </div>
-    <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px">
-      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Orden</span>
-      <select id="orden-plan" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none;cursor:pointer">
-        <option value="prio">Prioridad</option>
-        <option value="sinergia">Sinergia</option>
-        <option value="cliente">Cliente</option>
-      </select>
-    </div>
-    <button class="btn sm" onclick="cargarPlanDia()" style="height:34px">↻ Actualizar</button>
+    <!-- Orden -->
+    <select id="orden-plan"
+      style="height:34px;font-size:12px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;cursor:pointer">
+      <option value="prio">Prioridad</option>
+      <option value="sinergia">Sinergia</option>
+      <option value="cliente">Cliente</option>
+    </select>
+    <button class="btn sm primary" onclick="cargarPlanDia()" style="height:34px">&#8635; Actualizar</button>
     <button class="btn sm blue" onclick="exportarExcelPlan()" style="height:34px">Excel</button>
-    <div style="margin-left:auto;display:flex;gap:8px">
-      <button class="btn sm" onclick="showModalGrupo()" style="height:34px">⚙ Grupos</button>
-      <button class="btn primary" onclick="toggleFormulario()" style="height:34px;padding:0 18px" id="btn-toggle-form">+ Nuevo pedido</button>
+    <!-- Acciones derecha -->
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button class="btn sm" onclick="showModalGrupo()" style="height:34px" title="Gestionar grupos">&#9881; Grupos</button>
+      <button class="btn sm" onclick="showModalCambioFormato()" style="height:34px" title="Registrar cambio de formato">&#128295; Formato</button>
+      <button class="btn sm" onclick="verHistorialFormato()" style="height:34px" title="Historial de cambios de formato">&#128202; Historial</button>
+      <button class="btn sm" onclick="generarCierreDelDia()" style="height:34px;background:var(--green);color:#0f1117;border-color:var(--green)" title="Generar PDF cierre del día">&#128196; Cierre</button>
+      <button class="btn primary" onclick="toggleFormulario()" id="btn-toggle-form" style="height:34px;padding:0 16px">+ Nuevo pedido</button>
     </div>
   </div>
 
-  <!-- Grupos activos (compacto) -->
-  <div id="grupos-lista" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;min-height:24px"></div>
+  <!-- Grupos chips -->
+  <div id="grupos-lista" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;min-height:24px"></div>
 
   <!-- Formulario colapsable -->
-  <div id="form-agregar" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+  <div id="form-agregar" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div>
         <div class="fg" style="margin-bottom:10px">
           <label>Código de caja</label>
@@ -267,12 +284,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
       </div>
       <div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div class="fg">
-            <label>Cantidad</label>
-            <input type="number" id="p-cantidad" placeholder="5000" style="width:100%">
-          </div>
-          <div class="fg">
-            <label>Prioridad</label>
+          <div class="fg"><label>Cantidad</label><input type="number" id="p-cantidad" placeholder="5000" style="width:100%"></div>
+          <div class="fg"><label>Prioridad</label>
             <select id="p-prioridad" style="width:100%">
               <option value="Alta">Alta</option>
               <option value="Media" selected>Media</option>
@@ -281,55 +294,34 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div class="fg">
-            <label>Grupo</label>
+          <div class="fg"><label>Grupo</label>
             <select id="p-grupo" style="width:100%"><option value="">Sin grupo</option></select>
           </div>
-          <div class="fg">
-            <label>Turno</label>
+          <div class="fg"><label>Turno</label>
             <select id="p-turno" style="width:100%">
               <option value="Mañana">Mañana</option>
               <option value="Tarde">Tarde</option>
             </select>
           </div>
         </div>
-        <div class="fg">
-          <label>Máquina</label>
+        <div class="fg"><label>Máquina</label>
           <select id="p-maquina" style="width:100%"><option value="">Sin asignar</option></select>
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:10px;align-items:flex-end;padding-top:14px;border-top:1px solid var(--border)">
-      <div class="fg">
-        <label>Fecha armado</label>
-        <input type="date" id="p-fecha-armado" style="width:155px">
-      </div>
-      <div class="fg">
-        <label>Fecha despacho</label>
-        <input type="date" id="p-fecha-desp" style="width:155px">
-      </div>
-      <div class="fg">
-        <label>Hora despacho</label>
-        <input type="time" id="p-hora-desp" style="width:120px">
-      </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap">
+      <div class="fg"><label>Fecha armado</label><input type="date" id="p-fecha-armado" style="width:150px"></div>
+      <div class="fg"><label>Fecha despacho</label><input type="date" id="p-fecha-desp" style="width:150px"></div>
+      <div class="fg"><label>Hora despacho</label><input type="time" id="p-hora-desp" style="width:120px"></div>
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="btn" onclick="toggleFormulario()" style="height:34px">Cancelar</button>
-        <button class="btn primary" onclick="agregarPedido()" style="height:34px;padding:0 24px">Agregar pedido</button>
+        <button class="btn primary" onclick="agregarPedido()" style="height:34px;padding:0 24px">Agregar</button>
       </div>
     </div>
   </div>
 
   <!-- Plan de armado -->
-  <div id="alertas-plan" style="display:none;background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px"></div>
-
-  <!-- Carga por máquina -->
-  <div id="carga-maquinas" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Carga por máquina</span>
-    </div>
-    <div id="carga-maquinas-content" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-  </div>
-  <div id="plan-dia-output"><div class="empty">Cargando plan...</div></div>
+  <div id="plan-dia-output" style="min-height:100px"><div class="empty">Cargando plan...</div></div>
 
 </div>
 
@@ -410,69 +402,99 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
 
     <!-- JEFE: Informes -->
     <div class="sec" id="sec-informes">
-      <div class="metrics" id="met-informes"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="card">
-          <div class="card-title"><span>Reporte de cierre del día</span></div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Pedidos originales vs cambios vs despachado.</p>
-          <div class="frow">
-            <div class="fg"><label>Fecha</label><input type="date" id="inf-fecha" style="width:160px"></div>
-            <button class="btn primary" onclick="generarInformeDia()">Generar</button>
-            <button class="btn blue" onclick="exportarExcelInforme()">Excel</button>
-          </div>
-          <div id="informe-dia-output" style="margin-top:14px"></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span>Resumen de despachos por cliente</span></div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Total despachado agrupado por cliente en el período.</p>
-          <div class="frow">
-            <div class="fg"><label>Desde</label><input type="date" id="inf-desde" style="width:150px"></div>
-            <div class="fg"><label>Hasta</label><input type="date" id="inf-hasta" style="width:150px"></div>
-            <button class="btn primary" onclick="generarResumenClientes()">Generar</button>
-            <button class="btn blue" onclick="exportarExcelClientes()">Excel</button>
-          </div>
-          <div id="resumen-clientes-output" style="margin-top:14px"></div>
-        </div>
-      </div>
+
+  <!-- Métricas resumen -->
+  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
+
+  <!-- Barra de filtros -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <!-- Selector de modo -->
+    <div style="display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:3px">
+      <button id="inf-modo-dia" onclick="setInfModo('dia')"
+        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:var(--blue);color:#fff">
+        Un día
+      </button>
+      <button id="inf-modo-rango" onclick="setInfModo('rango')"
+        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text3)">
+        Rango
+      </button>
     </div>
 
-    <!-- JEFE: Gráficos -->
-    <div class="sec" id="sec-graficos">
-      <div class="metrics" id="met-graficos"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card">
-          <div class="card-title">
-            <span>Solicitado vs Armado</span>
-            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-1"></span>
-          </div>
-          <div style="position:relative;height:220px">
-            <canvas id="chart-sol-arm"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">
-            <span>Armado vs Despachado</span>
-            <span style="font-size:11px;color:var(--text3)" id="graf-fecha-2"></span>
-          </div>
-          <div style="position:relative;height:220px">
-            <canvas id="chart-arm-desp"></canvas>
-          </div>
-        </div>
+    <!-- Modo un día -->
+    <div id="inf-filtro-dia" style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3)">Fecha</span>
+      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+
+    <!-- Modo rango -->
+    <div id="inf-filtro-rango" style="display:none;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+      <span style="font-size:11px;color:var(--text3)">Desde</span>
+      <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+      <span style="font-size:11px;color:var(--text3)">→</span>
+      <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+
+    <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
+    <button class="btn sm blue" onclick="exportarExcelInforme()" style="height:34px">Excel</button>
+    <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:var(--red);color:#fff;border-color:var(--red)">&#128196; PDF</button>
+  </div>
+
+  <!-- 3 informes en tabs -->
+  <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)">
+    <button id="inf-tab-1" onclick="showInfTab(1)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--blue);border-bottom:2px solid var(--blue)">Cierre del día</button>
+    <button id="inf-tab-2" onclick="showInfTab(2)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Despachos por cliente</button>
+    <button id="inf-tab-3" onclick="showInfTab(3)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Rendimiento grupos</button>
+  </div>
+
+  <!-- Informe 1: Cierre del día -->
+  <div id="inf-panel-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Solicitado vs Armado — <span id="inf-fecha-label" style="color:var(--text3);font-weight:400"></span></div>
+        <div style="position:relative;height:220px"><canvas id="chart-cierre-sol-arm"></canvas></div>
       </div>
-      <div class="card">
-        <div class="card-title">
-          <span>Detalle por cliente</span>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div class="fg"><label>Desde</label><input type="date" id="graf-desde" style="width:145px;height:28px;font-size:12px"></div>
-            <div class="fg"><label>Hasta</label><input type="date" id="graf-hasta" style="width:145px;height:28px;font-size:12px"></div>
-            <button class="btn sm primary" onclick="cargarGraficos()">Actualizar</button>
-          </div>
-        </div>
-        <div style="position:relative;height:280px">
-          <canvas id="chart-clientes"></canvas>
-        </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Estado de pedidos</div>
+        <div style="position:relative;height:220px"><canvas id="chart-cierre-estados"></canvas></div>
       </div>
     </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos del día</div>
+      <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- Informe 2: Despachos por cliente -->
+  <div id="inf-panel-2" style="display:none">
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Despachos por cliente — período seleccionado</div>
+      <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por cliente</div>
+      <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- Informe 3: Rendimiento grupos -->
+  <div id="inf-panel-3" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Cajas armadas por grupo</div>
+        <div style="position:relative;height:250px"><canvas id="chart-grupos-arm"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Armado por máquina</div>
+        <div style="position:relative;height:250px"><canvas id="chart-maq-arm"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo y turno</div>
+      <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+</div>
 
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
@@ -528,8 +550,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
       <span>Registrar cambio de formato</span>
       <button class="btn sm" onclick="closeModal('modal-cambio-formato')">&#10005;</button>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Registra el cambio de kit realizado en una máquina para tener estadísticas reales de tiempo.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Registra el cambio de kit para estadísticas reales de tiempo.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div class="fg"><label>Máquina</label><select id="cf-maquina" style="width:100%"><option value="">Seleccionar...</option></select></div>
       <div class="fg"><label>Minutos reales</label><input type="number" id="cf-minutos" placeholder="Ej: 20" style="width:100%" inputmode="numeric"></div>
       <div class="fg"><label>Código anterior</label><input type="text" id="cf-antes" placeholder="Ej: F0999TL1" style="width:100%"></div>
@@ -719,197 +741,232 @@ function toggleFormulario() {
   if(btn) btn.querySelector('span:first-child').textContent = visible ? '+ Agregar pedido al plan' : '− Agregar pedido al plan';
 }
 
-// ── Punto 3: Historial cambios de formato ────────────────────
-async function registrarCambioFormato(maquina, codigoAntes, codigoDespues, tipo, minutos) {
+async function subirFotoGuia(despachoId, cliente, archivo) {
+  if(!archivo) return null;
+  const ext = archivo.name.split('.').pop().toLowerCase();
+  const nombre = 'guias/'+cliente.replace(/[^a-z0-9]/gi,'_')+'/'+despachoId+'_'+Date.now()+'.'+ext;
   try {
-    await sb('cambios_formato','POST',{
-      maquina: maquina,
-      codigo_antes: codigoAntes,
-      codigo_despues: codigoDespues,
-      tipo_cambio: tipo,
-      minutos_reales: minutos,
-      usuario: USER.nombre,
+    const res = await fetch('https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/'+nombre, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer '+SB_KEY,
+        'Content-Type': archivo.type,
+        'x-upsert': 'true'
+      },
+      body: archivo
     });
-  } catch(e) { console.warn('Error registrando cambio formato:', e.message); }
+    if(!res.ok) throw new Error(await res.text());
+    const url = 'https://uzioiyxrtoaeqfqhypci.supabase.co/storage/v1/object/public/'+nombre;
+    return url;
+  } catch(e) {
+    console.error('Error subiendo foto:', e);
+    return null;
+  }
+}
+
+// ── Alertas ────────────────────────────────────────────────
+function verificarAlertas(pedidos) {
+  var ahora = new Date();
+  var alertas = [];
+  pedidos.forEach(function(p) {
+    if(p.estado==='Cancelado'||p.estado==='Completado') return;
+    if(!p.hora_despacho||!p.fecha_despacho) return;
+    var dt = new Date(p.fecha_despacho+'T'+p.hora_despacho);
+    var diffMin = (dt-ahora)/60000;
+    var pct = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
+    if(diffMin>0&&diffMin<=180&&pct<80) alertas.push({p:p,diffMin:Math.round(diffMin),pct:pct});
+  });
+  var el = document.getElementById('alertas-plan');
+  if(!el) return;
+  if(!alertas.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+    '<span style="font-size:18px">&#9888;</span>'+
+    '<span style="font-size:13px;font-weight:700;color:#e85555">'+alertas.length+' pedido(s) en riesgo de no despachar a tiempo</span></div>'+
+    alertas.map(function(a){
+      var col=a.diffMin<=60?'#e85555':'#f0b429';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(232,85,85,.08);border-radius:6px;border-left:3px solid '+col+';margin-bottom:6px">'+
+        '<span style="font-size:16px">'+(a.diffMin<=60?'&#128680;':'&#9201;')+'</span>'+
+        '<span style="font-weight:600;font-size:13px">'+a.p.cliente+'</span>'+
+        '<code style="font-size:11px;color:var(--text2)">'+a.p.codigo+'</code>'+
+        '<span style="color:'+col+';font-weight:600;font-size:12px">'+a.pct+'% armado</span>'+
+        '<span style="color:'+col+';font-weight:700;font-size:12px;margin-left:auto">Despacha en '+a.diffMin+' min</span>'+
+      '</div>';
+    }).join('');
+}
+
+// ── Carga por máquina ──────────────────────────────────────
+function renderCargaMaquinas(pedidos) {
+  var el = document.getElementById('carga-maquinas-content');
+  var wrap = document.getElementById('carga-maquinas');
+  if(!el||!wrap) return;
+  var activos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
+  if(!activos.length){wrap.style.display='none';return;}
+  var porMaq={};
+  activos.forEach(function(p){
+    var m=p.maquina||'Sin máquina';
+    if(!porMaq[m]) porMaq[m]={sol:0,arm:0,pedidos:0};
+    porMaq[m].sol+=p.cantidad_pedida;
+    porMaq[m].arm+=p.cantidad_armada||0;
+    porMaq[m].pedidos++;
+  });
+  wrap.style.display='block';
+  el.innerHTML=Object.entries(porMaq).map(function(e){
+    var maq=e[0],d=e[1];
+    var pct=d.sol>0?Math.min(100,Math.round(d.arm/d.sol*100)):0;
+    var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--text3)';
+    return '<div style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+        '<span style="font-size:12px;font-weight:700">'+maq+'</span>'+
+        '<span style="font-size:10px;color:var(--text3)">'+d.pedidos+' ped.</span>'+
+      '</div>'+
+      '<div style="font-size:18px;font-weight:800;color:var(--text)">'+d.sol.toLocaleString('es-CL')+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">unidades</div>'+
+      '<div style="height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-bottom:4px">'+
+        '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:2px"></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between">'+
+        '<span style="font-size:10px;color:var(--text3)">'+d.arm.toLocaleString('es-CL')+' arm.</span>'+
+        '<span style="font-size:10px;color:'+col+';font-weight:700">'+pct+'%</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── Cambios de formato ────────────────────────────────────
+function showModalCambioFormato() {
+  var sel=document.getElementById('cf-maquina');
+  if(sel) sel.innerHTML='<option value="">Seleccionar...</option>'+
+    maquinasConfig.map(function(m){return '<option value="'+m.nombre+'">'+m.nombre+'</option>';}).join('');
+  document.getElementById('modal-cambio-formato').classList.add('open');
+}
+
+async function guardarCambioFormato() {
+  var maq=document.getElementById('cf-maquina')?.value;
+  var ant=document.getElementById('cf-antes')?.value?.trim();
+  var des=document.getElementById('cf-despues')?.value?.trim();
+  var min=parseInt(document.getElementById('cf-minutos')?.value)||null;
+  if(!maq||!ant||!des){alert('Completa máquina y códigos.');return;}
+  var ca=COD_IDX[ant],cb=COD_IDX[des];
+  var tipo=ca&&cb?compat(ca,cb):'cambio-completo';
+  try{
+    await sb('cambios_formato','POST',{maquina:maq,codigo_antes:ant,codigo_despues:des,tipo_cambio:tipo,minutos_reales:min,usuario:USER.nombre});
+    closeModal('modal-cambio-formato');
+    document.getElementById('cf-antes').value='';
+    document.getElementById('cf-despues').value='';
+    document.getElementById('cf-minutos').value='';
+    alert('Cambio registrado correctamente.');
+  }catch(e){alert('Error: '+e.message);}
 }
 
 async function verHistorialFormato() {
-  try {
-    const data = await sb('cambios_formato','GET',null,'?order=creado_en.desc&limit=100&select=*');
-    if(!data||!data.length) { alert('Sin historial de cambios de formato aún.'); return; }
-
-    // Calcular promedios por tipo
-    const promedios = {};
+  try{
+    var data=await sb('cambios_formato','GET',null,'?order=creado_en.desc&limit=100&select=*');
+    if(!data||!data.length){alert('Sin historial aún.');return;}
+    var prom={};
     data.forEach(function(r){
-      if(!promedios[r.tipo_cambio]) promedios[r.tipo_cambio]={total:0,count:0};
-      if(r.minutos_reales) { promedios[r.tipo_cambio].total+=r.minutos_reales; promedios[r.tipo_cambio].count++; }
+      if(!prom[r.tipo_cambio]) prom[r.tipo_cambio]={total:0,count:0};
+      if(r.minutos_reales){prom[r.tipo_cambio].total+=r.minutos_reales;prom[r.tipo_cambio].count++;}
     });
-
-    const modal = document.getElementById('modal-historial');
-    const body = document.getElementById('mh-body');
-    const title = document.getElementById('mh-title');
+    var modal=document.getElementById('modal-historial');
+    var body=document.getElementById('mh-body');
+    var title=document.getElementById('mh-title');
     if(!modal||!body||!title) return;
-    title.textContent = 'Historial de cambios de formato';
-
-    var resumeHtml = '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
-    Object.entries(promedios).forEach(function(e){
-      var tipo=e[0], d=e[1];
-      var col = tipo==='solo-altura'?'var(--green)':tipo==='ajuste-mayor'?'var(--yellow)':'var(--red)';
-      var avg = d.count>0?Math.round(d.total/d.count):0;
-      resumeHtml += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center">'+
-        '<div style="font-size:11px;color:var(--text3)">'+tipo.replace('-',' ')+'</div>'+
-        '<div style="font-size:20px;font-weight:700;color:'+col+'">'+avg+' min</div>'+
-        '<div style="font-size:10px;color:var(--text3)">promedio ('+d.count+' cambios)</div>'+
-      '</div>';
+    title.textContent='Historial de cambios de formato';
+    var resHtml='<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
+    Object.entries(prom).forEach(function(e){
+      var col=e[0]==='solo-altura'?'var(--green)':e[0]==='ajuste-mayor'?'var(--yellow)':'var(--red)';
+      var avg=e[1].count>0?Math.round(e[1].total/e[1].count):0;
+      resHtml+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center">'+
+        '<div style="font-size:10px;color:var(--text3)">'+e[0].replace(/-/g,' ')+'</div>'+
+        '<div style="font-size:22px;font-weight:800;color:'+col+'">'+avg+' min</div>'+
+        '<div style="font-size:10px;color:var(--text3)">promedio ('+e[1].count+' cambios)</div></div>';
     });
-    resumeHtml += '</div>';
-
-    var rows = data.map(function(r){
-      var col = r.tipo_cambio==='solo-altura'?'green':r.tipo_cambio==='ajuste-mayor'?'yellow':'red';
+    resHtml+='</div>';
+    var rows=data.map(function(r){
+      var col=r.tipo_cambio==='solo-altura'?'green':r.tipo_cambio==='ajuste-mayor'?'yellow':'red';
       return '<tr>'+
         '<td style="font-size:11px;color:var(--text3)">'+new Date(r.creado_en).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</td>'+
         '<td style="font-weight:600">'+r.maquina+'</td>'+
-        '<td><code style="font-size:11px">'+r.codigo_antes+'</code> → <code style="font-size:11px">'+r.codigo_despues+'</code></td>'+
-        '<td><span class="chip '+col+'">'+r.tipo_cambio.replace('-',' ')+'</span></td>'+
+        '<td><code>'+r.codigo_antes+'</code> &#8594; <code>'+r.codigo_despues+'</code></td>'+
+        '<td><span class="chip '+col+'">'+r.tipo_cambio.replace(/-/g,' ')+'</span></td>'+
         '<td style="font-weight:600">'+(r.minutos_reales||'—')+' min</td>'+
         '<td style="font-size:11px;color:var(--text3)">'+r.usuario+'</td>'+
       '</tr>';
     }).join('');
-
-    body.innerHTML = resumeHtml+
-      '<table class="dt"><thead><tr><th>Fecha</th><th>Máquina</th><th>Códigos</th><th>Tipo</th><th>Duración</th><th>Registrado por</th></tr></thead>'+
-      '<tbody>'+rows+'</tbody></table>';
+    body.innerHTML=resHtml+'<table class="dt"><thead><tr><th>Fecha</th><th>Máquina</th><th>Códigos</th><th>Tipo</th><th>Duración</th><th>Por</th></tr></thead><tbody>'+rows+'</tbody></table>';
     modal.classList.add('open');
-  } catch(e) { alert('Error: '+e.message); }
+  }catch(e){alert('Error: '+e.message);}
 }
 
-// Modal para registrar cambio de formato manualmente
-function showModalCambioFormato() {
-  const sel = document.getElementById('cf-maquina');
-  if(sel) {
-    sel.innerHTML = '<option value="">Seleccionar...</option>' +
-      maquinasConfig.map(function(m){return '<option value="'+m.nombre+'">'+m.nombre+'</option>';}).join('');
-  }
-  const modal = document.getElementById('modal-cambio-formato');
-  if(modal) modal.classList.add('open');
-}
-
-async function guardarCambioFormato() {
-  const maq = document.getElementById('cf-maquina')?.value;
-  const ant = document.getElementById('cf-antes')?.value?.trim();
-  const des = document.getElementById('cf-despues')?.value?.trim();
-  const min = parseInt(document.getElementById('cf-minutos')?.value)||0;
-  if(!maq||!ant||!des) { alert('Completa máquina y códigos.'); return; }
-
-  const ca = COD_IDX[ant];
-  const cb = COD_IDX[des];
-  const tipo = ca&&cb ? compat(ca,cb) : 'cambio-completo';
-
-  await registrarCambioFormato(maq, ant, des, tipo, min||null);
-  closeModal('modal-cambio-formato');
-  alert('Cambio de formato registrado.');
-}
-
-// ── Punto 4: Cierre del día ──────────────────────────────────
+// ── Cierre del día PDF ────────────────────────────────────
 async function generarCierreDelDia() {
-  const fecha = document.getElementById('filtro-fecha-plan')?.value || hoy();
-  try {
-    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&select=*');
-    const desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*');
-    const salidas = await sb('salidas_despacho','GET',null,'?select=*');
-    const formatos = await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
-
-    const activos = (pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
-    const cancelados = (pedidos||[]).filter(function(p){return p.estado==='Cancelado';});
-    const totalSol = activos.reduce(function(s,p){return s+p.cantidad_pedida;},0);
-    const totalArm = activos.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
-    const totalDesp = (salidas||[]).reduce(function(s,d){return s+d.cantidad;},0);
-    const pctArm = totalSol>0?Math.round(totalArm/totalSol*100):0;
-    const pctDesp = totalArm>0?Math.round(totalDesp/totalArm*100):0;
-    const formatosHoy = (formatos||[]).filter(function(f){return f.creado_en&&f.creado_en.startsWith(fecha);});
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p','mm','a4');
-    const w = doc.internal.pageSize.getWidth();
-    const m = 15;
-    let y = 0;
-
-    // Header
-    doc.setFillColor(15,17,23);
-    doc.rect(0,0,w,22,'F');
-    doc.setTextColor(34,201,138);
-    doc.setFontSize(16); doc.setFont('helvetica','bold');
-    doc.text('CSF Planificador', m, 10);
-    doc.setTextColor(200,200,200);
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text('Cierre del día — '+fecha, m, 17);
+  var fecha=document.getElementById('filtro-fecha-plan')?.value||hoy();
+  try{
+    var pedidos=await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&select=*');
+    var salidas=await sb('salidas_despacho','GET',null,'?select=*');
+    var formatos=await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
+    var activos=(pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
+    var cancelados=(pedidos||[]).filter(function(p){return p.estado==='Cancelado';});
+    var totalSol=activos.reduce(function(s,p){return s+p.cantidad_pedida;},0);
+    var totalArm=activos.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
+    var totalDesp=(salidas||[]).reduce(function(s,d){return s+d.cantidad;},0);
+    var pctArm=totalSol>0?Math.round(totalArm/totalSol*100):0;
+    var pctDesp=totalArm>0?Math.round(totalDesp/totalArm*100):0;
+    var formatosHoy=(formatos||[]).filter(function(f){return f.creado_en&&f.creado_en.startsWith(fecha);});
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF('p','mm','a4');
+    var w=doc.internal.pageSize.getWidth(),m=15,y=0;
+    doc.setFillColor(15,17,23);doc.rect(0,0,w,22,'F');
+    doc.setTextColor(34,201,138);doc.setFontSize(16);doc.setFont('helvetica','bold');
+    doc.text('CSF Planificador',m,11);
+    doc.setTextColor(200,200,200);doc.setFontSize(10);doc.setFont('helvetica','normal');
+    doc.text('Cierre del dia - '+fecha,m,18);
     doc.setTextColor(150,150,150);
-    doc.text('Generado: '+new Date().toLocaleString('es-CL'), w-m, 17, {align:'right'});
-    y = 32;
-
-    // Métricas principales
-    doc.setTextColor(30,30,30);
-    doc.setFontSize(11); doc.setFont('helvetica','bold');
-    doc.text('Resumen del día', m, y); y+=8;
-
-    const metricas = [
-      ['Cajas solicitadas', totalSol.toLocaleString('es-CL')],
-      ['Cajas armadas', totalArm.toLocaleString('es-CL')+' ('+pctArm+'%)'],
-      ['Cajas despachadas', totalDesp.toLocaleString('es-CL')+' ('+pctDesp+'% de lo armado)'],
-      ['Pedidos activos', activos.length.toString()],
-      ['Pedidos cancelados', cancelados.length.toString()],
-      ['Cambios de formato', formatosHoy.length.toString()],
+    doc.text('Generado: '+new Date().toLocaleString('es-CL'),w-m,18,{align:'right'});
+    y=30;
+    doc.setTextColor(30,30,30);doc.setFontSize(12);doc.setFont('helvetica','bold');
+    doc.text('Resumen del dia',m,y);y+=8;
+    var metricas=[
+      ['Cajas solicitadas',totalSol.toLocaleString('es-CL')],
+      ['Cajas armadas',totalArm.toLocaleString('es-CL')+' ('+pctArm+'%)'],
+      ['Cajas despachadas',totalDesp.toLocaleString('es-CL')+' ('+pctDesp+'% de lo armado)'],
+      ['Pedidos activos',activos.length+''],
+      ['Pedidos cancelados',cancelados.length+''],
+      ['Cambios de formato',formatosHoy.length+''],
     ];
     doc.setFontSize(10);
-    metricas.forEach(function(m2){
-      doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-      doc.text(m2[0]+':', m, y);
-      doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
-      doc.text(m2[1], 80, y);
-      y+=6;
+    metricas.forEach(function(mx){
+      doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);doc.text(mx[0]+':',m,y);
+      doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);doc.text(mx[1],85,y);y+=6;
     });
     y+=6;
-
-    // Tabla de pedidos
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30,30,30);
-    doc.text('Detalle de pedidos', m, y); y+=6;
-
-    // Cabecera tabla
-    doc.setFillColor(240,240,240);
-    doc.rect(m, y, w-m*2, 6, 'F');
-    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
-    doc.text('Cliente', m+2, y+4);
-    doc.text('Código', 70, y+4);
-    doc.text('Solicitado', 100, y+4);
-    doc.text('Armado', 125, y+4);
-    doc.text('Estado', 155, y+4);
-    y+=7;
-
-    doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30,30,30);
+    doc.text('Detalle de pedidos',m,y);y+=6;
+    doc.setFillColor(235,235,235);doc.rect(m,y,w-m*2,6,'F');
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);
+    doc.text('Cliente',m+2,y+4);doc.text('Codigo',72,y+4);
+    doc.text('Solicitado',100,y+4);doc.text('Armado',125,y+4);doc.text('Estado',155,y+4);y+=7;
+    doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);
     activos.forEach(function(p){
-      if(y > 270) { doc.addPage(); y=20; }
-      var pct2 = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
-      var est = pct2>=100?'Completado':p.estado;
+      if(y>270){doc.addPage();y=20;}
+      var pct2=p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
+      var est=pct2>=100&&p.estado==='Activo'?'Completado':p.estado;
       doc.setFontSize(8);
-      doc.text((p.cliente||'').substring(0,22), m+2, y+4);
-      doc.text(p.codigo||'', 70, y+4);
-      doc.text(p.cantidad_pedida.toLocaleString('es-CL'), 100, y+4);
-      doc.text((p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct2+'%)', 125, y+4);
-      doc.text(est, 155, y+4);
-      doc.setDrawColor(220,220,220);
-      doc.line(m, y+6, w-m, y+6);
-      y+=7;
+      doc.text((p.cliente||'').substring(0,22),m+2,y+4);
+      doc.text(p.codigo||'',72,y+4);
+      doc.text(p.cantidad_pedida.toLocaleString('es-CL'),100,y+4);
+      doc.text((p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct2+'%)',125,y+4);
+      doc.text(est,155,y+4);
+      doc.setDrawColor(220,220,220);doc.line(m,y+6,w-m,y+6);y+=7;
     });
-
-    // Footer
-    const ph = doc.internal.pageSize.getHeight();
-    doc.setFillColor(240,240,240);
-    doc.rect(0, ph-10, w, 10, 'F');
-    doc.setFontSize(8); doc.setTextColor(150,150,150);
-    doc.text('Contenedores San Fernando SpA. — Sistema de Planificacion', m, ph-3);
-
+    var ph=doc.internal.pageSize.getHeight();
+    doc.setFillColor(240,240,240);doc.rect(0,ph-10,w,10,'F');
+    doc.setFontSize(8);doc.setTextColor(150,150,150);
+    doc.text('Contenedores San Fernando SpA.',m,ph-3);
     doc.save('cierre_'+fecha+'.pdf');
-  } catch(e) { alert('Error generando cierre: '+e.message); }
+  }catch(e){alert('Error generando cierre: '+e.message);}
 }
 
 function mostrarSinConexion() {
@@ -953,7 +1010,7 @@ function initApp() {
 
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
-    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['graficos','Gráficos'],['informes','Informes']]
+    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['despacho','Mis Despachos']];
 
   const bar = document.getElementById('tabs-bar');
@@ -977,7 +1034,7 @@ function initApp() {
 
 function showTab(t) {
   const tabNames = USER.rol==='jefe'
-    ? ['planificar','cambios','armados','despacho','graficos','informes']
+    ? ['planificar','cambios','armados','despacho','informes']
     : ['desp-live','despacho'];
   document.querySelectorAll('.tab').forEach((el,i) => {
     el.classList.toggle('active', tabNames[i]===t);
@@ -995,8 +1052,7 @@ function refreshActual() {
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
-  else if(tabActual==='informes') { cargarMetricasInforme(); }
-  else if(tabActual==='graficos') { cargarGraficos(); }
+  else if(tabActual==='informes') { cargarInformes(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
 }
@@ -1275,44 +1331,6 @@ async function cargarPlanDia() {
   }
 }
 
-function verificarAlertas(pedidos) {
-  var ahora = new Date();
-  var alertas = [];
-  pedidos.forEach(function(p) {
-    if(p.estado === 'Cancelado' || p.estado === 'Completado') return;
-    if(!p.hora_despacho || !p.fecha_despacho) return;
-    var fechaHoraDesp = new Date(p.fecha_despacho + 'T' + p.hora_despacho);
-    var diffMin = (fechaHoraDesp - ahora) / 60000;
-    var pctArm = p.cantidad_pedida > 0 ? Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100) : 0;
-    if(diffMin > 0 && diffMin <= 180 && pctArm < 80) {
-      alertas.push({p:p, diffMin:Math.round(diffMin), pctArm:pctArm});
-    }
-  });
-
-  var alertEl = document.getElementById('alertas-plan');
-  if(!alertEl) return;
-  if(!alertas.length) { alertEl.style.display='none'; return; }
-
-  alertEl.style.display='block';
-  alertEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
-    '<span style="font-size:18px">&#9888;</span>'+
-    '<span style="font-size:13px;font-weight:700;color:#e85555">'+alertas.length+' pedido(s) en riesgo de no llegar a tiempo</span>'+
-    '</div>'+
-    alertas.map(function(a) {
-      var urgente = a.diffMin <= 60;
-      var col = urgente ? '#e85555' : '#f0b429';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(232,85,85,.08);border-radius:6px;border-left:3px solid '+col+';margin-bottom:6px">'+
-        '<span style="font-size:18px">'+(urgente?'&#128680;':'&#9201;')+'</span>'+
-        '<div style="flex:1">'+
-          '<span style="font-weight:600;font-size:13px">'+a.p.cliente+'</span>'+
-          '<span style="font-size:12px;color:var(--text2);margin-left:8px">'+a.p.codigo+'</span>'+
-        '</div>'+
-        '<span style="font-size:12px;color:'+col+';font-weight:600">'+a.pctArm+'% armado</span>'+
-        '<span style="font-size:12px;color:'+col+';font-weight:700;margin-left:8px">Despacha en '+a.diffMin+' min</span>'+
-      '</div>';
-    }).join('');
-}
-
 function renderPlanDia() {
   var el = document.getElementById('plan-dia-output');
   if(!el) return;
@@ -1362,62 +1380,97 @@ function renderPlanDia() {
         var armadas = p.cantidad_armada||0;
         var despNV = p.nv_referencia?(DESP_HIST[String(p.nv_referencia)]||{}):{};
         var despachado = despNV[p.codigo]||0;
-
         try {
-          if(pidx > 0 && orden === 'sinergia') {
-            var prev = items[pidx-1];
-            var ca = COD_IDX[prev.codigo];
-            var cb = COD_IDX[p.codigo];
-            if(ca && cb) {
-              var c = compat(ca, cb);
-              var sinLabel, sinColor, sinBg, sinIcon;
-              if(c==='solo-altura') { sinLabel='Solo altura'; sinColor='#22c98a'; sinBg='rgba(34,201,138,.12)'; sinIcon='&#8597;'; }
-              else if(c==='ajuste-mayor') { sinLabel='Ajuste mayor'; sinColor='#f0b429'; sinBg='rgba(240,180,41,.12)'; sinIcon='&#8644;'; }
-              else if(c==='maquina-diferente') { sinLabel='Maq. diferente'; sinColor='#a855f7'; sinBg='rgba(168,85,247,.12)'; sinIcon='&#9889;'; }
-              else { sinLabel='Cambio completo'; sinColor='#e85555'; sinBg='rgba(232,85,85,.12)'; sinIcon='&#9881;'; }
-              var tiempo = c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
-              var dims = (ca&&ca.largo&&cb&&cb.largo) ? ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto : '';
-              out += '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:3px 0;background:'+sinBg+';border-radius:6px;border-left:3px solid '+sinColor+'">';
-              out += '<span style="font-size:15px">'+sinIcon+'</span>';
-              out += '<span style="font-size:11px;color:'+sinColor+';font-weight:700">'+sinLabel+'</span>';
-              if(dims) out += '<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
-              if(tiempo) out += '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tiempo+'</span>';
-              out += '</div>';
+          if(pidx>0&&orden==='sinergia'){
+            var prev=items[pidx-1];
+            var ca=COD_IDX[prev.codigo],cb=COD_IDX[p.codigo];
+            if(ca&&cb){
+              var c=compat(ca,cb);
+              var sL,sC,sB,sI;
+              if(c==='solo-altura'){sL='Solo altura';sC='#22c98a';sB='rgba(34,201,138,.1)';sI='&#8597;';}
+              else if(c==='ajuste-mayor'){sL='Ajuste mayor';sC='#f0b429';sB='rgba(240,180,41,.1)';sI='&#8644;';}
+              else if(c==='maquina-diferente'){sL='Maq. diferente';sC='#a855f7';sB='rgba(168,85,247,.1)';sI='&#9889;';}
+              else{sL='Cambio completo';sC='#e85555';sB='rgba(232,85,85,.1)';sI='&#9881;';}
+              var tpo=c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
+              var dims=(ca.largo&&cb.largo)?ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto:'';
+              out+='<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:2px 0;background:'+sB+';border-radius:6px;border-left:3px solid '+sC+'">';
+              out+='<span style="font-size:14px">'+sI+'</span>';
+              out+='<span style="font-size:11px;color:'+sC+';font-weight:700">'+sL+'</span>';
+              if(dims) out+='<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
+              if(tpo) out+='<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tpo+'</span>';
+              out+='</div>';
             }
           }
-        } catch(eSin) { console.warn('Sinergia error:', eSin.message); }
+        } catch(eSin){console.warn('Sinergia:',eSin.message);}
         var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
 
-        out += '<div class="pfila">';
-        out += '<div class="dot" style="background:'+colorPrio(p.prioridad)+'"></div>';
-        out += '<span class="nv-tag">'+(p.nv_referencia||'--')+'</span>';
-        out += '<span style="font-weight:500;min-width:110px">'+p.cliente+'</span>';
-        out += '<code style="font-size:11px;color:var(--text2)">'+p.codigo+'</code>';
-        out += '<span style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.descripcion||'')+'</span>';
-        out += '<span style="color:var(--text2)">'+(p.destino||'')+'</span>';
-        out += '<span class="chip '+chipTipo(p.codigo)+'">'+tipo+'</span>';
-        out += '<span style="color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+' u.</span>';
-        out += '<span class="chip '+chipPrio(p.prioridad)+'">'+p.prioridad+'</span>';
-        out += '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
-        if(p.fecha_armado) out += '<span class="nv-tag" style="font-size:10px">'+p.fecha_armado+'</span>';
+        // Iconos prioridad y estado
+        var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
+        var estadoIcon = p.estado==='Activo'?'&#9654;':p.estado==='Modificado'?'&#9998;':p.estado==='Cancelado'?'&#10005;':'&#10003;';
+        var estadoCol = p.estado==='Activo'?'var(--green)':p.estado==='Modificado'?'var(--yellow)':p.estado==='Cancelado'?'var(--red)':'var(--blue)';
 
-        // Barra de progreso despacho vs solicitado
+        // Barras de progreso
+        var pctArm = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
+        var colArm = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
         var despInfo = window._despCache && window._despCache[p.id];
-        var cantSol = p.cantidad_pedida || 0;
-        if(despInfo && cantSol > 0) {
-          var despachado = despInfo.despachado || 0;
-          var pctD = Math.min(100, Math.round(despachado / cantSol * 100));
-          var colD = pctD >= 100 ? 'var(--green)' : pctD >= 50 ? 'var(--yellow)' : 'var(--red)';
-          out += '<div style="display:flex;align-items:center;gap:5px;margin-left:4px" title="'+despachado.toLocaleString()+' de '+cantSol.toLocaleString()+' despachadas">';
-          out += '<div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">';
-          out += '<div style="width:'+pctD+'%;height:100%;background:'+colD+';border-radius:3px"></div></div>';
-          out += '<span style="font-size:11px;color:'+colD+';font-weight:500">'+pctD+'% desp.</span>';
-          out += '</div>';
-        } else {
-          out += '<span style="font-size:11px;color:var(--text3);margin-left:4px">0% desp.</span>';
-        }
-        if(p.hora_entrega) out += '<span style="color:var(--yellow);font-size:11px;font-weight:500">Hora: '+p.hora_entrega+'</span>';
-        if(armadas>0) out += '<span style="color:var(--green);font-size:11px;font-weight:500">'+armadas.toLocaleString('es-CL')+' arm.</span>';
+        var despachado = despInfo?(despInfo.despachado||0):0;
+        var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
+        var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
+
+        out += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);flex-wrap:nowrap">';
+
+        // Col 1: Prioridad + Estado
+        out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
+        out += '<span title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
+        out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
+        out += '</div>';
+
+        // Col 2: Info principal
+        out += '<div style="flex:1;min-width:0">';
+        // Línea 1: cliente + código
+        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">';
+        out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
+        out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
+        out += '</div>';
+        // Línea 2: descripción (corta) + destino destacado
+        out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+p.descripcion+'</span>';
+        if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
+        out += '</div>';
+        // Línea 3: fechas más grandes
+        out += '<div style="display:flex;gap:12px">';
+        if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
+        if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
+        out += '</div>';
+        out += '</div>';
+
+        // Col 3: Cantidad
+        out += '<div style="flex-shrink:0;text-align:right;min-width:70px">';
+        out += '<div style="font-size:15px;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
+        out += '<div style="font-size:10px;color:var(--text3)">unidades</div>';
+        out += '</div>';
+
+        // Col 4: Barras de progreso
+        out += '<div style="flex-shrink:0;width:100px">';
+        // Armado
+        out += '<div style="margin-bottom:5px">';
+        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+        out += '<span style="font-size:10px;color:var(--text3)">Armado</span>';
+        out += '<span style="font-size:10px;color:'+colArm+';font-weight:600">'+pctArm+'%</span>';
+        out += '</div>';
+        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
+        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div>';
+        out += '</div></div>';
+        // Despachado
+        out += '<div>';
+        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+        out += '<span style="font-size:10px;color:var(--text3)">Despachado</span>';
+        out += '<span style="font-size:10px;color:'+colDesp+';font-weight:600">'+pctDesp+'%</span>';
+        out += '</div>';
+        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
+        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div>';
+        out += '</div></div>';
+        out += '</div>';
         if(despachado>0) {
           var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
           var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
@@ -1440,47 +1493,6 @@ function renderPlanDia() {
   el.innerHTML = out || '<div class="empty">Sin pedidos.</div>';
   verificarAlertas(pedidos);
   renderCargaMaquinas(pedidos);
-}
-
-function renderCargaMaquinas(pedidos) {
-  var el = document.getElementById('carga-maquinas-content');
-  var wrap = document.getElementById('carga-maquinas');
-  if(!el||!wrap) return;
-
-  var activos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
-  if(!activos.length) { wrap.style.display='none'; return; }
-
-  // Agrupar por máquina
-  var porMaq = {};
-  activos.forEach(function(p){
-    var m = p.maquina||'Sin máquina';
-    if(!porMaq[m]) porMaq[m]={sol:0,arm:0,pedidos:0};
-    porMaq[m].sol += p.cantidad_pedida;
-    porMaq[m].arm += p.cantidad_armada||0;
-    porMaq[m].pedidos++;
-  });
-
-  wrap.style.display='block';
-  el.innerHTML = Object.entries(porMaq).map(function(e){
-    var maq=e[0], d=e[1];
-    var pct = d.sol>0?Math.min(100,Math.round(d.arm/d.sol*100)):0;
-    var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--text3)';
-    return '<div style="flex:1;min-width:150px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-        '<span style="font-size:12px;font-weight:700">'+maq+'</span>'+
-        '<span style="font-size:10px;color:var(--text3)">'+d.pedidos+' ped.</span>'+
-      '</div>'+
-      '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">'+d.sol.toLocaleString('es-CL')+'</div>'+
-      '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">unidades solicitadas</div>'+
-      '<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:4px">'+
-        '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px"></div>'+
-      '</div>'+
-      '<div style="display:flex;justify-content:space-between">'+
-        '<span style="font-size:10px;color:var(--text3)">'+d.arm.toLocaleString('es-CL')+' arm.</span>'+
-        '<span style="font-size:10px;color:'+col+';font-weight:700">'+pct+'%</span>'+
-      '</div>'+
-    '</div>';
-  }).join('');
 }
 
 
@@ -1705,7 +1717,7 @@ async function verSalidas(id) {
     const salidas = await sb('salidas_despacho','GET',null,`?despacho_id=eq.${id}&order=creado_en.asc&select=*`);
     if(!salidas||!salidas.length) { el.innerHTML='<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>'; el.style.display='block'; return; }
     el.innerHTML=`<table class="dt" style="font-size:12px;margin-top:4px">
-      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Registrado por</th><th>Hora</th></tr></thead>
+      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th></tr></thead>
       <tbody>${salidas.map((s,i)=>`<tr>
         <td style="color:var(--text3)">${i+1}</td>
         <td style="font-weight:500">${s.cliente||'--'}</td>
@@ -1713,6 +1725,7 @@ async function verSalidas(id) {
         <td style="color:var(--text2)">${s.destino||'--'}</td>
         <td style="font-weight:500;color:var(--green)">${(s.cantidad||0).toLocaleString('es-CL')} u.</td>
         <td>${s.numero_guia?`<span class="nv-tag">${s.numero_guia}</span>`:'--'}</td>
+        <td>${s.foto_url?`<a href="${s.foto_url}" target="_blank" style="color:var(--blue);font-size:12px">&#128247; Ver foto</a>`:'--'}</td>
         <td style="color:var(--text2)">${s.registrado_por||'--'}</td>
         <td style="color:var(--text3)">${new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
       </tr>`).join('')}</tbody>
@@ -1842,57 +1855,76 @@ async function cargarPlanDespacho() {
       <div class="grupo">
         <div class="grupo-hdr">
           <span class="grupo-name">${cli}</span>
-          <span class="grupo-meta">${desps.length} despacho(s) . ${desps.reduce((s,d)=>s+d.cantidad_despachar,0).toLocaleString('es-CL')} u.</span>
+          <span class="grupo-meta">${desps.length} despacho(s) &middot; ${desps.reduce((s,d)=>s+d.cantidad_despachar,0).toLocaleString('es-CL')} u.</span>
         </div>
         ${desps.map(d=>{
           const pendiente = d.cantidad_despachar - (d.cantidad_despachada||0);
           const pct = d.cantidad_despachar>0?Math.min(100,Math.round((d.cantidad_despachada||0)/d.cantidad_despachar*100)):0;
           const col = pct>=100?'var(--green)':pct>0?'var(--yellow)':'var(--text3)';
           return `
-          <div class="pfila" style="flex-wrap:wrap;gap:10px;padding:10px 0">
-            <div style="display:flex;flex-direction:column;gap:3px;min-width:120px">
-              <code style="font-size:12px;color:var(--text2)">${d.codigo||'--'}</code>
-              <span style="font-size:12px;color:var(--text3)">${d.destino||'--'}</span>
-              ${d.nota?`<span style="font-size:11px;color:var(--text3)">${d.nota}</span>`:''}
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;color:var(--text3)">Total pedido</span>
-              <span style="font-weight:600">${d.cantidad_despachar.toLocaleString('es-CL')} u.</span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;color:var(--text3)">Despachado</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
-                <span style="font-size:12px;color:${col};font-weight:600">${(d.cantidad_despachada||0).toLocaleString('es-CL')} u. (${pct}%)</span>
+          <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+
+            <!-- Info principal -->
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                  <code style="font-size:14px;font-weight:700;color:var(--text);background:var(--bg3);padding:3px 10px;border-radius:6px">${d.codigo||'--'}</code>
+                  <span style="font-size:13px;font-weight:600;color:var(--blue)">&#8594; ${d.destino||'--'}</span>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                  ${d.hora_despacho?`<span style="font-size:13px;color:var(--yellow);font-weight:700">&#128666; ${d.hora_despacho}</span>`:''}
+                  ${d.fecha_despacho?`<span style="font-size:11px;color:var(--text3)">${d.fecha_despacho}</span>`:''}
+                  <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}" style="font-size:10px">${d.estado}</span>
+                </div>
+              </div>
+              <!-- Totales -->
+              <div style="text-align:right;flex-shrink:0;min-width:90px">
+                <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1">${d.cantidad_despachar.toLocaleString('es-CL')}</div>
+                <div style="font-size:10px;color:var(--text3);margin-bottom:4px">solicitadas</div>
+                <div style="font-size:13px;font-weight:700;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} pend.</div>
               </div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <span style="font-size:11px;color:var(--text3)">Pendiente</span>
-              <span style="font-weight:500;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} u.</span>
+
+            <!-- Barra de progreso -->
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:11px;color:var(--text3)">Progreso despacho</span>
+                <span style="font-size:12px;color:${col};font-weight:700">${(d.cantidad_despachada||0).toLocaleString('es-CL')} de ${d.cantidad_despachar.toLocaleString('es-CL')} &mdash; ${pct}%</span>
+              </div>
+              <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:${col};height:100%"></div></div>
             </div>
-            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
-            ${d.fecha_despacho && d.fecha_despacho !== '${fechaDesp}'?`<span class="nv-tag">${d.fecha_despacho}</span>`:''}
-            ${d.hora_despacho?`<span style="color:var(--yellow);font-size:12px;font-weight:600">Hora: ${d.hora_despacho}</span>`:''}
-            <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}">${d.estado}</span>
-            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:10px">Ver salidas</button>
-            <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:6px"></div>
+
+            <!-- Acciones -->
             ${d.estado!=='Despachado'&&d.estado!=='Cancelado'?`
-            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
-              <input type="number" id="desp-cant-${d.id}" placeholder="Cant. camión" 
-                style="width:120px;height:30px;font-size:12px" 
-                max="${pendiente}" min="1">
-              <input type="text" id="desp-guia-${d.id}" placeholder="N° guía" 
-                style="width:90px;height:30px;font-size:12px">
-              <button class="btn sm primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})">
-                Registrar salida
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--text3);flex-shrink:0">Registrar salida:</span>
+              <input type="number" id="desp-cant-${d.id}" placeholder="Cantidad" 
+                style="width:110px;height:32px;font-size:13px" min="1"
+                inputmode="numeric" pattern="[0-9]*">
+              <input type="text" id="desp-guia-${d.id}" placeholder="N° guía (opcional)" 
+                style="width:130px;height:32px;font-size:13px"
+                inputmode="numeric" pattern="[0-9]*">
+              <label style="display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);white-space:nowrap" title="Adjuntar foto de guía">
+                &#128247; Foto
+                <input type="file" id="desp-foto-${d.id}" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="this.parentElement.style.borderColor='var(--green)';this.parentElement.style.color='var(--green)'">
+              </label>
+              <button class="btn primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})"
+                style="height:32px;padding:0 16px;font-size:12px">
+                &#10003; Registrar
               </button>
-              ${pendiente>0?`<button class="btn sm green" onclick="marcarDespachado('${d.id}')" style="background:var(--green);color:#0f1117;border-color:var(--green)">
-                ✓ Listo
+              ${pendiente===0?`<button class="btn green" onclick="marcarDespachado('${d.id}')"
+                style="height:32px;padding:0 16px;font-size:12px;background:var(--green);color:#0f1117;border-color:var(--green)">
+                &#128666; Marcar despachado
               </button>`:''}
-            </div>`:`
-            <div style="margin-left:auto;display:flex;gap:6px">
-              ${USER.rol==='jefe'?`<button class="btn sm danger" onclick="eliminarDespacho('${d.id}')">Quitar</button>`:''}
-            </div>`}
+            </div>
+            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
+            `:`
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--green);font-weight:600">&#10003; Completado</span>
+              <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
+            </div>
+            `}
+            <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:8px"></div>
           </div>`;
         }).join('')}
       </div>`).join('');
@@ -1924,19 +1956,25 @@ async function guardarDespacho() {
 async function registrarSalida(id, totalPedido, yaEnviado) {
   const cantEl = document.getElementById('desp-cant-'+id);
   const guiaEl = document.getElementById('desp-guia-'+id);
+  const fotoEl = document.getElementById('desp-foto-'+id);
   const cant = parseInt(cantEl?.value)||0;
   const guia = guiaEl?.value?.trim()||'';
   if(!cant) { alert('Ingresa la cantidad que sale en este camión.'); return; }
   const nuevoDespachado = yaEnviado + cant;
-  if(nuevoDespachado > totalPedido) {
-    alert(`No puedes superar el total pedido (${totalPedido.toLocaleString('es-CL')} u.). Ya enviados: ${yaEnviado.toLocaleString('es-CL')}, intentas agregar: ${cant.toLocaleString('es-CL')}.`);
-    return;
-  }
-  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso';
+  // Sin límite - permite despachar más que lo solicitado (ej: cubicaje de cajas)
+  const nuevoEstado = nuevoDespachado >= totalPedido ? 'Despachado' : 'En proceso'; // puede superar total
   try {
     // Obtener info del despacho para copiar en la salida
     const actual = await sb('plan_despacho','GET',null,`?id=eq.${id}&select=*`);
     const d = actual&&actual[0] ? actual[0] : {};
+
+    // Subir foto si existe
+    let fotoUrl = null;
+    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
+      const actual2 = await sb('plan_despacho','GET',null,'?id=eq.'+id+'&select=cliente');
+      const cli = actual2&&actual2[0]?actual2[0].cliente:'cliente';
+      fotoUrl = await subirFotoGuia(id, cli, fotoEl.files[0]);
+    }
 
     // Crear registro individual de salida
     await sb('salidas_despacho','POST',{
@@ -1946,6 +1984,7 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
       destino: d.destino||'',
       cantidad: cant,
       numero_guia: guia||null,
+      foto_url: fotoUrl||null,
       registrado_por: USER.nombre,
     });
 
@@ -1959,6 +1998,7 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
     // Limpiar campos
     if(cantEl) cantEl.value='';
     if(guiaEl) guiaEl.value='';
+    if(fotoEl) fotoEl.value='';
     cargarPlanDespacho();
   } catch(e) { alert('Error: '+e.message); }
 }
@@ -2052,12 +2092,398 @@ async function verForecast(nv) {
 }
 
 // -- Informes --------------------------------------------------
+// Charts de informes
+let chartCierreSolArm = null, chartCierreEstados = null;
+let chartDespCliente = null, chartGruposArm = null, chartMaqArm = null;
+
+// Plugin inline para etiquetas en dona
+const datalabelsPlugin = {
+  id:'datalabels',
+  afterDatasetsDraw:function(chart){
+    var ctx3 = chart.ctx;
+    chart.data.datasets.forEach(function(dataset, i){
+      var meta = chart.getDatasetMeta(i);
+      meta.data.forEach(function(arc, j){
+        var val = dataset.data[j];
+        if(!val) return;
+        var total = dataset.data.reduce(function(a,b){return a+b;},0);
+        var pct = Math.round(val/total*100);
+        if(pct < 5) return;
+        var angle = (arc.startAngle + arc.endAngle) / 2;
+        var r = (arc.outerRadius + arc.innerRadius) / 2;
+        var x = arc.x + Math.cos(angle) * r;
+        var y = arc.y + Math.sin(angle) * r;
+        ctx3.save();
+        ctx3.fillStyle = '#fff';
+        ctx3.font = 'bold 12px system-ui';
+        ctx3.textAlign = 'center';
+        ctx3.textBaseline = 'middle';
+        ctx3.fillText(val+' ('+pct+'%)', x, y);
+        ctx3.restore();
+      });
+    });
+  }
+};
+
+function showInfTab(n) {
+  [1,2,3].forEach(function(i) {
+    document.getElementById('inf-panel-'+i).style.display = i===n?'block':'none';
+    var btn = document.getElementById('inf-tab-'+i);
+    if(btn) {
+      btn.style.color = i===n?'var(--blue)':'var(--text3)';
+      btn.style.borderBottomColor = i===n?'var(--blue)':'transparent';
+    }
+  });
+}
+
+function setInfModo(modo) {
+  var esDia = modo === 'dia';
+  document.getElementById('inf-filtro-dia').style.display = esDia ? 'flex' : 'none';
+  document.getElementById('inf-filtro-rango').style.display = esDia ? 'none' : 'flex';
+  var btnDia = document.getElementById('inf-modo-dia');
+  var btnRango = document.getElementById('inf-modo-rango');
+  if(btnDia) { btnDia.style.background = esDia?'var(--blue)':'transparent'; btnDia.style.color = esDia?'#fff':'var(--text3)'; }
+  if(btnRango) { btnRango.style.background = esDia?'transparent':'var(--blue)'; btnRango.style.color = esDia?'var(--text3)':'#fff'; }
+  // Sincronizar fechas
+  if(esDia) {
+    var f = document.getElementById('inf-fecha')?.value || hoy();
+    var desdeEl = document.getElementById('inf-desde');
+    var hastaEl = document.getElementById('inf-hasta');
+    if(desdeEl) desdeEl.value = f;
+    if(hastaEl) hastaEl.value = f;
+  } else {
+    var desde = document.getElementById('inf-desde')?.value || hoy();
+    var hasta = document.getElementById('inf-hasta')?.value || hoy();
+    var fechaEl = document.getElementById('inf-fecha');
+    if(fechaEl) fechaEl.value = desde;
+  }
+}
+
+async function cargarInformes() {
+  // Sincronizar fechas según modo activo
+  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  if(esDia) {
+    var f = document.getElementById('inf-fecha')?.value || hoy();
+    var desdeEl = document.getElementById('inf-desde');
+    var hastaEl = document.getElementById('inf-hasta');
+    if(desdeEl) desdeEl.value = f;
+    if(hastaEl) hastaEl.value = f;
+  }
+  await cargarMetricasInforme();
+  await cargarInformeCierre();
+  await cargarInformeClientes();
+  await cargarInformeGrupos();
+}
+
+async function cargarInformeCierre() {
+  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  const desde = document.getElementById('inf-desde')?.value || hoy();
+  const hasta = document.getElementById('inf-hasta')?.value || hoy();
+  const el = document.getElementById('inf-fecha-label');
+  if(el) el.textContent = esDia ? fecha : desde+' → '+hasta;
+
+  try {
+    const query = esDia
+      ? '?fecha_armado=eq.'+fecha+'&select=*'
+      : '?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*';
+    const pedidos = await sb('pedidos_dia','GET',null, query);
+    if(!pedidos||!pedidos.length) {
+      document.getElementById('inf-tabla-cierre').innerHTML='<p style="color:var(--text3);font-size:13px">Sin pedidos para esta fecha.</p>';
+      return;
+    }
+
+    // Separar activos/completados de cancelados
+    const pedidosActivos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
+    const pedidosCancelados = pedidos.filter(function(p){return p.estado==='Cancelado';});
+
+    // Gráfico barras sol vs arm — solo activos/completados
+    const labels = pedidosActivos.map(function(p){return p.codigo;});
+    const sol = pedidosActivos.map(function(p){return p.cantidad_pedida;});
+    const arm = pedidosActivos.map(function(p){return p.cantidad_armada||0;});
+
+    const ctx1 = document.getElementById('chart-cierre-sol-arm');
+    if(chartCierreSolArm) chartCierreSolArm.destroy();
+    chartCierreSolArm = new Chart(ctx1, {
+      type:'bar',
+      data:{labels:labels,datasets:[
+        {label:'Solicitado',data:sol,backgroundColor:'rgba(74,158,255,.7)',borderColor:'#4a9eff',borderWidth:1},
+        {label:'Armado',data:arm,backgroundColor:'rgba(240,180,41,.7)',borderColor:'#f0b429',borderWidth:1}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
+        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Gráfico dona estados — solo activos/completados/modificados
+    const estados = {};
+    pedidosActivos.forEach(function(p){
+      var e = (p.cantidad_pedida>0 && (p.cantidad_armada||0)>=p.cantidad_pedida && p.estado==='Activo') ? 'Completado' : p.estado;
+      estados[e]=(estados[e]||0)+1;
+    });
+    const ctx2 = document.getElementById('chart-cierre-estados');
+    if(chartCierreEstados) chartCierreEstados.destroy();
+    const colorEstado = function(e) {
+      if(e==='Activo') return 'rgba(34,201,138,.85)';
+      if(e==='Completado') return 'rgba(74,158,255,.85)';
+      if(e==='Modificado') return 'rgba(240,180,41,.85)';
+      if(e==='Cancelado') return 'rgba(232,85,85,.85)';
+      return 'rgba(139,144,167,.85)';
+    };
+    chartCierreEstados = new Chart(ctx2, {
+      type:'doughnut',
+      data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),
+        backgroundColor:Object.keys(estados).map(colorEstado),
+        borderWidth:0}]},
+      plugins:[datalabelsPlugin],
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{
+          legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:12}},
+          tooltip:{callbacks:{label:function(ctx){
+            var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+            var pct = Math.round(ctx.parsed/total*100);
+            return ' '+ctx.label+': '+ctx.parsed+' ('+pct+'%)';
+          }}}
+        }
+      }
+    });
+
+    // Tabla detalle
+    var rows = pedidos.map(function(p){
+      var pct = p.cantidad_pedida>0?Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100):0;
+      var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+      return '<tr>'+
+        '<td style="font-weight:500">'+p.cliente+'</td>'+
+        '<td><code style="font-size:11px">'+p.codigo+'</code></td>'+
+        '<td>'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
+        '<td style="color:'+col+';font-weight:600">'+(p.cantidad_armada||0).toLocaleString('es-CL')+' ('+pct+'%)</td>'+
+        '<td>'+(p.grupo||'—')+'</td>'+
+        '<td>'+(p.maquina||'—')+'</td>'+
+        '<td><span class="chip '+(p.estado==='Activo'?'green':p.estado==='Cancelado'?'red':'yellow')+'">'+p.estado+'</span></td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-cierre').innerHTML =
+      '<table class="dt"><thead><tr><th>Cliente</th><th>Código</th><th>Solicitado</th><th>Armado</th><th>Grupo</th><th>Máquina</th><th>Estado</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe cierre:', e.message); }
+}
+
+async function cargarInformeClientes() {
+  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
+  const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
+  try {
+    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=*');
+    if(!salidas||!salidas.length) {
+      document.getElementById('inf-tabla-clientes').innerHTML='<p style="color:var(--text3);font-size:13px">Sin despachos en el período.</p>';
+      return;
+    }
+
+    // Agrupar por cliente
+    var porCli = {};
+    salidas.forEach(function(s){
+      if(!porCli[s.cliente]) porCli[s.cliente]={cant:0,guias:new Set(),salidas:0};
+      porCli[s.cliente].cant += s.cantidad||0;
+      if(s.numero_guia) porCli[s.cliente].guias.add(s.numero_guia);
+      porCli[s.cliente].salidas++;
+    });
+    var sorted = Object.entries(porCli).sort(function(a,b){return b[1].cant-a[1].cant;});
+
+    // Gráfico
+    const ctx = document.getElementById('chart-desp-cliente');
+    if(chartDespCliente) chartDespCliente.destroy();
+    chartDespCliente = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels:sorted.map(function(e){return e[0];}),
+        datasets:[{label:'Unidades despachadas',data:sorted.map(function(e){return e[1].cant;}),
+          backgroundColor:'rgba(34,201,138,.7)',borderColor:'#22c98a',borderWidth:1}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Tabla
+    var rows = sorted.map(function(e){
+      return '<tr>'+
+        '<td style="font-weight:600">'+e[0]+'</td>'+
+        '<td style="color:var(--green);font-weight:700">'+e[1].cant.toLocaleString('es-CL')+'</td>'+
+        '<td>'+e[1].salidas+'</td>'+
+        '<td>'+e[1].guias.size+'</td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-clientes').innerHTML =
+      '<table class="dt"><thead><tr><th>Cliente</th><th>Unidades despachadas</th><th>Salidas</th><th>Guías</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe clientes:', e.message); }
+}
+
+async function cargarInformeGrupos() {
+  const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
+  const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
+  try {
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
+    if(!pedidos||!pedidos.length) {
+      document.getElementById('inf-tabla-grupos').innerHTML='<p style="color:var(--text3);font-size:13px">Sin datos en el período.</p>';
+      return;
+    }
+
+    // Agrupar por grupo
+    var porGrupo = {};
+    var porMaq = {};
+    pedidos.forEach(function(p){
+      var g = p.grupo||'Sin grupo';
+      var m = p.maquina||'Sin máquina';
+      if(!porGrupo[g]) porGrupo[g]={sol:0,arm:0,pedidos:0,turno:p.turno||''};
+      porGrupo[g].sol += p.cantidad_pedida;
+      porGrupo[g].arm += p.cantidad_armada||0;
+      porGrupo[g].pedidos++;
+      if(!porMaq[m]) porMaq[m]={sol:0,arm:0};
+      porMaq[m].sol += p.cantidad_pedida;
+      porMaq[m].arm += p.cantidad_armada||0;
+    });
+
+    // Gráfico grupos
+    var gSorted = Object.entries(porGrupo).sort(function(a,b){return b[1].arm-a[1].arm;});
+    const ctx1 = document.getElementById('chart-grupos-arm');
+    if(chartGruposArm) chartGruposArm.destroy();
+    chartGruposArm = new Chart(ctx1, {
+      type:'bar',
+      data:{labels:gSorted.map(function(e){return e[0];}),datasets:[
+        {label:'Solicitado',data:gSorted.map(function(e){return e[1].sol;}),backgroundColor:'rgba(74,158,255,.6)',borderWidth:0},
+        {label:'Armado',data:gSorted.map(function(e){return e[1].arm;}),backgroundColor:'rgba(240,180,41,.8)',borderWidth:0}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#8b90a7',font:{size:11}}}},
+        scales:{x:{ticks:{color:'#555d7a',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+
+    // Gráfico máquinas (dona)
+    var mSorted = Object.entries(porMaq);
+    const ctx2 = document.getElementById('chart-maq-arm');
+    if(chartMaqArm) chartMaqArm.destroy();
+    chartMaqArm = new Chart(ctx2, {
+      type:'doughnut',
+      data:{labels:mSorted.map(function(e){return e[0];}),datasets:[{
+        data:mSorted.map(function(e){return e[1].arm;}),
+        backgroundColor:['rgba(74,158,255,.8)','rgba(240,180,41,.8)','rgba(34,201,138,.8)','rgba(168,85,247,.8)'],
+        borderWidth:0
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:10}}}}
+    });
+
+    // Tabla
+    var rows = gSorted.map(function(e){
+      var pct = e[1].sol>0?Math.round(e[1].arm/e[1].sol*100):0;
+      var col = pct>=100?'var(--green)':pct>=70?'var(--yellow)':'var(--red)';
+      return '<tr>'+
+        '<td style="font-weight:600">'+e[0]+'</td>'+
+        '<td style="color:var(--text3)">'+e[1].turno+'</td>'+
+        '<td>'+e[1].pedidos+'</td>'+
+        '<td>'+e[1].sol.toLocaleString('es-CL')+'</td>'+
+        '<td style="color:'+col+';font-weight:700">'+e[1].arm.toLocaleString('es-CL')+' ('+pct+'%)</td>'+
+      '</tr>';
+    }).join('');
+    document.getElementById('inf-tabla-grupos').innerHTML =
+      '<table class="dt"><thead><tr><th>Grupo</th><th>Turno</th><th>Pedidos</th><th>Solicitado</th><th>Armado</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('Informe grupos:', e.message); }
+}
+
+async function exportarPDFInforme() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const w = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  let y = 20;
+
+  // Header
+  doc.setFillColor(15, 17, 23);
+  doc.rect(0, 0, w, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CSF Planificador — Informe', margin, 12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(139, 144, 167);
+  const desde = document.getElementById('inf-desde')?.value || hoy();
+  const hasta = document.getElementById('inf-hasta')?.value || hoy();
+  const fecha = document.getElementById('inf-fecha')?.value || hoy();
+  doc.text('Generado: '+new Date().toLocaleString('es-CL'), w-margin, 12, {align:'right'});
+  y = 28;
+
+  // Título del informe activo
+  const tabActiva = document.querySelector('[id^="inf-tab-"][style*="var(--blue)"]');
+  const tabNombre = tabActiva ? tabActiva.textContent.trim() : 'Informe';
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text(tabNombre, margin, y);
+  y += 8;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text('Período: '+desde+' → '+hasta+' | Fecha: '+fecha, margin, y);
+  y += 10;
+
+  // Capturar el panel activo como imagen
+  const panelActivo = [1,2,3].map(function(i){
+    var p = document.getElementById('inf-panel-'+i);
+    return p && p.style.display !== 'none' ? p : null;
+  }).filter(Boolean)[0];
+
+  if(panelActivo) {
+    try {
+      const canvas = await html2canvas(panelActivo, {
+        scale: 1.5,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const imgW = w - margin*2;
+      const imgH = canvas.height * imgW / canvas.width;
+
+      // Si no cabe en una página, escalar
+      const maxH = doc.internal.pageSize.getHeight() - y - 20;
+      const finalH = imgH > maxH ? maxH : imgH;
+      doc.addImage(imgData, 'PNG', margin, y, imgW, finalH);
+      y += finalH + 10;
+    } catch(e) {
+      console.warn('html2canvas error:', e);
+      doc.setTextColor(200, 50, 50);
+      doc.text('Error al capturar gráficos: '+e.message, margin, y);
+    }
+  }
+
+  // Footer
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFillColor(240, 240, 240);
+  doc.rect(0, pageH-10, w, 10, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Contenedores San Fernando SpA. — Sistema de Planificación', margin, pageH-3);
+  doc.text('Página 1', w-margin, pageH-3, {align:'right'});
+
+  doc.save('informe_csf_'+hoy()+'.pdf');
+}
+
 async function cargarMetricasInforme() {
   const el = document.getElementById('met-informes');
   if(!el) return;
   try {
-    const pedidos = await sb('pedidos_dia','GET',null,`?fecha=eq.${hoy()}&select=*`);
-    const desps = await sb('plan_despacho','GET',null,`?fecha=eq.${hoy()}&select=*`);
+    const esDia = document.getElementById('inf-filtro-dia')?.style.display !== 'none';
+    const fecha = document.getElementById('inf-fecha')?.value || hoy();
+    const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
+    const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
+    const desps = await sb('plan_despacho','GET',null,'?fecha_despacho=gte.'+desde+'&fecha_despacho=lte.'+hasta+'&select=*');
     const totalPed = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
     const totalArm = (pedidos||[]).reduce((s,p)=>s+p.cantidad_armada,0);
     const totalDesp = (desps||[]).filter(d=>d.estado==='Despachado').reduce((s,d)=>s+d.cantidad_despachar,0);
