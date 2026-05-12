@@ -1919,10 +1919,14 @@ async function cargarInformeCierre() {
       return;
     }
 
-    // Gráfico barras sol vs arm por código
-    const labels = pedidos.map(function(p){return p.codigo;});
-    const sol = pedidos.map(function(p){return p.cantidad_pedida;});
-    const arm = pedidos.map(function(p){return p.cantidad_armada||0;});
+    // Separar activos/completados de cancelados
+    const pedidosActivos = pedidos.filter(function(p){return p.estado!=='Cancelado';});
+    const pedidosCancelados = pedidos.filter(function(p){return p.estado==='Cancelado';});
+
+    // Gráfico barras sol vs arm — solo activos/completados
+    const labels = pedidosActivos.map(function(p){return p.codigo;});
+    const sol = pedidosActivos.map(function(p){return p.cantidad_pedida;});
+    const arm = pedidosActivos.map(function(p){return p.cantidad_armada||0;});
 
     const ctx1 = document.getElementById('chart-cierre-sol-arm');
     if(chartCierreSolArm) chartCierreSolArm.destroy();
@@ -1938,18 +1942,37 @@ async function cargarInformeCierre() {
                 y:{ticks:{color:'#555d7a'},grid:{color:'rgba(255,255,255,.05)'}}}}
     });
 
-    // Gráfico dona estados
+    // Gráfico dona estados — solo activos/completados/modificados
     const estados = {};
-    pedidos.forEach(function(p){ estados[p.estado]=(estados[p.estado]||0)+1; });
+    pedidosActivos.forEach(function(p){
+      var e = (p.cantidad_pedida>0 && (p.cantidad_armada||0)>=p.cantidad_pedida && p.estado==='Activo') ? 'Completado' : p.estado;
+      estados[e]=(estados[e]||0)+1;
+    });
     const ctx2 = document.getElementById('chart-cierre-estados');
     if(chartCierreEstados) chartCierreEstados.destroy();
+    const colorEstado = function(e) {
+      if(e==='Activo') return 'rgba(34,201,138,.85)';
+      if(e==='Completado') return 'rgba(74,158,255,.85)';
+      if(e==='Modificado') return 'rgba(240,180,41,.85)';
+      if(e==='Cancelado') return 'rgba(232,85,85,.85)';
+      return 'rgba(139,144,167,.85)';
+    };
     chartCierreEstados = new Chart(ctx2, {
       type:'doughnut',
       data:{labels:Object.keys(estados),datasets:[{data:Object.values(estados),
-        backgroundColor:['rgba(34,201,138,.8)','rgba(240,180,41,.8)','rgba(232,85,85,.8)','rgba(74,158,255,.8)'],
+        backgroundColor:Object.keys(estados).map(colorEstado),
         borderWidth:0}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
-        plugins:{legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:12}}}}
+      plugins:[datalabelsPlugin],
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{
+          legend:{position:'right',labels:{color:'#8b90a7',font:{size:11},padding:12}},
+          tooltip:{callbacks:{label:function(ctx){
+            var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+            var pct = Math.round(ctx.parsed/total*100);
+            return ' '+ctx.label+': '+ctx.parsed+' ('+pct+'%)';
+          }}}
+        }
+      }
     });
 
     // Tabla detalle
