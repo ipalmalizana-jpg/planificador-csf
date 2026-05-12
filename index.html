@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -403,93 +402,108 @@ table.dt tr:hover td{background:rgba(255,255,255,.02)}
     <!-- JEFE: Informes -->
     <div class="sec" id="sec-informes">
 
-  <!-- Métricas resumen -->
-  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
-
-  <!-- Barra de filtros -->
+  <!-- Barra de control -->
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <!-- Selector de modo -->
-    <div style="display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:3px">
+    <!-- Toggle día / rango -->
+    <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
       <button id="inf-modo-dia" onclick="setInfModo('dia')"
-        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:var(--blue);color:#fff">
+        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--blue);color:#fff">
         Un día
       </button>
       <button id="inf-modo-rango" onclick="setInfModo('rango')"
-        style="padding:4px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text3)">
+        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3)">
         Rango
       </button>
     </div>
-
-    <!-- Modo un día -->
-    <div id="inf-filtro-dia" style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
+    <!-- Filtro día -->
+    <div id="inf-filtro-dia" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
       <span style="font-size:11px;color:var(--text3)">Fecha</span>
       <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
     </div>
-
-    <!-- Modo rango -->
-    <div id="inf-filtro-rango" style="display:none;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px">
-      <span style="font-size:11px;color:var(--text3)">Desde</span>
+    <!-- Filtro rango -->
+    <div id="inf-filtro-rango" style="display:none;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
       <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
       <span style="font-size:11px;color:var(--text3)">→</span>
       <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
     </div>
-
     <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
     <button class="btn sm blue" onclick="exportarExcelInforme()" style="height:34px">Excel</button>
-    <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:var(--red);color:#fff;border-color:var(--red)">&#128196; PDF</button>
+    <button class="btn sm" onclick="exportarPDFInforme()" style="height:34px;background:#e85555;color:#fff;border-color:#e85555">&#128196; PDF</button>
+    <button class="btn sm" onclick="generarCierreDelDia()" style="height:34px;background:var(--green);color:#0f1117;border-color:var(--green)">&#128196; Cierre día</button>
   </div>
 
-  <!-- 3 informes en tabs -->
-  <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)">
-    <button id="inf-tab-1" onclick="showInfTab(1)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--blue);border-bottom:2px solid var(--blue)">Cierre del día</button>
-    <button id="inf-tab-2" onclick="showInfTab(2)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Despachos por cliente</button>
-    <button id="inf-tab-3" onclick="showInfTab(3)" style="padding:8px 18px;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">Rendimiento grupos</button>
+  <!-- Métricas -->
+  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
+
+  <!-- Tabs de informes -->
+  <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;gap:2px">
+    <button id="inf-tab-1" onclick="showInfTab(1)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid var(--blue);margin-bottom:-2px;cursor:pointer;color:var(--blue)">
+      &#128203; Cierre del día
+    </button>
+    <button id="inf-tab-2" onclick="showInfTab(2)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
+      &#128666; Despachos por cliente
+    </button>
+    <button id="inf-tab-3" onclick="showInfTab(3)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
+      &#9881; Rendimiento grupos
+    </button>
   </div>
 
-  <!-- Informe 1: Cierre del día -->
+  <!-- Panel 1: Cierre del día -->
   <div id="inf-panel-1">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px">
       <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Solicitado vs Armado — <span id="inf-fecha-label" style="color:var(--text3);font-weight:400"></span></div>
-        <div style="position:relative;height:220px"><canvas id="chart-cierre-sol-arm"></canvas></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Solicitado vs Armado</div>
+            <div style="font-size:11px;color:var(--text3)" id="inf-fecha-label"></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#4a9eff;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="chart-cierre-sol-arm"></canvas></div>
       </div>
       <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Estado de pedidos</div>
-        <div style="position:relative;height:220px"><canvas id="chart-cierre-estados"></canvas></div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Estado de pedidos</div>
+        <div style="position:relative;height:200px"><canvas id="chart-cierre-estados"></canvas></div>
       </div>
     </div>
     <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos del día</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos</div>
       <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
     </div>
   </div>
 
-  <!-- Informe 2: Despachos por cliente -->
+  <!-- Panel 2: Despachos por cliente -->
   <div id="inf-panel-2" style="display:none">
     <div class="card" style="padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Despachos por cliente — período seleccionado</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Unidades despachadas por cliente</div>
       <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
     </div>
     <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por cliente</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Resumen por cliente</div>
       <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
     </div>
   </div>
 
-  <!-- Informe 3: Rendimiento grupos -->
+  <!-- Panel 3: Rendimiento grupos -->
   <div id="inf-panel-3" style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Cajas armadas por grupo</div>
-        <div style="position:relative;height:250px"><canvas id="chart-grupos-arm"></canvas></div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Armado por grupo</div>
+        <div style="position:relative;height:240px"><canvas id="chart-grupos-arm"></canvas></div>
       </div>
       <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Armado por máquina</div>
-        <div style="position:relative;height:250px"><canvas id="chart-maq-arm"></canvas></div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Distribución por máquina</div>
+        <div style="position:relative;height:240px"><canvas id="chart-maq-arm"></canvas></div>
       </div>
     </div>
     <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo y turno</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo</div>
       <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
     </div>
   </div>
@@ -816,20 +830,13 @@ function renderCargaMaquinas(pedidos) {
     var maq=e[0],d=e[1];
     var pct=d.sol>0?Math.min(100,Math.round(d.arm/d.sol*100)):0;
     var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--text3)';
-    return '<div style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-        '<span style="font-size:12px;font-weight:700">'+maq+'</span>'+
-        '<span style="font-size:10px;color:var(--text3)">'+d.pedidos+' ped.</span>'+
-      '</div>'+
-      '<div style="font-size:18px;font-weight:800;color:var(--text)">'+d.sol.toLocaleString('es-CL')+'</div>'+
-      '<div style="font-size:10px;color:var(--text3);margin-bottom:6px">unidades</div>'+
-      '<div style="height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-bottom:4px">'+
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;white-space:nowrap">'+
+      '<span style="font-size:11px;font-weight:700;color:var(--text)">'+maq+'</span>'+
+      '<div style="width:60px;height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;flex-shrink:0">'+
         '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:2px"></div>'+
       '</div>'+
-      '<div style="display:flex;justify-content:space-between">'+
-        '<span style="font-size:10px;color:var(--text3)">'+d.arm.toLocaleString('es-CL')+' arm.</span>'+
-        '<span style="font-size:10px;color:'+col+';font-weight:700">'+pct+'%</span>'+
-      '</div>'+
+      '<span style="font-size:11px;color:'+col+';font-weight:700">'+pct+'%</span>'+
+      '<span style="font-size:10px;color:var(--text3)">'+d.sol.toLocaleString('es-CL')+' u.</span>'+
     '</div>';
   }).join('');
 }
