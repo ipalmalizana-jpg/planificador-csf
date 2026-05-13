@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -968,7 +967,7 @@ async function generarCierreDelDia() {
       ? '?fecha_armado=eq.'+fecha+'&select=*'
       : '?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*';
     var pedidos=await sb('pedidos_dia','GET',null, query);
-    var salidas=await sb('salidas_despacho','GET',null,'?select=*');
+    var salidas=await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=cantidad,creado_en,cliente,codigo,destino,numero_guia,registrado_por');
     var formatos=await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
     var activos=(pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
     var cancelados=(pedidos||[]).filter(function(p){return p.estado==='Cancelado';});
@@ -2692,10 +2691,10 @@ async function cargarMetricasInforme() {
     const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
     const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
     const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
-    const desps = await sb('plan_despacho','GET',null,'?fecha_despacho=gte.'+desde+'&fecha_despacho=lte.'+hasta+'&select=*');
+    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=cantidad');
     const totalPed = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
-    const totalArm = (pedidos||[]).reduce((s,p)=>s+p.cantidad_armada,0);
-    const totalDesp = (desps||[]).filter(d=>d.estado==='Despachado').reduce((s,d)=>s+d.cantidad_despachar,0);
+    const totalArm = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+(p.cantidad_armada||0),0);
+    const totalDesp = (salidas||[]).reduce((s,d)=>s+(d.cantidad||0),0);
     const cancelados = (pedidos||[]).filter(p=>p.estado==='Cancelado').length;
     document.getElementById('met-informes').innerHTML=`
       <div class="metric"><div class="metric-label">Cajas pedidas hoy</div><div class="metric-val">${totalPed.toLocaleString('es-CL')}</div></div>
