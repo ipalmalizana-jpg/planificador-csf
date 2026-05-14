@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1030,31 +1031,45 @@ async function generarCierreDelDia() {
     // Cargar gráfico histórico si no está cargado
     try { await cargarInformeHistorico(); } catch(eH2){}
 
-    // Agregar gráfico histórico al PDF
+    // Gráfico histórico — siempre en página nueva
     try {
+      await cargarInformeHistorico();
+      await new Promise(function(r){setTimeout(r,600);});
       var panel4 = document.getElementById('inf-panel-4');
       var canvasHist = document.getElementById('chart-historico');
       if(canvasHist && chartHistorico) {
-        // Mostrar panel temporalmente para captura
         var eraOculto = panel4 && panel4.style.display === 'none';
-        if(eraOculto) { panel4.style.display='block'; panel4.style.position='absolute'; panel4.style.left='-9999px'; }
+        if(eraOculto) {
+          panel4.style.display = 'block';
+          panel4.style.position = 'fixed';
+          panel4.style.left = '-9999px';
+          panel4.style.top = '0';
+          panel4.style.width = '900px';
+          panel4.style.background = '#ffffff';
+        }
         chartHistorico.resize();
-        await new Promise(function(r){setTimeout(r,300);});
-
-        if(y > 200) { doc.addPage(); y=20; }
+        await new Promise(function(r){setTimeout(r,800);});
+        var imgCanvas = await html2canvas(canvasHist, {scale:2,backgroundColor:'#ffffff',logging:false});
+        if(eraOculto) {
+          panel4.style.display = 'none';
+          panel4.style.position = '';
+          panel4.style.left = '';
+          panel4.style.top = '';
+          panel4.style.width = '';
+          panel4.style.background = '';
+        }
+        doc.addPage();
+        var yG = 20;
+        doc.setFillColor(240,242,245);
+        doc.rect(m, yG, w-m*2, 9, 'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30,30,30);
-        doc.text('Historico: Solicitado vs Armado vs Despachado', m, y); y+=6;
-
-        var imgH2 = await html2canvas(canvasHist, {scale:2, backgroundColor:'#ffffff', logging:false, useCORS:true});
-        var imgW2=w-m*2;
-        var imgH2px=imgH2.height*imgW2/imgH2.width;
-        var maxH2=doc.internal.pageSize.getHeight()-y-20;
-        doc.addImage(imgH2.toDataURL('image/png'),'PNG',m,y,imgW2,Math.min(imgH2px,maxH2));
-
-        if(eraOculto) { panel4.style.display='none'; panel4.style.position=''; panel4.style.left=''; }
+        doc.text('Historico: Solicitado vs Armado vs Despachado', m+3, yG+6);
+        yG += 14;
+        var imgW = w-m*2;
+        var imgH = Math.round(imgCanvas.height * imgW / imgCanvas.width);
+        doc.addImage(imgCanvas.toDataURL('image/png'), 'PNG', m, yG, imgW, Math.min(imgH, h-yG-25));
       }
-    } catch(eH) { console.warn('Grafico historico PDF:', eH.message); }
-
+    } catch(eH) { console.warn('Grafico PDF:', eH.message); }
     doc.save('cierre_'+(esDia?fecha:desde+'_'+hasta)+'.pdf');
   }catch(e){alert('Error generando cierre: '+e.message);}
 }
@@ -1374,13 +1389,14 @@ async function cargarMetricas() {
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
     const totalCajas = pedidos.filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
     const armadas = pedidos.reduce((s,p)=>s+p.cantidad_armada,0);
-    document.getElementById('met-planificar').innerHTML = `
-      <div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">${activos}</div><div class="metric-sub">hoy</div></div>
-      <div class="metric"><div class="metric-label">Cajas a armar</div><div class="metric-val">${totalCajas.toLocaleString('es-CL')}</div><div class="metric-sub">total del día</div></div>
-      <div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">${armadas.toLocaleString('es-CL')}</div><div class="metric-sub">${totalCajas?Math.round(armadas/totalCajas*100):0}%</div></div>
-      <div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val ${cancelados?'red':''}">${cancelados}</div><div class="metric-sub">hoy</div></div>
-    `;
-  } catch(e) { console.error(e); }
+    const labelFecha = modoPlan2==='todos' ? 'total' : fechaPlan2;
+    const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
+    document.getElementById('met-planificar').innerHTML =
+      '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+activos+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Cajas a armar</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'%</div></div>'+
+      '<div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val '+(cancelados>0?'red':'')+'">'+cancelados+'</div><div class="metric-sub">'+labelFecha+'</div></div>';
+    } catch(e) { console.error(e); }
 }
 
 // -- Plan del día -----------------------------------------------
