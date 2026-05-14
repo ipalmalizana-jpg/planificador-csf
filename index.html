@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1153,7 +1152,7 @@ function showTab(t) {
 
 let tabActual = '';
 function refreshActual() {
-  if(tabActual==='planificar') { cargarPlanDia(); cargarMetricas(); }
+  if(tabActual==='planificar') { cargarPlanDia(); }
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
@@ -1389,13 +1388,26 @@ async function cargarMetricas() {
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
     const totalCajas = pedidos.filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
     const armadas = pedidos.reduce((s,p)=>s+p.cantidad_armada,0);
-    const labelFecha = modoPlan2==='todos' ? 'total' : fechaPlan2;
+    const labelFecha = modoPlan2==='todos' ? 'todos los días' : fechaPlan2;
     const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
+
+    // Cargar despachado para el mismo período
+    let totalDesp = 0;
+    try {
+      const salidasQ = modoPlan2==='todos'
+        ? '?select=cantidad'
+        : '?creado_en=gte.'+fechaPlan2+'T00:00:00&creado_en=lte.'+fechaPlan2+'T23:59:59&select=cantidad';
+      const sals = await sb('salidas_despacho','GET',null, salidasQ);
+      totalDesp = (sals||[]).reduce((s,d)=>s+(d.cantidad||0),0);
+    } catch(e2){}
+
+    const pctDesp = armadas>0?Math.round(totalDesp/armadas*100):0;
+
     document.getElementById('met-planificar').innerHTML =
       '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+activos+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-      '<div class="metric"><div class="metric-label">Cajas a armar</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-      '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'%</div></div>'+
-      '<div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val '+(cancelados>0?'red':'')+'">'+cancelados+'</div><div class="metric-sub">'+labelFecha+'</div></div>';
+      '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'% de lo solicitado</div></div>'+
+      '<div class="metric"><div class="metric-label">Cajas despachadas</div><div class="metric-val green">'+totalDesp.toLocaleString('es-CL')+'</div><div class="metric-sub">'+(cancelados>0?cancelados+' cancelado(s) · ':'')+pctDesp+'% de lo armado</div></div>';
     } catch(e) { console.error(e); }
 }
 
@@ -1929,7 +1941,7 @@ function toggleFiltroPlanFecha() {
   const modo = document.getElementById('filtro-plan-modo')?.value;
   const fechaInput = document.getElementById('filtro-fecha-plan');
   if(fechaInput) fechaInput.style.display = modo==='todos' ? 'none' : '';
-  cargarPlanDia();
+  cargarPlanDia(); // esto ya llama cargarMetricas internamente
 }
 
 function toggleFiltroDespFecha() {
