@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1152,7 +1153,7 @@ function showTab(t) {
 
 let tabActual = '';
 function refreshActual() {
-  if(tabActual==='planificar') { cargarPlanDia(); }
+  if(tabActual==='planificar') { cargarPlanDia().then(function(){ cargarMetricas(); }); }
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
@@ -1379,11 +1380,11 @@ async function cargarMetricas() {
   try {
     const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
     const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    const queryMet = modoPlan2==='todos'
-      ? '?select=*&limit=500'
-      : '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*';
-    const pedidos = await sb('pedidos_dia','GET',null, queryMet);
-    pedidosCache = pedidos || [];
+    // Usar pedidosCache que ya tiene los datos del filtro activo
+    const pedidos = pedidosCache.length > 0 ? pedidosCache : await sb('pedidos_dia','GET',null,
+      modoPlan2==='todos'
+        ? '?select=*&limit=500'
+        : '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*');
     const activos = pedidos.filter(p=>p.estado==='Activo').length;
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
     const totalCajas = pedidos.filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
