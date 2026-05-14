@@ -1374,17 +1374,35 @@ function renderMetDespLive(pedidos) {
 }
 
 // -- Métricas --------------------------------------------------
+function renderMetricasPlan() {
+  const el = document.getElementById('met-planificar');
+  if(!el) return;
+  const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
+  const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
+  const pedidos = pedidosCache;
+  const activos = pedidos.filter(function(p){return p.estado==='Activo';}).length;
+  const completados = pedidos.filter(function(p){return p.estado==='Completado';}).length;
+  const cancelados = pedidos.filter(function(p){return p.estado==='Cancelado';}).length;
+  const totalCajas = pedidos.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
+  const armadas = pedidos.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
+  const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
+  const labelFecha = modoPlan2==='todos' ? 'todos los días' : fechaPlan2;
+
+  el.innerHTML =
+    '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+(activos+completados)+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'% de lo solicitado</div></div>'+
+    '<div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val '+(cancelados>0?'red':'')+'">'+cancelados+'</div><div class="metric-sub">'+labelFecha+'</div></div>';
+}
+
 async function cargarMetricas() {
   const el = document.getElementById('met-planificar');
   if(!el) return;
   try {
     const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
     const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    // Usar pedidosCache que ya tiene los datos del filtro activo
-    const pedidos = pedidosCache.length > 0 ? pedidosCache : await sb('pedidos_dia','GET',null,
-      modoPlan2==='todos'
-        ? '?select=*&limit=500'
-        : '?or=(fecha_armado.eq.'+fechaPlan2+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan2+'))&select=*');
+    // Siempre usar pedidosCache — se actualiza en cargarPlanDia
+    const pedidos = pedidosCache;
     const activos = pedidos.filter(p=>p.estado==='Activo').length;
     const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
     const totalCajas = pedidos.filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
@@ -1441,6 +1459,7 @@ async function cargarPlanDia() {
       window._despCache = {};
     }
     renderPlanDia();
+    renderMetricasPlan(); // actualizar métricas con datos ya cargados
     // Poblar select modal despacho
     const sel = document.getElementById('md-pedido');
     if(sel) sel.innerHTML = (pedidos||[]).filter(p=>p.estado==='Activo').map(p=>'<option value="'+p.id+'">'+p.cliente+' -- '+p.codigo+' ('+p.cantidad_pedida.toLocaleString('es-CL')+' u.)</option>').join('');
