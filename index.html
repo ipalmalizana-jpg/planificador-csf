@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -622,8 +623,8 @@ table.dt tr:hover td{background:rgba(255,255,255,.015)}
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
         <h2 style="font-size:15px;font-weight:600">Stock pallet a pallet</h2>
         <label style="cursor:pointer;background:var(--green);color:#0b0e17;font-size:12px;font-weight:700;padding:7px 16px;border-radius:var(--radius-sm);margin-left:auto">
-          &#128196; Subir DBF/Excel
-          <input type="file" id="stock-file" accept=".dbf,.xlsx,.xls,.csv" style="display:none" onchange="procesarArchivoStock(this)">
+          &#128196; Subir Excel
+          <input type="file" id="stock-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="procesarArchivoStock(this)">
         </label>
         <button class="btn sm blue" onclick="exportarExcelStock()" style="height:34px">Excel</button>
       </div>
@@ -1311,73 +1312,78 @@ let stockFiltrado = [];
 async function procesarArchivoStock(input) {
   const file = input.files[0];
   if(!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
   const infoEl = document.getElementById('stock-info');
-
-  if(infoEl) { infoEl.style.display='block'; infoEl.textContent='Procesando archivo...'; }
-
+  if(infoEl) {
+    infoEl.style.display='block';
+    infoEl.style.background='var(--blue-bg)';
+    infoEl.style.color='var(--blue)';
+    infoEl.style.borderColor='rgba(77,158,255,.2)';
+    infoEl.textContent='Procesando archivo...';
+  }
   try {
-    let registros = [];
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {raw:false, defval:''});
 
-    if(ext === 'dbf') {
-      // Leer DBF via ArrayBuffer y parsear manualmente campos clave
-      const buf = await file.arrayBuffer();
-      const arr = new Uint8Array(buf);
-      // Usar SheetJS que soporta DBF
-      const wb = XLSX.read(buf, {type:'array', raw:true});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {raw:false});
-      registros = data.map(function(r){
-        return {
-          codigo: (r.COD_PRODUC||'').trim(),
-          descripcion: (r.PRODUCTO||'').trim(),
-          cliente: (r.CLIENTE||'').trim().toUpperCase(),
-          unidades: parseInt(r.UNIDADES)||0,
-          ubicacion: (r.UBICA||'').trim(),
-          centro: (r.CENTRO||'').trim(),
-          maquina: (r.MAQ||'').trim(),
-          nv: (r.OP_NOTAVTA||'').trim(),
-          fecha_recepcion: r.REC_BOD||null,
-          periodo: parseInt(r.PERIODO)||null,
-        };
-      }).filter(function(r){return r.codigo && r.unidades > 0;});
-    } else {
-      // Excel/CSV
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {raw:false});
-      registros = data.map(function(r){
-        return {
-          codigo: (r.COD_PRODUC||r.Codigo||'').trim(),
-          descripcion: (r.PRODUCTO||r.Descripcion||'').trim(),
-          cliente: (r.CLIENTE||r.Cliente||'').trim().toUpperCase(),
-          unidades: parseInt(r.UNIDADES||r.Unidades)||0,
-          ubicacion: (r.UBICA||r.Ubicacion||'').trim(),
-          centro: (r.CENTRO||r.Centro||'').trim(),
-          maquina: (r.MAQ||r.Maquina||'').trim(),
-          nv: (r.OP_NOTAVTA||r.NV||'').trim(),
-          fecha_recepcion: r.REC_BOD||r.Fecha||null,
-          periodo: parseInt(r.PERIODO)||null,
-        };
-      }).filter(function(r){return r.codigo && r.unidades > 0;});
-    }
+    if(!data.length) { alert('El archivo está vacío o no tiene el formato correcto.'); return; }
 
-    if(!registros.length) { alert('No se encontraron registros válidos.'); return; }
+    // Detectar columnas automáticamente (primera fila como cabecera)
+    const firstRow = data[0];
+    const keys = Object.keys(firstRow);
+    console.log('Columnas detectadas:', keys);
 
-    // Guardar en Supabase — primero borrar los anteriores y subir los nuevos
+    const get = function(row, posibles) {
+      for(var i=0; i<posibles.length; i++) {
+        if(row[posibles[i]] !== undefined && row[posibles[i]] !== '') return String(row[posibles[i]]).trim();
+      }
+      return '';
+    };
+
+    const registros = data.map(function(r) {
+      return {
+        codigo:          get(r, ['COD_PRODUC','Codigo','codigo','CODIGO']),
+        descripcion:     get(r, ['PRODUCTO','Descripcion','descripcion','DESCRIPCION']),
+        cliente:         get(r, ['CLIENTE','Cliente','cliente']).toUpperCase(),
+        unidades:        parseInt(get(r, ['UNIDADES','Unidades','unidades','CANT']))||0,
+        ubicacion:       get(r, ['UBICA','Ubicacion','ubicacion','UBICACION']),
+        centro:          get(r, ['CENTRO','Centro','centro']),
+        maquina:         get(r, ['MAQ','Maquina','maquina','MAQUINA']),
+        nv:              get(r, ['OP_NOTAVTA','NV','nv','NV_FAB']),
+        fecha_recepcion: get(r, ['REC_BOD','Fecha','fecha','FECHA'])||null,
+        periodo:         parseInt(get(r, ['PERIODO','Periodo','periodo']))||null,
+      };
+    }).filter(function(r){ return r.codigo && r.unidades > 0; });
+
+    if(!registros.length) { alert('No se encontraron registros válidos. Verifica que el Excel tenga las columnas correctas (COD_PRODUC, CLIENTE, UNIDADES, etc.)'); return; }
+
+    if(infoEl) infoEl.textContent = 'Guardando '+registros.length.toLocaleString('es-CL')+' registros en Supabase...';
+
+    // Borrar stock anterior
     await sb('stock_pallets','DELETE',null,'?id=neq.00000000-0000-0000-0000-000000000000');
-    // Insertar en bloques de 500
-    for(var i=0; i<registros.length; i+=500) {
-      await sb('stock_pallets','POST', registros.slice(i,i+500));
+
+    // Insertar en bloques de 200
+    var bloques = Math.ceil(registros.length/200);
+    for(var i=0; i<registros.length; i+=200) {
+      await sb('stock_pallets','POST', registros.slice(i,i+200));
+      if(infoEl) infoEl.textContent = 'Guardando... '+Math.min(i+200,registros.length).toLocaleString('es-CL')+' / '+registros.length.toLocaleString('es-CL');
     }
 
-    if(infoEl) infoEl.textContent = '✓ '+registros.length.toLocaleString('es-CL')+' registros cargados desde '+file.name+' — '+new Date().toLocaleString('es-CL');
+    if(infoEl) {
+      infoEl.style.background='var(--green-bg)';
+      infoEl.style.color='var(--green)';
+      infoEl.style.borderColor='rgba(0,214,143,.2)';
+      infoEl.textContent = '✓ '+registros.length.toLocaleString('es-CL')+' registros cargados desde '+file.name+' — '+new Date().toLocaleString('es-CL');
+    }
     input.value = '';
     cargarStock();
   } catch(e) {
-    if(infoEl) { infoEl.style.background='var(--red-bg)'; infoEl.style.color='var(--red)'; infoEl.style.borderColor='rgba(255,77,106,.2)'; }
-    if(infoEl) infoEl.textContent = 'Error: '+e.message;
+    if(infoEl) {
+      infoEl.style.background='var(--red-bg)';
+      infoEl.style.color='var(--red)';
+      infoEl.style.borderColor='rgba(255,77,106,.2)';
+      infoEl.textContent = 'Error: '+e.message;
+    }
     console.error('procesarArchivoStock:', e);
   }
 }
