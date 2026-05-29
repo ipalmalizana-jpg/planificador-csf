@@ -297,6 +297,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.015)}
             <div id="sugg-codigo" class="suggest-box" style="display:none"></div>
           </div>
           <div id="cod-info" style="font-size:11px;color:var(--text2);min-height:14px;margin-top:4px"></div>
+          <div id="stock-codigo-info" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-top:6px;font-size:12px"></div>
         </div>
         <div class="fg" style="margin-bottom:10px">
           <label>Cliente</label>
@@ -1511,38 +1512,32 @@ function renderStock() {
     var d = porCliente[cli];
     var codigos = Object.values(d.codigos).sort(function(a,b){return b.unidades-a.unidades;});
     html += '<tr style="background:var(--bg3)">'+
-      '<td colspan="10" style="font-weight:700;font-size:12px;padding:8px 14px;border-top:2px solid var(--border2)">'+
+      '<td colspan="5" style="font-weight:700;font-size:12px;padding:8px 14px;border-top:2px solid var(--border2)">'+
         cli+
         ' <span style="font-size:11px;color:var(--green);font-weight:600;margin-left:8px">'+d.unidades.toLocaleString('es-CL')+' u.</span>'+
         ' <span style="font-size:10px;color:var(--text3);margin-left:6px">'+d.pallets+' pallets · '+codigos.length+' código(s)</span>'+
       '</td></tr>';
     codigos.forEach(function(c){
-      var fRec = c.fecha_recepcion ? c.fecha_recepcion.toString().slice(0,10) : '—';
       html += '<tr>'+
         '<td></td>'+
         '<td><code style="font-size:11px">'+c.codigo+'</code></td>'+
-        '<td style="font-size:12px;color:var(--text2)">'+((c.descripcion||'').substring(0,32))+'</td>'+
+        '<td style="font-size:12px;color:var(--text2)">'+((c.descripcion||'').substring(0,40))+'</td>'+
         '<td style="font-weight:700;color:var(--green)">'+c.unidades.toLocaleString('es-CL')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+c.pallets+'</td>'+
-        '<td><span class="chip gray">'+c.centro+'</span></td>'+
-        '<td style="font-size:12px">'+c.ubicacion+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+c.maquina+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+c.nv+'</td>'+
-        '<td style="font-size:11px;color:var(--text3)">'+fRec+'</td>'+
+        '<td style="font-size:12px;color:var(--text3);text-align:center">'+c.pallets+'</td>'+
       '</tr>';
     });
   });
 
   // Botón ver más si hay más clientes
   if(clientesSorted.length > CLIENTES_POR_PAGINA) {
-    html += '<tr><td colspan="10" style="padding:12px;text-align:center">'+
+    html += '<tr><td colspan="5" style="padding:12px;text-align:center">'+
       '<button class="btn sm primary" onclick="verTodosClientes()" style="height:30px">'+
       'Ver todos los clientes ('+clientesSorted.length+') →</button></td></tr>';
   }
 
   html += '</tbody></table>';
-  html += '<div style="padding:8px 14px;font-size:11px;color:var(--text3)">'+
-    clientesSorted.length+' clientes · '+stockFiltrado.length.toLocaleString('es-CL')+' registros totales</div>';
+  html += '</div><div style="padding:8px 14px;font-size:11px;color:var(--text3)">'+
+    clientesVisibles.length+(clientesSorted.length>clientesVisibles.length?' de '+clientesSorted.length:'')+' clientes · '+stockFiltrado.length.toLocaleString('es-CL')+' registros totales</div>';
   tabEl.innerHTML = html;
 }
 
@@ -2620,6 +2615,21 @@ async function registrarSalida(id, totalPedido, yaEnviado) {
       foto_url: fotoUrl||null,
       registrado_por: USER.nombre,
     });
+
+    // Descontar del stock bodega 002: total ingreso - despacho = stock
+    try {
+      var stockBod = await sb('stock_pallets','GET',null,
+        '?codigo=eq.'+encodeURIComponent(d.codigo||'')+'&centro=eq.002&select=id,unidades');
+      if(stockBod && stockBod.length) {
+        var totalStock = stockBod.reduce(function(s,r){return s+(r.unidades||0);},0);
+        var nuevoTotal = Math.max(0, totalStock - cant);
+        // Actualizar el primer registro con el nuevo total y eliminar el resto
+        await sb('stock_pallets','PATCH',{unidades: nuevoTotal},'?id=eq.'+stockBod[0].id);
+        for(var si=1; si<stockBod.length; si++) {
+          await sb('stock_pallets','DELETE',null,'?id=eq.'+stockBod[si].id);
+        }
+      }
+    } catch(eStock) { console.warn('Error descontando stock:', eStock.message); }
 
     // Actualizar totales en plan_despacho
     await sb('plan_despacho','PATCH',{
