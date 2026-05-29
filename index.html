@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1332,7 +1331,7 @@ async function procesarArchivoStock(input) {
         return {
           codigo: (r.COD_PRODUC||'').trim(),
           descripcion: (r.PRODUCTO||'').trim(),
-          cliente: (r.CLIENTE||'').trim(),
+          cliente: (r.CLIENTE||'').trim().toUpperCase(),
           unidades: parseInt(r.UNIDADES)||0,
           ubicacion: (r.UBICA||'').trim(),
           centro: (r.CENTRO||'').trim(),
@@ -1352,7 +1351,7 @@ async function procesarArchivoStock(input) {
         return {
           codigo: (r.COD_PRODUC||r.Codigo||'').trim(),
           descripcion: (r.PRODUCTO||r.Descripcion||'').trim(),
-          cliente: (r.CLIENTE||r.Cliente||'').trim(),
+          cliente: (r.CLIENTE||r.Cliente||'').trim().toUpperCase(),
           unidades: parseInt(r.UNIDADES||r.Unidades)||0,
           ubicacion: (r.UBICA||r.Ubicacion||'').trim(),
           centro: (r.CENTRO||r.Centro||'').trim(),
@@ -1400,20 +1399,19 @@ function filtrarStock() {
       (r.cliente||'').toLowerCase().includes(buscar) ||
       (r.codigo||'').toLowerCase().includes(buscar) ||
       (r.ubicacion||'').toLowerCase().includes(buscar) ||
-      (r.descripcion||'').toLowerCase().includes(buscar);
-    const matchCentro = !centro || r.centro === centro;
+      (r.descripcion||'').toLowerCase().includes(buscar) ||
+      (r.nv||'').toLowerCase().includes(buscar);
+    const matchCentro = !centro || (r.centro||'').trim() === centro.trim();
     return matchBuscar && matchCentro;
   });
 
-  // Poblar centros
+  // Poblar centros — siempre reconstruir
   const selCentro = document.getElementById('stock-filtro-centro');
-  if(selCentro && selCentro.options.length <= 1) {
+  if(selCentro) {
+    const valorActual = selCentro.value;
     const centros = [...new Set(stockCache.map(function(r){return r.centro;}).filter(Boolean))].sort();
-    centros.forEach(function(c){
-      const o = document.createElement('option');
-      o.value = c; o.textContent = 'Centro '+c;
-      selCentro.appendChild(o);
-    });
+    selCentro.innerHTML = '<option value="">Todos los centros</option>'+
+      centros.map(function(c){return '<option value="'+c+'"'+(c===valorActual?' selected':'')+'>Centro '+c+'</option>';}).join('');
   }
 
   renderStock();
