@@ -1124,23 +1124,13 @@ async function generarCierreDelDia() {
       if(canvasHist && chartHistorico) {
         var eraOculto = panel4 && panel4.style.display === 'none';
         if(eraOculto) {
-          panel4.style.display = 'block';
-          panel4.style.position = 'fixed';
-          panel4.style.left = '-9999px';
-          panel4.style.top = '0';
-          panel4.style.width = '900px';
-          panel4.style.background = '#ffffff';
+          panel4.style.cssText = 'display:block;visibility:hidden;position:absolute;left:-9999px;top:-9999px;width:900px;background:#ffffff;z-index:-999';
         }
         chartHistorico.resize();
         await new Promise(function(r){setTimeout(r,800);});
         var imgCanvas = await html2canvas(canvasHist, {scale:2,backgroundColor:'#ffffff',logging:false});
         if(eraOculto) {
-          panel4.style.display = 'none';
-          panel4.style.position = '';
-          panel4.style.left = '';
-          panel4.style.top = '';
-          panel4.style.width = '';
-          panel4.style.background = '';
+          panel4.style.cssText = 'display:none';
         }
         doc.addPage();
         var yG = 20;
@@ -1412,6 +1402,10 @@ async function cargarStock() {
 function filtrarStock() {
   const buscar = (document.getElementById('stock-buscar')?.value||'').toLowerCase();
   const centro = document.getElementById('stock-filtro-centro')?.value||'';
+
+  // Scroll al top de la sección al filtrar
+  const secEl = document.getElementById('sec-stock');
+  if(secEl) secEl.scrollIntoView({behavior:'smooth', block:'start'});
 
   stockFiltrado = stockCache.filter(function(r){
     const matchBuscar = !buscar ||
