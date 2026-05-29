@@ -1389,9 +1389,22 @@ async function procesarArchivoStock(input) {
 }
 
 async function cargarStock() {
+  const tabEl = document.getElementById('tabla-stock');
+  if(tabEl) tabEl.innerHTML = '<div class="empty">Cargando stock...</div>';
   try {
-    const data = await sb('stock_pallets','GET',null,'?order=cliente.asc,codigo.asc&select=*&limit=5000');
-    stockCache = data||[];
+    // Traer todos los registros en páginas de 1000 (límite de Supabase)
+    let todos = [];
+    let offset = 0;
+    const pageSize = 1000;
+    while(true) {
+      const page = await sb('stock_pallets','GET',null,
+        '?order=cliente.asc,codigo.asc&select=*&limit='+pageSize+'&offset='+offset);
+      if(!page||!page.length) break;
+      todos = todos.concat(page);
+      if(page.length < pageSize) break;
+      offset += pageSize;
+    }
+    stockCache = todos;
     filtrarStock();
   } catch(e) { console.warn('cargarStock:', e.message); }
 }
@@ -1438,32 +1451,70 @@ function renderStock() {
       '<div class="metric"><div class="metric-label">Códigos</div><div class="metric-val">'+codigos+'</div><div class="metric-sub">distintos</div></div>';
   }
 
-  // Tabla
   const tabEl = document.getElementById('tabla-stock');
   if(!tabEl) return;
-  if(!stockFiltrado.length) { tabEl.innerHTML='<div class="empty">Sin registros'+(stockCache.length?'. Ajusta los filtros.':'. Carga un archivo DBF.')+'</div>'; return; }
+  if(!stockFiltrado.length) {
+    tabEl.innerHTML='<div class="empty">Sin registros'+(stockCache.length?'. Ajusta los filtros.':'. Carga un archivo Excel.')+'</div>';
+    return;
+  }
 
-  const rows = stockFiltrado.slice(0,500).map(function(r){
-    var fRec = r.fecha_recepcion ? new Date(r.fecha_recepcion+'T12:00:00').toLocaleDateString('es-CL') : '—';
-    return '<tr>'+
-      '<td style="font-weight:600">'+r.cliente+'</td>'+
-      '<td><code style="font-size:11px">'+r.codigo+'</code></td>'+
-      '<td style="font-size:12px;color:var(--text2)">'+((r.descripcion||'').substring(0,30))+'</td>'+
-      '<td style="font-weight:700;color:var(--green)">'+r.unidades.toLocaleString('es-CL')+'</td>'+
-      '<td><span class="chip gray">'+r.centro+'</span></td>'+
-      '<td style="font-size:12px">'+r.ubicacion+'</td>'+
-      '<td style="font-size:12px;color:var(--text3)">'+r.maquina+'</td>'+
-      '<td style="font-size:12px;color:var(--text3)">'+r.nv+'</td>'+
-      '<td style="font-size:11px;color:var(--text3)">'+fRec+'</td>'+
-    '</tr>';
-  }).join('');
+  // Agrupar por cliente → codigo para mostrar todos sin límite
+  var porCliente = {};
+  stockFiltrado.forEach(function(r){
+    var cli = r.cliente||'SIN CLIENTE';
+    if(!porCliente[cli]) porCliente[cli] = {unidades:0,pallets:0,codigos:{}};
+    porCliente[cli].unidades += r.unidades;
+    porCliente[cli].pallets++;
+    var key = r.codigo+'|'+r.descripcion+'|'+r.centro+'|'+r.ubicacion+'|'+r.maquina+'|'+r.nv+'|'+r.fecha_recepcion;
+    if(!porCliente[cli].codigos[key]) porCliente[cli].codigos[key] = {
+      codigo:r.codigo, descripcion:r.descripcion, unidades:0,
+      centro:r.centro, ubicacion:r.ubicacion, maquina:r.maquina,
+      nv:r.nv, fecha_recepcion:r.fecha_recepcion, pallets:0
+    };
+    porCliente[cli].codigos[key].unidades += r.unidades;
+    porCliente[cli].codigos[key].pallets++;
+  });
 
-  var nota = stockFiltrado.length > 500 ? '<div style="padding:10px 14px;font-size:11px;color:var(--text3)">Mostrando 500 de '+stockFiltrado.length.toLocaleString('es-CL')+' registros. Usa los filtros para acotar.</div>' : '';
-
-  tabEl.innerHTML = '<table class="dt"><thead><tr>'+
+  var clientesSorted = Object.keys(porCliente).sort();
+  var html = '<table class="dt"><thead><tr>'+
     '<th>Cliente</th><th>Código</th><th>Descripción</th><th>Unidades</th>'+
-    '<th>Centro</th><th>Ubicación</th><th>Máquina</th><th>NV</th><th>Recepción</th>'+
-    '</tr></thead><tbody>'+rows+'</tbody></table>'+nota;
+    '<th>Pallets</th><th>Centro</th><th>Ubicación</th><th>Máquina</th><th>NV</th><th>Recepción</th>'+
+    '</tr></thead><tbody>';
+
+  clientesSorted.forEach(function(cli){
+    var d = porCliente[cli];
+    var codigos = Object.values(d.codigos).sort(function(a,b){return b.unidades-a.unidades;});
+
+    // Fila cabecera cliente
+    html += '<tr style="background:var(--bg3)">'+
+      '<td colspan="10" style="font-weight:700;font-size:12px;padding:8px 14px;border-top:2px solid var(--border2)">'+
+        cli+
+        ' <span style="font-size:11px;color:var(--green);font-weight:600;margin-left:8px">'+d.unidades.toLocaleString('es-CL')+' u.</span>'+
+        ' <span style="font-size:10px;color:var(--text3);margin-left:6px">'+d.pallets+' pallets · '+codigos.length+' código(s)</span>'+
+      '</td></tr>';
+
+    // Filas de código
+    codigos.forEach(function(c){
+      var fRec = c.fecha_recepcion ? c.fecha_recepcion.toString().slice(0,10) : '—';
+      html += '<tr>'+
+        '<td></td>'+
+        '<td><code style="font-size:11px">'+c.codigo+'</code></td>'+
+        '<td style="font-size:12px;color:var(--text2)">'+((c.descripcion||'').substring(0,32))+'</td>'+
+        '<td style="font-weight:700;color:var(--green)">'+c.unidades.toLocaleString('es-CL')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+c.pallets+'</td>'+
+        '<td><span class="chip gray">'+c.centro+'</span></td>'+
+        '<td style="font-size:12px">'+c.ubicacion+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+c.maquina+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+c.nv+'</td>'+
+        '<td style="font-size:11px;color:var(--text3)">'+fRec+'</td>'+
+      '</tr>';
+    });
+  });
+
+  html += '</tbody></table>';
+  html += '<div style="padding:8px 14px;font-size:11px;color:var(--text3)">'+
+    clientesSorted.length+' clientes · '+stockFiltrado.length.toLocaleString('es-CL')+' registros totales</div>';
+  tabEl.innerHTML = html;
 }
 
 async function exportarExcelStock() {
