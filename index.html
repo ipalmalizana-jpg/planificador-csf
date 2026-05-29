@@ -1216,7 +1216,10 @@ async function guardarIngreso() {
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function cargarIngresos() {
+let _ingresosLastLoad = 0;
+let _ingresosLastQuery = '';
+
+async function cargarIngresos(forzar) {
   const desde = document.getElementById('ing-desde')?.value || '';
   const hasta = document.getElementById('ing-hasta')?.value || '';
   const tipo = document.getElementById('ing-filtro-tipo')?.value || '';
@@ -1226,9 +1229,18 @@ async function cargarIngresos() {
   if(hasta) q += '&fecha=lte.'+hasta;
   if(tipo) q += '&tipo=eq.'+tipo;
 
+  // Usar cache si la query no cambió y hace menos de 2 min
+  const ahora = Date.now();
+  if(!forzar && ingresosCache.length && q === _ingresosLastQuery && (ahora - _ingresosLastLoad) < 120000) {
+    renderTablaIngresos();
+    return;
+  }
+
   try {
     const data = await sb('ingresos_material','GET',null,q);
     ingresosCache = data||[];
+    _ingresosLastLoad = Date.now();
+    _ingresosLastQuery = q;
 
     // Métricas
     const metEl = document.getElementById('met-ingresos');
@@ -1244,34 +1256,49 @@ async function cargarIngresos() {
         '<div class="metric"><div class="metric-label">Por sistema</div><div class="metric-val blue">'+totalSis.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>';
     }
 
-    // Tabla
-    const tabEl = document.getElementById('tabla-ingresos');
-    if(!tabEl) return;
-    if(!ingresosCache.length) { tabEl.innerHTML='<div class="empty">Sin registros para el período.</div>'; return; }
-
-    const tipoColor = {'cliente':'green','bodega':'yellow','sistema':'blue'};
-    const rows = ingresosCache.map(function(r){
-      var col = tipoColor[r.tipo]||'gray';
-      var fecha = r.fecha ? new Date(r.fecha+'T12:00:00').toLocaleDateString('es-CL') : '—';
-      return '<tr>'+
-        '<td style="font-size:11px;color:var(--text3)">'+fecha+'</td>'+
-        '<td><span class="chip '+col+'">'+r.tipo+'</span></td>'+
-        '<td style="font-weight:600">'+r.cliente+'</td>'+
-        '<td><code style="font-size:11px">'+r.codigo+'</code></td>'+
-        '<td style="font-size:11px;color:var(--text2)">'+((r.descripcion||'').substring(0,30)||'—')+'</td>'+
-        '<td style="font-weight:700;color:var(--text)">'+r.cantidad.toLocaleString('es-CL')+'</td>'+
-        '<td style="font-size:11px;color:var(--text3)">'+(r.numero_guia||'—')+'</td>'+
-        '<td style="font-size:11px;color:var(--text3)">'+(r.observacion||'—')+'</td>'+
-        '<td style="font-size:11px;color:var(--text3)">'+(r.registrado_por||'—')+'</td>'+
-        '<td><button class="btn sm danger" onclick="eliminarIngreso(\"'+r.id+'\")">&#10005;</button></td>'+
-      '</tr>';
-    }).join('');
-
-    tabEl.innerHTML = '<table class="dt"><thead><tr>'+
-      '<th>Fecha</th><th>Tipo</th><th>Cliente/Bodega</th><th>Código</th><th>Descripción</th>'+
-      '<th>Cantidad</th><th>N° Guía</th><th>Observación</th><th>Registrado por</th><th></th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table>';
+    renderTablaIngresos();
   } catch(e) { console.warn('cargarIngresos:', e.message); }
+}
+
+function renderTablaIngresos() {
+  // Métricas
+  const metEl = document.getElementById('met-ingresos');
+  if(metEl) {
+    const totalCli = ingresosCache.filter(function(r){return r.tipo==='cliente';}).reduce(function(s,r){return s+r.cantidad;},0);
+    const totalBod = ingresosCache.filter(function(r){return r.tipo==='bodega';}).reduce(function(s,r){return s+r.cantidad;},0);
+    const totalSis = ingresosCache.filter(function(r){return r.tipo==='sistema';}).reduce(function(s,r){return s+r.cantidad;},0);
+    const total = ingresosCache.reduce(function(s,r){return s+r.cantidad;},0);
+    metEl.innerHTML =
+      '<div class="metric"><div class="metric-label">Total ingresos</div><div class="metric-val">'+total.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">De clientes</div><div class="metric-val green">'+totalCli.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">De bodega</div><div class="metric-val yellow">'+totalBod.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">Por sistema</div><div class="metric-val blue">'+totalSis.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>';
+  }
+  // Tabla
+  const tabEl = document.getElementById('tabla-ingresos');
+  if(!tabEl) return;
+  if(!ingresosCache.length) { tabEl.innerHTML='<div class="empty">Sin registros para el período.</div>'; return; }
+  const tipoColor = {'cliente':'green','bodega':'yellow','sistema':'blue'};
+  const rows = ingresosCache.map(function(r){
+    var col = tipoColor[r.tipo]||'gray';
+    var fecha = r.fecha ? new Date(r.fecha+'T12:00:00').toLocaleDateString('es-CL') : '—';
+    return '<tr>'+
+      '<td style="font-size:11px;color:var(--text3)">'+fecha+'</td>'+
+      '<td><span class="chip '+col+'">'+r.tipo+'</span></td>'+
+      '<td style="font-weight:600">'+r.cliente+'</td>'+
+      '<td><code style="font-size:11px">'+r.codigo+'</code></td>'+
+      '<td style="font-size:11px;color:var(--text2)">'+((r.descripcion||'').substring(0,30)||'—')+'</td>'+
+      '<td style="font-weight:700;color:var(--text)">'+r.cantidad.toLocaleString('es-CL')+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+(r.numero_guia||'—')+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+(r.observacion||'—')+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+(r.registrado_por||'—')+'</td>'+
+      '<td><button class="btn sm danger" onclick="eliminarIngreso(\"'+r.id+'\")">&#10005;</button></td>'+
+    '</tr>';
+  }).join('');
+  tabEl.innerHTML = '<table class="dt"><thead><tr>'+
+    '<th>Fecha</th><th>Tipo</th><th>Cliente/Bodega</th><th>Código</th><th>Descripción</th>'+
+    '<th>Cantidad</th><th>N° Guía</th><th>Observación</th><th>Registrado por</th><th></th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 async function eliminarIngreso(id) {
@@ -1475,19 +1502,20 @@ function renderStock() {
     '<th>Pallets</th><th>Centro</th><th>Ubicación</th><th>Máquina</th><th>NV</th><th>Recepción</th>'+
     '</tr></thead><tbody>';
 
-  clientesSorted.forEach(function(cli){
+  // Limitar clientes visibles inicialmente para velocidad
+  var CLIENTES_POR_PAGINA = window._stockSinLimite ? clientesSorted.length : 50;
+  window._stockSinLimite = false;
+  var clientesVisibles = clientesSorted.slice(0, CLIENTES_POR_PAGINA);
+
+  clientesVisibles.forEach(function(cli){
     var d = porCliente[cli];
     var codigos = Object.values(d.codigos).sort(function(a,b){return b.unidades-a.unidades;});
-
-    // Fila cabecera cliente
     html += '<tr style="background:var(--bg3)">'+
       '<td colspan="10" style="font-weight:700;font-size:12px;padding:8px 14px;border-top:2px solid var(--border2)">'+
         cli+
         ' <span style="font-size:11px;color:var(--green);font-weight:600;margin-left:8px">'+d.unidades.toLocaleString('es-CL')+' u.</span>'+
         ' <span style="font-size:10px;color:var(--text3);margin-left:6px">'+d.pallets+' pallets · '+codigos.length+' código(s)</span>'+
       '</td></tr>';
-
-    // Filas de código
     codigos.forEach(function(c){
       var fRec = c.fecha_recepcion ? c.fecha_recepcion.toString().slice(0,10) : '—';
       html += '<tr>'+
@@ -1505,10 +1533,26 @@ function renderStock() {
     });
   });
 
+  // Botón ver más si hay más clientes
+  if(clientesSorted.length > CLIENTES_POR_PAGINA) {
+    html += '<tr><td colspan="10" style="padding:12px;text-align:center">'+
+      '<button class="btn sm primary" onclick="verTodosClientes()" style="height:30px">'+
+      'Ver todos los clientes ('+clientesSorted.length+') →</button></td></tr>';
+  }
+
   html += '</tbody></table>';
   html += '<div style="padding:8px 14px;font-size:11px;color:var(--text3)">'+
     clientesSorted.length+' clientes · '+stockFiltrado.length.toLocaleString('es-CL')+' registros totales</div>';
   tabEl.innerHTML = html;
+}
+
+function verTodosClientes() {
+  // Re-renderizar sin límite
+  var tabEl = document.getElementById('tabla-stock');
+  if(!tabEl) return;
+  // Marcar que queremos ver todos
+  window._stockSinLimite = true;
+  renderStock();
 }
 
 async function exportarExcelStock() {
@@ -1607,7 +1651,7 @@ function refreshActual() {
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
   else if(tabActual==='ingresos') { cargarIngresos(); }
-  else if(tabActual==='stock') { cargarStock(); }
+  else if(tabActual==='stock') { if(!stockCache.length) cargarStock(); else filtrarStock(); }
   else if(tabActual==='informes') { cargarInformes(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
