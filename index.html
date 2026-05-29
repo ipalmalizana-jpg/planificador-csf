@@ -297,7 +297,6 @@ table.dt tr:hover td{background:rgba(255,255,255,.015)}
             <div id="sugg-codigo" class="suggest-box" style="display:none"></div>
           </div>
           <div id="cod-info" style="font-size:11px;color:var(--text2);min-height:14px;margin-top:4px"></div>
-          <div id="stock-codigo-info" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-top:6px;font-size:12px"></div>
         </div>
         <div class="fg" style="margin-bottom:10px">
           <label>Cliente</label>
@@ -335,6 +334,14 @@ table.dt tr:hover td{background:rgba(255,255,255,.015)}
         </div>
       </div>
     </div>
+    <!-- Panel stock disponible -->
+    <div id="stock-codigo-info" style="display:none;margin-bottom:14px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border2)">
+      <div style="background:var(--bg3);padding:8px 14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">
+        Stock disponible para este código
+      </div>
+      <div id="stock-codigo-body" style="padding:12px 16px;font-size:13px;background:var(--bg2)"></div>
+    </div>
+
     <div style="display:flex;gap:10px;align-items:flex-end;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap">
       <div class="fg"><label>Fecha armado</label><input type="date" id="p-fecha-armado" style="width:150px"></div>
       <div class="fg"><label>Fecha despacho</label><input type="date" id="p-fecha-desp" style="width:150px"></div>
