@@ -558,6 +558,90 @@ table.dt tr:hover td{background:rgba(255,255,255,.015)}
 
 </div>
 
+    <!-- JEFE: Ingresos -->
+    <div class="sec" id="sec-ingresos">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <h2 style="font-size:15px;font-weight:600">Ingresos de material</h2>
+        <button class="btn primary" onclick="toggleFormIngreso()" style="height:34px;margin-left:auto">+ Registrar ingreso</button>
+        <button class="btn sm blue" onclick="exportarExcelIngresos()" style="height:34px">Excel</button>
+      </div>
+
+      <div id="form-ingreso" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="fg"><label>Tipo</label>
+            <select id="ing-tipo" style="width:100%">
+              <option value="cliente">Material de cliente</option>
+              <option value="bodega">Material de bodega</option>
+              <option value="sistema">Movimiento sistema</option>
+            </select>
+          </div>
+          <div class="fg"><label>Fecha</label><input type="date" id="ing-fecha" style="width:100%"></div>
+          <div class="fg"><label>N° Guía / Documento</label><input type="text" id="ing-guia" placeholder="Ej: 224836" style="width:100%"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="fg"><label>Cliente / Bodega</label><input type="text" id="ing-cliente" placeholder="Nombre" style="width:100%"></div>
+          <div class="fg"><label>Código de caja</label>
+            <div class="rel">
+              <input type="text" id="ing-codigo" placeholder="Ej: F0999TL1" autocomplete="off" oninput="suggestCodigo2(this.value)" style="width:100%">
+              <div id="sugg-ing-codigo" class="suggest-box" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:14px">
+          <div class="fg"><label>Descripción</label><input type="text" id="ing-desc" placeholder="Se autocompleta" style="width:100%"></div>
+          <div class="fg"><label>Cantidad (cajas)</label><input type="number" id="ing-cantidad" placeholder="1000" style="width:100%" inputmode="numeric"></div>
+          <div class="fg"><label>Observación</label><input type="text" id="ing-obs" placeholder="Opcional" style="width:100%"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" onclick="toggleFormIngreso()">Cancelar</button>
+          <button class="btn primary" onclick="guardarIngreso()">Guardar ingreso</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
+          <span style="font-size:11px;color:var(--text3)">Desde</span>
+          <input type="date" id="ing-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+          <span style="font-size:11px;color:var(--text3)">→</span>
+          <input type="date" id="ing-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+        </div>
+        <select id="ing-filtro-tipo" style="height:34px;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:0 10px">
+          <option value="">Todos los tipos</option>
+          <option value="cliente">Cliente</option>
+          <option value="bodega">Bodega</option>
+          <option value="sistema">Sistema</option>
+        </select>
+        <button class="btn sm primary" onclick="cargarIngresos()" style="height:34px">↻ Actualizar</button>
+      </div>
+
+      <div id="met-ingresos" class="metrics" style="margin-bottom:16px"></div>
+      <div class="card" style="padding:0;overflow-x:auto"><div id="tabla-ingresos"><div class="empty">Cargando...</div></div></div>
+    </div>
+
+    <!-- JEFE: Stock -->
+    <div class="sec" id="sec-stock">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <h2 style="font-size:15px;font-weight:600">Stock pallet a pallet</h2>
+        <label style="cursor:pointer;background:var(--green);color:#0b0e17;font-size:12px;font-weight:700;padding:7px 16px;border-radius:var(--radius-sm);margin-left:auto">
+          &#128196; Subir DBF/Excel
+          <input type="file" id="stock-file" accept=".dbf,.xlsx,.xls,.csv" style="display:none" onchange="procesarArchivoStock(this)">
+        </label>
+        <button class="btn sm blue" onclick="exportarExcelStock()" style="height:34px">Excel</button>
+      </div>
+
+      <div id="stock-info" style="display:none;background:var(--green-bg);border:1px solid rgba(0,214,143,.2);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:12px;color:var(--green)"></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="stock-buscar" placeholder="Buscar cliente, código o ubicación..." style="width:280px;height:34px" oninput="filtrarStock()">
+        <select id="stock-filtro-centro" style="height:34px;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:0 10px" onchange="filtrarStock()">
+          <option value="">Todos los centros</option>
+        </select>
+      </div>
+
+      <div id="met-stock" class="metrics" style="margin-bottom:16px"></div>
+      <div class="card" style="padding:0;overflow-x:auto"><div id="tabla-stock"><div class="empty">Carga un archivo DBF para ver el stock.</div></div></div>
+    </div>
+
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
       <div class="metrics" id="met-desp-live"></div>
@@ -1074,6 +1158,322 @@ async function generarCierreDelDia() {
   }catch(e){alert('Error generando cierre: '+e.message);}
 }
 
+// ── INGRESOS ────────────────────────────────────────────────
+
+let ingresosCache = [];
+
+function toggleFormIngreso() {
+  const el = document.getElementById('form-ingreso');
+  const btn = document.getElementById('btn-toggle-ingreso') || document.querySelector('[onclick="toggleFormIngreso()"]');
+  if(!el) return;
+  const visible = el.style.display !== 'none';
+  el.style.display = visible ? 'none' : 'block';
+  // Setear fecha de hoy por defecto
+  if(!visible) {
+    const fi = document.getElementById('ing-fecha');
+    if(fi && !fi.value) fi.value = hoy();
+  }
+}
+
+function suggestCodigo2(val) {
+  const box = document.getElementById('sugg-ing-codigo');
+  if(!box) return;
+  if(!val || val.length < 2) { box.style.display='none'; return; }
+  const matches = Object.values(COD_IDX).filter(function(c){
+    return c.codigo.toLowerCase().includes(val.toLowerCase()) || (c.descripcion||'').toLowerCase().includes(val.toLowerCase());
+  }).slice(0,8);
+  if(!matches.length) { box.style.display='none'; return; }
+  box.innerHTML = matches.map(function(c){
+    return '<div class="sitem" onclick="selectCodigo2(\"'+c.codigo+'\",\"'+c.descripcion.replace(/"/g,'')+'\")">'+
+      '<span class="snv">'+c.codigo+'</span> <span class="smeta">'+c.descripcion+'</span></div>';
+  }).join('');
+  box.style.display = 'block';
+}
+
+function selectCodigo2(codigo, desc) {
+  const ci = document.getElementById('ing-codigo');
+  const di = document.getElementById('ing-desc');
+  if(ci) ci.value = codigo;
+  if(di) di.value = desc;
+  const box = document.getElementById('sugg-ing-codigo');
+  if(box) box.style.display = 'none';
+}
+
+async function guardarIngreso() {
+  const tipo = document.getElementById('ing-tipo')?.value;
+  const fecha = document.getElementById('ing-fecha')?.value;
+  const guia = document.getElementById('ing-guia')?.value?.trim();
+  const cliente = document.getElementById('ing-cliente')?.value?.trim();
+  const codigo = document.getElementById('ing-codigo')?.value?.trim();
+  const desc = document.getElementById('ing-desc')?.value?.trim();
+  const cantidad = parseInt(document.getElementById('ing-cantidad')?.value)||0;
+  const obs = document.getElementById('ing-obs')?.value?.trim();
+
+  if(!fecha||!cliente||!codigo||!cantidad) { alert('Completa fecha, cliente, código y cantidad.'); return; }
+
+  try {
+    await sb('ingresos_material','POST',{
+      tipo, fecha, numero_guia: guia||null, cliente, codigo,
+      descripcion: desc||null, cantidad, observacion: obs||null,
+      registrado_por: USER.nombre
+    });
+    // Limpiar form
+    ['ing-guia','ing-cliente','ing-codigo','ing-desc','ing-cantidad','ing-obs'].forEach(function(id){
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    toggleFormIngreso();
+    cargarIngresos();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarIngresos() {
+  const desde = document.getElementById('ing-desde')?.value || '';
+  const hasta = document.getElementById('ing-hasta')?.value || '';
+  const tipo = document.getElementById('ing-filtro-tipo')?.value || '';
+
+  let q = '?order=creado_en.desc&select=*';
+  if(desde) q += '&fecha=gte.'+desde;
+  if(hasta) q += '&fecha=lte.'+hasta;
+  if(tipo) q += '&tipo=eq.'+tipo;
+
+  try {
+    const data = await sb('ingresos_material','GET',null,q);
+    ingresosCache = data||[];
+
+    // Métricas
+    const metEl = document.getElementById('met-ingresos');
+    if(metEl) {
+      const totalCli = ingresosCache.filter(function(r){return r.tipo==='cliente';}).reduce(function(s,r){return s+r.cantidad;},0);
+      const totalBod = ingresosCache.filter(function(r){return r.tipo==='bodega';}).reduce(function(s,r){return s+r.cantidad;},0);
+      const totalSis = ingresosCache.filter(function(r){return r.tipo==='sistema';}).reduce(function(s,r){return s+r.cantidad;},0);
+      const total = ingresosCache.reduce(function(s,r){return s+r.cantidad;},0);
+      metEl.innerHTML =
+        '<div class="metric"><div class="metric-label">Total ingresos</div><div class="metric-val">'+total.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+        '<div class="metric"><div class="metric-label">De clientes</div><div class="metric-val green">'+totalCli.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+        '<div class="metric"><div class="metric-label">De bodega</div><div class="metric-val yellow">'+totalBod.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+        '<div class="metric"><div class="metric-label">Por sistema</div><div class="metric-val blue">'+totalSis.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>';
+    }
+
+    // Tabla
+    const tabEl = document.getElementById('tabla-ingresos');
+    if(!tabEl) return;
+    if(!ingresosCache.length) { tabEl.innerHTML='<div class="empty">Sin registros para el período.</div>'; return; }
+
+    const tipoColor = {'cliente':'green','bodega':'yellow','sistema':'blue'};
+    const rows = ingresosCache.map(function(r){
+      var col = tipoColor[r.tipo]||'gray';
+      var fecha = r.fecha ? new Date(r.fecha+'T12:00:00').toLocaleDateString('es-CL') : '—';
+      return '<tr>'+
+        '<td style="font-size:11px;color:var(--text3)">'+fecha+'</td>'+
+        '<td><span class="chip '+col+'">'+r.tipo+'</span></td>'+
+        '<td style="font-weight:600">'+r.cliente+'</td>'+
+        '<td><code style="font-size:11px">'+r.codigo+'</code></td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+((r.descripcion||'').substring(0,30)||'—')+'</td>'+
+        '<td style="font-weight:700;color:var(--text)">'+r.cantidad.toLocaleString('es-CL')+'</td>'+
+        '<td style="font-size:11px;color:var(--text3)">'+(r.numero_guia||'—')+'</td>'+
+        '<td style="font-size:11px;color:var(--text3)">'+(r.observacion||'—')+'</td>'+
+        '<td style="font-size:11px;color:var(--text3)">'+(r.registrado_por||'—')+'</td>'+
+        '<td><button class="btn sm danger" onclick="eliminarIngreso(\"'+r.id+'\")">&#10005;</button></td>'+
+      '</tr>';
+    }).join('');
+
+    tabEl.innerHTML = '<table class="dt"><thead><tr>'+
+      '<th>Fecha</th><th>Tipo</th><th>Cliente/Bodega</th><th>Código</th><th>Descripción</th>'+
+      '<th>Cantidad</th><th>N° Guía</th><th>Observación</th><th>Registrado por</th><th></th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table>';
+  } catch(e) { console.warn('cargarIngresos:', e.message); }
+}
+
+async function eliminarIngreso(id) {
+  if(!confirm('¿Eliminar este registro?')) return;
+  try {
+    await sb('ingresos_material','DELETE',null,'?id=eq.'+id);
+    cargarIngresos();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function exportarExcelIngresos() {
+  if(!ingresosCache.length) { alert('Sin datos para exportar.'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = ingresosCache.map(function(r){return {
+    Fecha:r.fecha, Tipo:r.tipo, Cliente:r.cliente, Codigo:r.codigo,
+    Descripcion:r.descripcion, Cantidad:r.cantidad, Guia:r.numero_guia,
+    Observacion:r.observacion, Registrado_por:r.registrado_por
+  };});
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Ingresos');
+  XLSX.writeFile(wb, 'ingresos_'+hoy()+'.xlsx');
+}
+
+// ── STOCK ────────────────────────────────────────────────────
+
+let stockCache = [];
+let stockFiltrado = [];
+
+async function procesarArchivoStock(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const infoEl = document.getElementById('stock-info');
+
+  if(infoEl) { infoEl.style.display='block'; infoEl.textContent='Procesando archivo...'; }
+
+  try {
+    let registros = [];
+
+    if(ext === 'dbf') {
+      // Leer DBF via ArrayBuffer y parsear manualmente campos clave
+      const buf = await file.arrayBuffer();
+      const arr = new Uint8Array(buf);
+      // Usar SheetJS que soporta DBF
+      const wb = XLSX.read(buf, {type:'array', raw:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {raw:false});
+      registros = data.map(function(r){
+        return {
+          codigo: (r.COD_PRODUC||'').trim(),
+          descripcion: (r.PRODUCTO||'').trim(),
+          cliente: (r.CLIENTE||'').trim(),
+          unidades: parseInt(r.UNIDADES)||0,
+          ubicacion: (r.UBICA||'').trim(),
+          centro: (r.CENTRO||'').trim(),
+          maquina: (r.MAQ||'').trim(),
+          nv: (r.OP_NOTAVTA||'').trim(),
+          fecha_recepcion: r.REC_BOD||null,
+          periodo: parseInt(r.PERIODO)||null,
+        };
+      }).filter(function(r){return r.codigo && r.unidades > 0;});
+    } else {
+      // Excel/CSV
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {raw:false});
+      registros = data.map(function(r){
+        return {
+          codigo: (r.COD_PRODUC||r.Codigo||'').trim(),
+          descripcion: (r.PRODUCTO||r.Descripcion||'').trim(),
+          cliente: (r.CLIENTE||r.Cliente||'').trim(),
+          unidades: parseInt(r.UNIDADES||r.Unidades)||0,
+          ubicacion: (r.UBICA||r.Ubicacion||'').trim(),
+          centro: (r.CENTRO||r.Centro||'').trim(),
+          maquina: (r.MAQ||r.Maquina||'').trim(),
+          nv: (r.OP_NOTAVTA||r.NV||'').trim(),
+          fecha_recepcion: r.REC_BOD||r.Fecha||null,
+          periodo: parseInt(r.PERIODO)||null,
+        };
+      }).filter(function(r){return r.codigo && r.unidades > 0;});
+    }
+
+    if(!registros.length) { alert('No se encontraron registros válidos.'); return; }
+
+    // Guardar en Supabase — primero borrar los anteriores y subir los nuevos
+    await sb('stock_pallets','DELETE',null,'?id=neq.00000000-0000-0000-0000-000000000000');
+    // Insertar en bloques de 500
+    for(var i=0; i<registros.length; i+=500) {
+      await sb('stock_pallets','POST', registros.slice(i,i+500));
+    }
+
+    if(infoEl) infoEl.textContent = '✓ '+registros.length.toLocaleString('es-CL')+' registros cargados desde '+file.name+' — '+new Date().toLocaleString('es-CL');
+    input.value = '';
+    cargarStock();
+  } catch(e) {
+    if(infoEl) { infoEl.style.background='var(--red-bg)'; infoEl.style.color='var(--red)'; infoEl.style.borderColor='rgba(255,77,106,.2)'; }
+    if(infoEl) infoEl.textContent = 'Error: '+e.message;
+    console.error('procesarArchivoStock:', e);
+  }
+}
+
+async function cargarStock() {
+  try {
+    const data = await sb('stock_pallets','GET',null,'?order=cliente.asc,codigo.asc&select=*&limit=5000');
+    stockCache = data||[];
+    filtrarStock();
+  } catch(e) { console.warn('cargarStock:', e.message); }
+}
+
+function filtrarStock() {
+  const buscar = (document.getElementById('stock-buscar')?.value||'').toLowerCase();
+  const centro = document.getElementById('stock-filtro-centro')?.value||'';
+
+  stockFiltrado = stockCache.filter(function(r){
+    const matchBuscar = !buscar ||
+      (r.cliente||'').toLowerCase().includes(buscar) ||
+      (r.codigo||'').toLowerCase().includes(buscar) ||
+      (r.ubicacion||'').toLowerCase().includes(buscar) ||
+      (r.descripcion||'').toLowerCase().includes(buscar);
+    const matchCentro = !centro || r.centro === centro;
+    return matchBuscar && matchCentro;
+  });
+
+  // Poblar centros
+  const selCentro = document.getElementById('stock-filtro-centro');
+  if(selCentro && selCentro.options.length <= 1) {
+    const centros = [...new Set(stockCache.map(function(r){return r.centro;}).filter(Boolean))].sort();
+    centros.forEach(function(c){
+      const o = document.createElement('option');
+      o.value = c; o.textContent = 'Centro '+c;
+      selCentro.appendChild(o);
+    });
+  }
+
+  renderStock();
+}
+
+function renderStock() {
+  // Métricas
+  const metEl = document.getElementById('met-stock');
+  if(metEl) {
+    const totalUn = stockFiltrado.reduce(function(s,r){return s+r.unidades;},0);
+    const totalPallets = stockFiltrado.length;
+    const clientes = new Set(stockFiltrado.map(function(r){return r.cliente;})).size;
+    const codigos = new Set(stockFiltrado.map(function(r){return r.codigo;})).size;
+    metEl.innerHTML =
+      '<div class="metric"><div class="metric-label">Pallets</div><div class="metric-val">'+totalPallets.toLocaleString('es-CL')+'</div><div class="metric-sub">registros</div></div>'+
+      '<div class="metric"><div class="metric-label">Unidades totales</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">Clientes</div><div class="metric-val yellow">'+clientes+'</div><div class="metric-sub">distintos</div></div>'+
+      '<div class="metric"><div class="metric-label">Códigos</div><div class="metric-val">'+codigos+'</div><div class="metric-sub">distintos</div></div>';
+  }
+
+  // Tabla
+  const tabEl = document.getElementById('tabla-stock');
+  if(!tabEl) return;
+  if(!stockFiltrado.length) { tabEl.innerHTML='<div class="empty">Sin registros'+(stockCache.length?'. Ajusta los filtros.':'. Carga un archivo DBF.')+'</div>'; return; }
+
+  const rows = stockFiltrado.slice(0,500).map(function(r){
+    var fRec = r.fecha_recepcion ? new Date(r.fecha_recepcion+'T12:00:00').toLocaleDateString('es-CL') : '—';
+    return '<tr>'+
+      '<td style="font-weight:600">'+r.cliente+'</td>'+
+      '<td><code style="font-size:11px">'+r.codigo+'</code></td>'+
+      '<td style="font-size:12px;color:var(--text2)">'+((r.descripcion||'').substring(0,30))+'</td>'+
+      '<td style="font-weight:700;color:var(--green)">'+r.unidades.toLocaleString('es-CL')+'</td>'+
+      '<td><span class="chip gray">'+r.centro+'</span></td>'+
+      '<td style="font-size:12px">'+r.ubicacion+'</td>'+
+      '<td style="font-size:12px;color:var(--text3)">'+r.maquina+'</td>'+
+      '<td style="font-size:12px;color:var(--text3)">'+r.nv+'</td>'+
+      '<td style="font-size:11px;color:var(--text3)">'+fRec+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var nota = stockFiltrado.length > 500 ? '<div style="padding:10px 14px;font-size:11px;color:var(--text3)">Mostrando 500 de '+stockFiltrado.length.toLocaleString('es-CL')+' registros. Usa los filtros para acotar.</div>' : '';
+
+  tabEl.innerHTML = '<table class="dt"><thead><tr>'+
+    '<th>Cliente</th><th>Código</th><th>Descripción</th><th>Unidades</th>'+
+    '<th>Centro</th><th>Ubicación</th><th>Máquina</th><th>NV</th><th>Recepción</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+nota;
+}
+
+async function exportarExcelStock() {
+  if(!stockFiltrado.length) { alert('Sin datos para exportar.'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = stockFiltrado.map(function(r){return {
+    Cliente:r.cliente, Codigo:r.codigo, Descripcion:r.descripcion,
+    Unidades:r.unidades, Centro:r.centro, Ubicacion:r.ubicacion,
+    Maquina:r.maquina, NV:r.nv, Recepcion:r.fecha_recepcion
+  };});
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Stock');
+  XLSX.writeFile(wb, 'stock_'+hoy()+'.xlsx');
+}
+
 function mostrarSinConexion() {
   const ind = document.getElementById('conn-indicator');
   if(ind) {
@@ -1115,7 +1515,7 @@ function initApp() {
 
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
-    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['informes','Informes']]
+    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['ingresos','Ingresos'],['stock','Stock'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['despacho','Mis Despachos']];
 
   const bar = document.getElementById('tabs-bar');
@@ -1139,7 +1539,7 @@ function initApp() {
 
 function showTab(t) {
   const tabNames = USER.rol==='jefe'
-    ? ['planificar','cambios','armados','despacho','informes']
+    ? ['planificar','cambios','armados','despacho','ingresos','stock','informes']
     : ['desp-live','despacho'];
   document.querySelectorAll('.tab').forEach((el,i) => {
     el.classList.toggle('active', tabNames[i]===t);
@@ -1157,6 +1557,8 @@ function refreshActual() {
   else if(tabActual==='cambios') { cargarCambiosDia(); }
   else if(tabActual==='armados') { cargarArmados(); }
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
+  else if(tabActual==='ingresos') { cargarIngresos(); }
+  else if(tabActual==='stock') { cargarStock(); }
   else if(tabActual==='informes') { cargarInformes(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
