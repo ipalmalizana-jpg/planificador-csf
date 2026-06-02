@@ -1797,10 +1797,17 @@ function initApp() {
 
   const bar = document.getElementById('tabs-bar');
   const iconMap = {planificar:'📋',cambios:'✏️',armados:'📦',despacho:'🚚',ingresos:'📥',stock:'🏭',informes:'📊','desp-live':'📅','mis-despachos':'🚛'};
-  bar.innerHTML = tabs.map(function(t,i){
-    return '<button class="tab '+(i===0?'active':'')+'" id="tab-'+t[0]+'" onclick="showTab(\"'+t[0]+'\")">'+
-      '<span class="tab-icon">'+(iconMap[t[0]]||'•')+'</span>'+t[1]+'</button>';
-  }).join('');
+  bar.innerHTML = '';
+  tabs.forEach(function(t,i){
+    var btn = document.createElement('button');
+    btn.className = 'tab' + (i===0?' active':'');
+    btn.id = 'tab-'+t[0];
+    btn.setAttribute('data-tab', t[0]);
+    btn.innerHTML = '<span class="tab-icon">'+(iconMap[t[0]]||'•')+'</span>'+t[1];
+    btn.addEventListener('click', function(){ showTab(this.getAttribute('data-tab')); });
+    bar.appendChild(btn);
+  });
+  var _dummy_join = '';
 
   showTab(tabs[0][0]);
   if (USER.rol === 'jefe') {
