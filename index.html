@@ -2703,19 +2703,25 @@ function setMisDespachosModo(modo) {
 
 async function cargarMisDespachos() {
   var esDia = document.getElementById('md-filtro-dia')?.style.display !== 'none';
-  var fecha = document.getElementById('mis-desp-fecha')?.value || hoy();
-  var desde = esDia ? fecha : (document.getElementById('mis-desp-desde')?.value || hoy());
-  var hasta = esDia ? fecha : (document.getElementById('mis-desp-hasta')?.value || hoy());
+  var fecha = document.getElementById('mis-desp-fecha')?.value || '';
+  var desde = esDia ? fecha : (document.getElementById('mis-desp-desde')?.value || '');
+  var hasta = esDia ? fecha : (document.getElementById('mis-desp-hasta')?.value || '');
+
   const el = document.getElementById('mis-desp-output');
   const metEl = document.getElementById('mis-desp-metrics');
   if(!el) return;
   el.innerHTML = '<div class="empty">Cargando...</div>';
+
   try {
-    const salidas = await sb('salidas_despacho','GET',null,
-      '?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&order=creado_en.asc&select=*');
+    // Construir query - si no hay fecha carga todo
+    var q = '?order=creado_en.desc&select=*';
+    if(desde) q += '&creado_en=gte.'+desde+'T00:00:00';
+    if(hasta) q += '&creado_en=lte.'+hasta+'T23:59:59';
+
+    const salidas = await sb('salidas_despacho','GET',null,q);
 
     if(!salidas||!salidas.length) {
-      el.innerHTML='<div class="empty">Sin despachos registrados para esta fecha.</div>';
+      el.innerHTML='<div class="empty">Sin despachos registrados'+(desde?' para este período':'')+'.</div>';
       if(metEl) metEl.innerHTML='';
       return;
     }
@@ -2726,48 +2732,61 @@ async function cargarMisDespachos() {
     const guias = new Set(salidas.filter(function(r){return r.numero_guia;}).map(function(r){return r.numero_guia;})).size;
     if(metEl) metEl.innerHTML =
       '<div class="metric"><div class="metric-label">Salidas</div><div class="metric-val">'+salidas.length+'</div><div class="metric-sub">registros</div></div>'+
-      '<div class="metric"><div class="metric-label">Unidades despachadas</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">Unidades</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
       '<div class="metric"><div class="metric-label">Clientes</div><div class="metric-val yellow">'+clientes+'</div><div class="metric-sub">distintos</div></div>'+
       '<div class="metric"><div class="metric-label">Guías</div><div class="metric-val">'+guias+'</div><div class="metric-sub">documentos</div></div>';
 
-    // Agrupar por cliente
-    var porCliente = {};
+    // Agrupar por fecha y luego cliente
+    var porFecha = {};
     salidas.forEach(function(s){
+      var f = (s.creado_en||'').slice(0,10);
+      if(!porFecha[f]) porFecha[f] = {};
       var cli = s.cliente||'Sin cliente';
-      if(!porCliente[cli]) porCliente[cli]=[];
-      porCliente[cli].push(s);
+      if(!porFecha[f][cli]) porFecha[f][cli] = [];
+      porFecha[f][cli].push(s);
     });
 
     var html2 = '';
-    Object.keys(porCliente).sort().forEach(function(cli){
-      var rows = porCliente[cli];
-      var totalCli = rows.reduce(function(s,r){return s+(r.cantidad||0);},0);
-      html2 += '<div style="margin-bottom:14px">'+
-        '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border2)">'+
-          '<span style="font-size:13px;font-weight:700">'+cli+'</span>'+
-          '<span style="font-size:12px;color:var(--green);font-weight:600">'+totalCli.toLocaleString('es-CL')+' u.</span>'+
-          '<span style="font-size:11px;color:var(--text3)">'+rows.length+' salida(s)</span>'+
-        '</div>'+
-        '<table class="dt" style="border-radius:0 0 var(--radius) var(--radius);overflow:hidden;border:1px solid var(--border2);border-top:none">'+
-        '<thead><tr><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Hora</th><th></th></tr></thead>'+
-        '<tbody>'+
-        rows.map(function(s){
-          var hora = new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-          return '<tr>'+
-            '<td><code style="font-size:11px">'+s.codigo+'</code></td>'+
-            '<td style="color:var(--text2)">'+s.destino+'</td>'+
-            '<td style="font-weight:700;color:var(--green)">'+s.cantidad.toLocaleString('es-CL')+' u.</td>'+
-            '<td>'+(s.numero_guia?'<span class="nv-tag">'+s.numero_guia+'</span>':'—')+'</td>'+
-            '<td>'+(s.foto_url?'<a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:12px">📷 Ver</a>':'—')+'</td>'+
-            '<td style="color:var(--text3);font-size:11px">'+hora+'</td>'+
-            '<td><button class="btn sm danger" onclick="eliminarSalidaDesp(\"'+s.id+'\")">✕</button></td>'+
-          '</tr>';
-        }).join('')+
-        '</tbody></table></div>';
+    Object.keys(porFecha).sort().reverse().forEach(function(fecha2){
+      var fechaStr = new Date(fecha2+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+      html2 += '<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 6px">'+fechaStr+'</div>';
+
+      Object.keys(porFecha[fecha2]).sort().forEach(function(cli){
+        var rows = porFecha[fecha2][cli];
+        var totalCli = rows.reduce(function(s,r){return s+(r.cantidad||0);},0);
+
+        html2 += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden">'+
+          '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">'+
+            '<span style="font-size:13px;font-weight:700;color:var(--text)">'+cli+'</span>'+
+            '<span style="font-size:12px;color:var(--green);font-weight:600;margin-left:auto">'+totalCli.toLocaleString('es-CL')+' u.</span>'+
+            '<span style="font-size:11px;color:var(--text3)">'+rows.length+' salida(s)</span>'+
+          '</div>'+
+          '<div style="overflow-x:auto"><table class="dt" style="font-size:12px">'+
+          '<thead><tr><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Hora</th><th></th></tr></thead>'+
+          '<tbody>'+
+          rows.map(function(s){
+            var hora = new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+            return '<tr>'+
+              '<td><code style="font-size:11px">'+s.codigo+'</code></td>'+
+              '<td style="color:var(--text2);font-size:11px">'+s.destino+'</td>'+
+              '<td style="font-weight:700;color:var(--green)">'+s.cantidad.toLocaleString('es-CL')+'</td>'+
+              '<td>'+(s.numero_guia?'<span class="nv-tag">'+s.numero_guia+'</span>':'—')+'</td>'+
+              '<td>'+(s.foto_url?'<a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:11px">📷</a>':'—')+'</td>'+
+              '<td style="color:var(--text3);font-size:11px;white-space:nowrap">'+hora+'</td>'+
+              '<td><button class="btn sm danger" onclick="eliminarSalidaDesp(\"'+s.id+'\")">✕</button></td>'+
+            '</tr>';
+          }).join('')+
+          '</tbody></table></div></div>';
+      });
     });
+
     el.innerHTML = html2;
-  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+  } catch(e) {
+    el.innerHTML='<div class="empty">Error: '+e.message+'</div>';
+    console.error('cargarMisDespachos:', e);
+  }
 }
+
 
 async function eliminarSalidaDesp(salidaId) {
   if(!confirm('¿Eliminar este despacho?')) return;
