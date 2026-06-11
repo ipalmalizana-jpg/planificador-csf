@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2160,40 +2161,68 @@ async function cargarDespLive() {
     });
     if(sinHora.length) grupos['Sin hora asignada'] = sinHora;
 
-    el.innerHTML = Object.entries(grupos).map(([hora, items])=>`
-      <div class="grupo">
-        <div class="grupo-hdr">
-          <span style="font-size:18px;font-weight:600;color:${hora==='Sin hora asignada'?'var(--text3)':'var(--yellow)'}">${hora==='Sin hora asignada'?'Sin hora asignada':' '+hora}</span>
-          <span class="grupo-meta">${items.length} pedido(s) . ${items.reduce((s,p)=>s+p.cantidad_pedida,0).toLocaleString('es-CL')} u. totales</span>
-        </div>
-        <div style="overflow-x:auto">
-        <table class="dt">
-          <thead><tr><th>Prioridad</th><th>Cliente</th><th>Destino</th><th>Código</th><th>Descripción</th><th>Cajas</th><th>Armadas</th><th>Máquina</th><th>Estado</th></tr></thead>
-          <tbody>
-          ${items.map(p=>{
-            const pct=p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
-            const col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-            return `<tr>
-              <td><span class="chip ${chipPrio(p.prioridad)}">${p.prioridad}</span></td>
-              <td style="font-weight:500;white-space:nowrap">${p.cliente}</td>
-              <td style="color:var(--text2);white-space:nowrap">${p.destino||'--'}</td>
-              <td><code style="font-size:11px;color:var(--text2)">${p.codigo}</code></td>
-              <td style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.descripcion||''}</td>
-              <td style="font-weight:500;text-align:right">${p.cantidad_pedida.toLocaleString('es-CL')}</td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <div class="prog-bar" style="width:60px"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
-                  <span style="font-size:11px;color:${col};font-weight:500">${p.cantidad_armada.toLocaleString('es-CL')}</span>
-                </div>
-              </td>
-              <td style="color:var(--text2)">${p.maquina||'--'}</td>
-              <td><span class="chip ${chipEstado(p.estado)}">${p.estado}</span></td>
-            </tr>`;
-          }).join('')}
-          </tbody>
-        </table>
-        </div>
-      </div>`).join('');
+    // Cargar plan_despacho para este día
+    const planDesp = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fechaDesp+'&select=*');
+    const planMap = {};
+    (planDesp||[]).forEach(function(d){ planMap[d.pedido_id]=d; });
+
+    el.innerHTML = Object.entries(grupos).map(([hora, items])=>
+      '<div class="grupo">'+
+        '<div class="grupo-hdr">'+
+          '<span style="font-size:16px;font-weight:700;color:'+(hora==='Sin hora asignada'?'var(--text3)':'var(--yellow)')+'">'+
+            (hora==='Sin hora asignada'?'Sin hora asignada':'🕐 '+hora)+
+          '</span>'+
+          '<span class="grupo-meta">'+items.length+' pedido(s) · '+items.reduce((s,p)=>s+p.cantidad_pedida,0).toLocaleString('es-CL')+' u.</span>'+
+        '</div>'+
+        items.map(function(p){
+          const pct=p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
+          const col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+          const dp = planMap[p.id];
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:8px">'+
+            // Cabecera pedido
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">'+
+              '<div>'+
+                '<div style="font-size:15px;font-weight:700">'+p.cliente+'</div>'+
+                '<code style="font-size:12px;color:var(--csf)">'+p.codigo+'</code>'+
+                '<span style="font-size:11px;color:var(--text2);margin-left:8px">→ '+p.destino+'</span>'+
+              '</div>'+
+              '<span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>'+
+            '</div>'+
+            // Barra de progreso armado
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+              '<span style="font-size:11px;color:var(--text3);width:50px">Armado</span>'+
+              '<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+              '<span style="font-size:12px;color:'+col+';font-weight:700">'+p.cantidad_armada.toLocaleString('es-CL')+'/'+p.cantidad_pedida.toLocaleString('es-CL')+'</span>'+
+            '</div>'+
+            // Si hay plan de despacho, mostrar inputs
+            (dp ?
+              '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+                '<input type="number" id="live-cant-'+dp.id+'" placeholder="Cantidad" '+
+                  'style="width:100px;height:40px;font-size:15px;font-weight:600" '+
+                  'min="1" inputmode="numeric" pattern="[0-9]*">'+
+                '<input type="text" id="live-guia-'+dp.id+'" placeholder="N° guía" '+
+                  'style="width:110px;height:40px;font-size:14px" '+
+                  'inputmode="numeric" pattern="[0-9]*">'+
+                '<label style="display:flex;align-items:center;gap:4px;height:40px;padding:0 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:12px;color:var(--text2)" id="live-foto-lbl-'+dp.id+'">'+
+                  '📷'+
+                  '<input type="file" id="live-foto-'+dp.id+'" accept="image/*,application/pdf" capture="environment" style="display:none" '+
+                    'onchange="this.parentElement.style.borderColor=\'#0db87a\';this.parentElement.style.color=\'#0db87a\'">'+
+                '</label>'+
+                '<button class="btn primary" onclick="registrarSalidaLive(\"'+dp.id+'\",\"'+p.codigo+'\",\"'+p.cliente.replace(/"/g,'')+'\")" '+
+                  'style="height:40px;padding:0 18px;font-size:13px;font-weight:700;flex:1">'+
+                  '✓ Registrar salida'+
+                '</button>'+
+                (dp.cantidad_despachada>0?
+                  '<button class="btn sm" onclick="verSalidas(\"'+dp.id+'\")" style="height:40px;color:var(--csf)">Ver salidas ('+dp.cantidad_despachada.toLocaleString('es-CL')+')</button>':'')+
+              '</div>'+
+              '<div id="salidas-'+dp.id+'" style="display:none;margin-top:8px"></div>'
+            :
+              '<div style="font-size:12px;color:var(--text3);padding:6px 0">Sin plan de despacho para esta fecha</div>'
+            )+
+          '</div>';
+        }).join('')+
+      '</div>'
+    ).join('');
   } catch(e) { if(el&&el.closest('.sec.active')) el.innerHTML=`<div class="wbox">Error: ${e.message}</div>`; }
 }
 
@@ -2699,6 +2728,49 @@ function setMisDespachosModo(modo) {
     var d = document.getElementById('mis-desp-desde'); if(d) d.value = f;
     var h = document.getElementById('mis-desp-hasta'); if(h) h.value = f;
   }
+}
+
+async function registrarSalidaLive(despId, codigo, cliente) {
+  const cantEl = document.getElementById('live-cant-'+despId);
+  const guiaEl = document.getElementById('live-guia-'+despId);
+  const fotoEl = document.getElementById('live-foto-'+despId);
+  const cant = parseInt(cantEl?.value)||0;
+  const guia = guiaEl?.value?.trim()||'';
+  if(!cant) { alert('Ingresa la cantidad.'); return; }
+  try {
+    // Subir foto si hay
+    let fotoUrl = null;
+    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
+      fotoUrl = await subirFotoGuia(despId, cliente, fotoEl.files[0]);
+    }
+    // Registrar salida
+    await sb('salidas_despacho','POST',{
+      despacho_id: despId, cliente: cliente, codigo: codigo,
+      cantidad: cant, numero_guia: guia||null, foto_url: fotoUrl||null,
+      registrado_por: USER.nombre
+    });
+    // Actualizar plan_despacho
+    const salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
+    const totalDesp = (salidas||[]).reduce(function(s,d){return s+(d.cantidad||0);},0);
+    const desp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
+    const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
+    const nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
+    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+despId);
+    // Descontar stock 002
+    try {
+      const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
+      if(stockBod&&stockBod.length) {
+        const totalStock = stockBod.reduce(function(s,r){return s+(r.unidades||0);},0);
+        await sb('stock_pallets','PATCH',{unidades:Math.max(0,totalStock-cant)},'?id=eq.'+stockBod[0].id);
+        for(var si=1;si<stockBod.length;si++) await sb('stock_pallets','DELETE',null,'?id=eq.'+stockBod[si].id);
+      }
+    } catch(eS){}
+    // Limpiar campos
+    if(cantEl) cantEl.value='';
+    if(guiaEl) guiaEl.value='';
+    if(fotoEl) { fotoEl.value=''; var lbl=document.getElementById('live-foto-lbl-'+despId); if(lbl){lbl.style.borderColor='';lbl.style.color='';} }
+    cargarDespLive();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 async function cargarMisDespachos() {
