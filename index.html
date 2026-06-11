@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1007,6 +1008,17 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
   </div>
 </div>
 
+<!-- Navegación inferior móvil -->
+<div class="mobile-nav" id="mobile-nav" style="display:none">
+  <button class="mobile-nav-btn active" id="mnav-desp-live" onclick="showTab('desp-live');updateMobileNav('desp-live')">
+    <span class="mnav-icon">📋</span>Plan del día
+  </button>
+  <button class="mobile-nav-btn" id="mnav-mis-despachos" onclick="showTab('mis-despachos');updateMobileNav('mis-despachos')">
+    <span class="mnav-icon">📦</span>Mis despachos
+  </button>
+</div>
+
+
 <script>
 const SB_URL = 'https://uzioiyxrtoaeqfqhypci.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6aW9peXhydG9hZXFmcWh5cGNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczODEyMzcsImV4cCI6MjA5Mjk1NzIzN30.94SGcya9IO5xmUxnDf7qRENcI0wBnG2eZZk7jcaP-b0';
@@ -1079,10 +1091,13 @@ function agregarGrupo() {
   guardarGrupos();
   document.getElementById('mg-nombre').value='';
   renderMgLista();
-  // Mostrar nav móvil para despachador en pantallas pequeñas
-  if(USER.rol !== 'jefe' && window.innerWidth <= 480) {
+  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
+    if(mn) {
+      mn.style.display = 'flex';
+      // En desktop también mostrar como tabs normales via sidebar
+    }
   }
 
   renderGruposLista();
@@ -1092,10 +1107,13 @@ function eliminarGrupo(nombre) {
   gruposHoy = gruposHoy.filter(g=>g.nombre!==nombre);
   guardarGrupos();
   renderMgLista();
-  // Mostrar nav móvil para despachador en pantallas pequeñas
-  if(USER.rol !== 'jefe' && window.innerWidth <= 480) {
+  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
+    if(mn) {
+      mn.style.display = 'flex';
+      // En desktop también mostrar como tabs normales via sidebar
+    }
   }
 
   renderGruposLista();
@@ -1882,10 +1900,13 @@ function initApp() {
   var rolEl = document.getElementById('tb-rol');
   if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
 
-  // Mostrar nav móvil para despachador en pantallas pequeñas
-  if(USER.rol !== 'jefe' && window.innerWidth <= 480) {
+  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
+    if(mn) {
+      mn.style.display = 'flex';
+      // En desktop también mostrar como tabs normales via sidebar
+    }
   }
 
   renderGruposLista();
