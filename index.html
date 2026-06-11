@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1003,6 +1002,56 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
       <button class="btn sm" onclick="closeModal('modal-historial')">✕</button>
     </div>
     <div id="mh-body"></div>
+  </div>
+</div>
+
+<!-- Modal registrar despacho (despachador) -->
+<div class="modal-overlay" id="modal-despacho-live">
+  <div class="modal" style="max-width:420px;width:95vw">
+    <div class="modal-title">
+      <span>Registrar despacho</span>
+      <button class="btn sm" onclick="closeModal('modal-despacho-live')">✕</button>
+    </div>
+
+    <!-- Info del pedido -->
+    <div id="mdl-info" style="background:var(--bg3);border-radius:var(--radius);padding:12px 14px;margin-bottom:20px">
+      <div id="mdl-cliente" style="font-size:16px;font-weight:700;margin-bottom:2px"></div>
+      <div id="mdl-codigo" style="font-size:13px;color:var(--csf);font-family:monospace;margin-bottom:2px"></div>
+      <div id="mdl-progreso" style="font-size:12px;color:var(--text2)"></div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="fg" style="margin-bottom:14px">
+      <label>Cantidad a despachar</label>
+      <input type="number" id="mdl-cant" placeholder="Ej: 1200" 
+        style="height:52px;font-size:22px;font-weight:700;text-align:center"
+        inputmode="numeric" pattern="[0-9]*">
+    </div>
+
+    <div class="fg" style="margin-bottom:14px">
+      <label>N° de guía (opcional)</label>
+      <input type="text" id="mdl-guia" placeholder="Ej: 224836"
+        style="height:44px;font-size:16px;text-align:center"
+        inputmode="numeric" pattern="[0-9]*">
+    </div>
+
+    <div style="margin-bottom:20px">
+      <label style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:8px">Foto de guía (opcional)</label>
+      <label id="mdl-foto-lbl" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2)">
+        📷 Adjuntar foto
+        <input type="file" id="mdl-foto" accept="image/*,application/pdf" capture="environment" style="display:none"
+          onchange="document.getElementById('mdl-foto-lbl').style.borderColor='var(--green)';document.getElementById('mdl-foto-lbl').style.color='var(--green)';document.getElementById('mdl-foto-lbl').childNodes[0].textContent='✓ Foto adjunta'">
+      </label>
+    </div>
+
+    <input type="hidden" id="mdl-desp-id">
+    <input type="hidden" id="mdl-desp-codigo">
+    <input type="hidden" id="mdl-desp-cliente">
+
+    <button class="btn primary" onclick="confirmarDespachoLive()"
+      style="width:100%;height:52px;font-size:16px;font-weight:700;border-radius:8px">
+      ✓ Confirmar despacho
+    </button>
   </div>
 </div>
 
@@ -2194,26 +2243,17 @@ async function cargarDespLive() {
               '<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
               '<span style="font-size:12px;color:'+col+';font-weight:700">'+p.cantidad_armada.toLocaleString('es-CL')+'/'+p.cantidad_pedida.toLocaleString('es-CL')+'</span>'+
             '</div>'+
-            // Si hay plan de despacho, mostrar inputs
+            // Botón despachar - lleva a modal
             (dp ?
-              '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-                '<input type="number" id="live-cant-'+dp.id+'" placeholder="Cantidad" '+
-                  'style="width:100px;height:40px;font-size:15px;font-weight:600" '+
-                  'min="1" inputmode="numeric" pattern="[0-9]*">'+
-                '<input type="text" id="live-guia-'+dp.id+'" placeholder="N° guía" '+
-                  'style="width:110px;height:40px;font-size:14px" '+
-                  'inputmode="numeric" pattern="[0-9]*">'+
-                '<label style="display:flex;align-items:center;gap:4px;height:40px;padding:0 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:12px;color:var(--text2)" id="live-foto-lbl-'+dp.id+'">'+
-                  '📷'+
-                  '<input type="file" id="live-foto-'+dp.id+'" accept="image/*,application/pdf" capture="environment" style="display:none" '+
-                    'onchange="this.parentElement.style.borderColor=\'#0db87a\';this.parentElement.style.color=\'#0db87a\'">'+
-                '</label>'+
-                '<button class="btn primary" onclick="registrarSalidaLive(\"'+dp.id+'\",\"'+p.codigo+'\",\"'+p.cliente.replace(/"/g,'')+'\")" '+
-                  'style="height:40px;padding:0 18px;font-size:13px;font-weight:700;flex:1">'+
-                  '✓ Registrar salida'+
+              '<div style="display:flex;gap:8px;margin-top:4px">'+
+                '<button class="btn primary" onclick="abrirModalDespacho(\"'+dp.id+'\",\"'+p.codigo+'\",\"'+p.cliente.replace(/"/g,'')+'\",'+(dp.cantidad_despachar||0)+','+(dp.cantidad_despachada||0)+')" '+
+                  'style="height:42px;padding:0 20px;font-size:14px;font-weight:700;flex:1;border-radius:8px">'+
+                  '🚚 Registrar despacho'+
                 '</button>'+
                 (dp.cantidad_despachada>0?
-                  '<button class="btn sm" onclick="verSalidas(\"'+dp.id+'\")" style="height:40px;color:var(--csf)">Ver salidas ('+dp.cantidad_despachada.toLocaleString('es-CL')+')</button>':'')+
+                  '<button class="btn blue" onclick="verSalidas(\"'+dp.id+'\")" style="height:42px;padding:0 14px;font-size:12px;border-radius:8px">'+
+                    '📋 '+dp.cantidad_despachada.toLocaleString('es-CL')+' u.'+
+                  '</button>':'')+
               '</div>'+
               '<div id="salidas-'+dp.id+'" style="display:none;margin-top:8px"></div>'
             :
@@ -2728,6 +2768,59 @@ function setMisDespachosModo(modo) {
     var d = document.getElementById('mis-desp-desde'); if(d) d.value = f;
     var h = document.getElementById('mis-desp-hasta'); if(h) h.value = f;
   }
+}
+
+function abrirModalDespacho(despId, codigo, cliente, totalPedido, yaDesp) {
+  document.getElementById('mdl-desp-id').value = despId;
+  document.getElementById('mdl-desp-codigo').value = codigo;
+  document.getElementById('mdl-desp-cliente').value = cliente;
+  document.getElementById('mdl-cliente').textContent = cliente;
+  document.getElementById('mdl-codigo').textContent = codigo;
+  document.getElementById('mdl-progreso').textContent = 'Ya despachado: '+yaDesp.toLocaleString('es-CL')+' / '+totalPedido.toLocaleString('es-CL')+' u.';
+  document.getElementById('mdl-cant').value = '';
+  document.getElementById('mdl-guia').value = '';
+  document.getElementById('mdl-foto').value = '';
+  var lbl = document.getElementById('mdl-foto-lbl');
+  lbl.style.borderColor = ''; lbl.style.color = '';
+  lbl.childNodes[0].textContent = '📷 Adjuntar foto';
+  document.getElementById('modal-despacho-live').classList.add('open');
+  setTimeout(function(){ document.getElementById('mdl-cant').focus(); }, 200);
+}
+
+async function confirmarDespachoLive() {
+  var despId = document.getElementById('mdl-desp-id').value;
+  var codigo = document.getElementById('mdl-desp-codigo').value;
+  var cliente = document.getElementById('mdl-desp-cliente').value;
+  var cant = parseInt(document.getElementById('mdl-cant').value)||0;
+  var guia = document.getElementById('mdl-guia').value.trim();
+  var fotoEl = document.getElementById('mdl-foto');
+  if(!cant) { alert('Ingresa la cantidad.'); return; }
+  try {
+    var fotoUrl = null;
+    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
+      fotoUrl = await subirFotoGuia(despId, cliente, fotoEl.files[0]);
+    }
+    await sb('salidas_despacho','POST',{
+      despacho_id:despId, cliente:cliente, codigo:codigo,
+      cantidad:cant, numero_guia:guia||null, foto_url:fotoUrl||null,
+      registrado_por:USER.nombre
+    });
+    var salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
+    var totalDesp = (salidas||[]).reduce(function(s,d){return s+(d.cantidad||0);},0);
+    var desp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
+    var total = desp&&desp[0]?desp[0].cantidad_despachar:0;
+    var nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
+    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+despId);
+    try {
+      var stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
+      if(stockBod&&stockBod.length) {
+        var totalStock = stockBod.reduce(function(s,r){return s+(r.unidades||0);},0);
+        await sb('stock_pallets','PATCH',{unidades:Math.max(0,totalStock-cant)},'?id=eq.'+stockBod[0].id);
+      }
+    } catch(eS){}
+    closeModal('modal-despacho-live');
+    cargarDespLive();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 async function registrarSalidaLive(despId, codigo, cliente) {
