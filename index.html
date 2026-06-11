@@ -834,6 +834,19 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
         </div>
         <div id="desp-live-output"><div class="empty">Cargando...</div></div>
       </div>
+    <!-- DESPACHADOR: Mis Despachos -->
+    <div class="sec" id="sec-mis-despachos">
+      <div class="card">
+        <div class="card-title">
+          <span>Mis despachos</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input type="date" id="mis-desp-fecha" style="height:28px;font-size:12px" onchange="cargarMisDespachos()">
+            <button class="btn sm primary" onclick="cargarMisDespachos()">↻ Actualizar</button>
+          </div>
+        </div>
+        <div id="mis-desp-metrics" class="metrics" style="margin-bottom:14px"></div>
+        <div id="mis-desp-output"><div class="empty">Selecciona una fecha para ver los despachos.</div></div>
+      </div>
     </div>
 
   </div>
@@ -1795,7 +1808,7 @@ function initApp() {
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
     ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['ingresos','Ingresos'],['stock','Stock'],['informes','Informes']]
-    : [['desp-live','Plan del Día'],['despacho','Mis Despachos']];
+    : [['desp-live','Plan del Día'],['mis-despachos','Mis Despachos']];
 
   const bar = document.getElementById('tabs-bar');
   const iconMap = {planificar:'📋',cambios:'✏️',armados:'📦',despacho:'🚚',ingresos:'📥',stock:'🏭',informes:'📊','desp-live':'📅','mis-despachos':'🚛'};
@@ -1846,6 +1859,7 @@ function refreshActual() {
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
   else if(tabActual==='ingresos') { cargarIngresos(); }
   else if(tabActual==='stock') { if(!stockCache.length) cargarStock(); else filtrarStock(); }
+  else if(tabActual==='mis-despachos') { cargarMisDespachos(); }
   else if(tabActual==='informes') { cargarInformes(); }
   else if(tabActual==='desp-live') { cargarDespLive(); }
   console.log('Tab activo:', tabActual);
@@ -2535,6 +2549,100 @@ async function eliminarPedido(id) {
     // Eliminar pedido
     await sb('pedidos_dia','DELETE',null,`?id=eq.${id}`);
     cargarPlanDia(); cargarMetricas();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function cargarMisDespachos() {
+  const fi = document.getElementById('mis-desp-fecha');
+  if(fi && !fi.value) fi.value = hoy();
+  const fecha = fi ? fi.value : hoy();
+  const el = document.getElementById('mis-desp-output');
+  const metEl = document.getElementById('mis-desp-metrics');
+  if(!el) return;
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  try {
+    // Obtener todas las salidas del día
+    const salidas = await sb('salidas_despacho','GET',null,
+      '?creado_en=gte.'+fecha+'T00:00:00&creado_en=lte.'+fecha+'T23:59:59&order=creado_en.asc&select=*');
+
+    if(!salidas||!salidas.length) {
+      el.innerHTML='<div class="empty">Sin despachos registrados para esta fecha.</div>';
+      if(metEl) metEl.innerHTML='';
+      return;
+    }
+
+    // Métricas
+    const totalUn = salidas.reduce(function(s,r){return s+(r.cantidad||0);},0);
+    const clientes = new Set(salidas.map(function(r){return r.cliente;})).size;
+    const guias = new Set(salidas.filter(function(r){return r.numero_guia;}).map(function(r){return r.numero_guia;})).size;
+    if(metEl) metEl.innerHTML =
+      '<div class="metric"><div class="metric-label">Salidas</div><div class="metric-val">'+salidas.length+'</div><div class="metric-sub">registros</div></div>'+
+      '<div class="metric"><div class="metric-label">Unidades despachadas</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
+      '<div class="metric"><div class="metric-label">Clientes</div><div class="metric-val yellow">'+clientes+'</div><div class="metric-sub">distintos</div></div>'+
+      '<div class="metric"><div class="metric-label">Guías</div><div class="metric-val">'+guias+'</div><div class="metric-sub">documentos</div></div>';
+
+    // Agrupar por cliente
+    var porCliente = {};
+    salidas.forEach(function(s){
+      var cli = s.cliente||'Sin cliente';
+      if(!porCliente[cli]) porCliente[cli]=[];
+      porCliente[cli].push(s);
+    });
+
+    var html2 = '';
+    Object.keys(porCliente).sort().forEach(function(cli){
+      var rows = porCliente[cli];
+      var totalCli = rows.reduce(function(s,r){return s+(r.cantidad||0);},0);
+      html2 += '<div style="margin-bottom:14px">'+
+        '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border2)">'+
+          '<span style="font-size:13px;font-weight:700">'+cli+'</span>'+
+          '<span style="font-size:12px;color:var(--green);font-weight:600">'+totalCli.toLocaleString('es-CL')+' u.</span>'+
+          '<span style="font-size:11px;color:var(--text3)">'+rows.length+' salida(s)</span>'+
+        '</div>'+
+        '<table class="dt" style="border-radius:0 0 var(--radius) var(--radius);overflow:hidden;border:1px solid var(--border2);border-top:none">'+
+        '<thead><tr><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Hora</th><th></th></tr></thead>'+
+        '<tbody>'+
+        rows.map(function(s){
+          var hora = new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+          return '<tr>'+
+            '<td><code style="font-size:11px">'+s.codigo+'</code></td>'+
+            '<td style="color:var(--text2)">'+s.destino+'</td>'+
+            '<td style="font-weight:700;color:var(--green)">'+s.cantidad.toLocaleString('es-CL')+' u.</td>'+
+            '<td>'+(s.numero_guia?'<span class="nv-tag">'+s.numero_guia+'</span>':'—')+'</td>'+
+            '<td>'+(s.foto_url?'<a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:12px">📷 Ver</a>':'—')+'</td>'+
+            '<td style="color:var(--text3);font-size:11px">'+hora+'</td>'+
+            '<td><button class="btn sm danger" onclick="eliminarSalidaDesp(\"'+s.id+'\")">✕</button></td>'+
+          '</tr>';
+        }).join('')+
+        '</tbody></table></div>';
+    });
+    el.innerHTML = html2;
+  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+}
+
+async function eliminarSalidaDesp(salidaId) {
+  if(!confirm('¿Eliminar este despacho?')) return;
+  try {
+    const sal = await sb('salidas_despacho','GET',null,'?id=eq.'+salidaId+'&select=*');
+    if(sal&&sal[0]) {
+      const s = sal[0];
+      try {
+        const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(s.codigo||'')+'&centro=eq.002&select=id,unidades');
+        if(stockBod&&stockBod.length) {
+          await sb('stock_pallets','PATCH',{unidades:(stockBod[0].unidades||0)+(s.cantidad||0)},'?id=eq.'+stockBod[0].id);
+        }
+      } catch(eS){}
+      await sb('salidas_despacho','DELETE',null,'?id=eq.'+salidaId);
+      if(s.despacho_id) {
+        const salidas2 = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+s.despacho_id+'&select=cantidad');
+        const totalDesp = (salidas2||[]).reduce(function(a,r){return a+(r.cantidad||0);},0);
+        const desp = await sb('plan_despacho','GET',null,'?id=eq.'+s.despacho_id+'&select=cantidad_despachar');
+        const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
+        const nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
+        await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+s.despacho_id);
+      }
+    }
+    cargarMisDespachos();
   } catch(e) { alert('Error: '+e.message); }
 }
 
