@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2534,6 +2535,34 @@ async function eliminarPedido(id) {
   } catch(e) { alert('Error: '+e.message); }
 }
 
+async function eliminarSalida(salidaId, despachoId) {
+  if(!confirm('¿Eliminar esta salida? Se revertirá el descuento de stock.')) return;
+  try {
+    // Obtener datos de la salida antes de eliminar
+    const sal = await sb('salidas_despacho','GET',null,'?id=eq.'+salidaId+'&select=*');
+    if(sal && sal[0]) {
+      const s = sal[0];
+      // Revertir descuento en stock bodega 002
+      try {
+        const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(s.codigo||'')+'&centro=eq.002&select=id,unidades');
+        if(stockBod && stockBod.length) {
+          await sb('stock_pallets','PATCH',{unidades: (stockBod[0].unidades||0) + (s.cantidad||0)},'?id=eq.'+stockBod[0].id);
+        }
+      } catch(eS) { console.warn('No se pudo revertir stock:', eS.message); }
+    }
+    await sb('salidas_despacho','DELETE',null,'?id=eq.'+salidaId);
+    // Actualizar cantidad despachada en plan_despacho
+    const salidas2 = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despachoId+'&select=cantidad');
+    const totalDesp = (salidas2||[]).reduce(function(s,r){return s+(r.cantidad||0);},0);
+    const desp = await sb('plan_despacho','GET',null,'?id=eq.'+despachoId+'&select=cantidad_despachar');
+    const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
+    const nuevoEstado = totalDesp >= total ? 'Despachado' : totalDesp > 0 ? 'En proceso' : 'Pendiente';
+    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp, estado:nuevoEstado},'?id=eq.'+despachoId);
+    verSalidas(despachoId);
+    cargarPlanDespacho();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
 async function verSalidas(id) {
   const el = document.getElementById('salidas-'+id);
   if(!el) return;
@@ -2542,7 +2571,7 @@ async function verSalidas(id) {
     const salidas = await sb('salidas_despacho','GET',null,`?despacho_id=eq.${id}&order=creado_en.asc&select=*`);
     if(!salidas||!salidas.length) { el.innerHTML='<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>'; el.style.display='block'; return; }
     el.innerHTML=`<table class="dt" style="font-size:12px;margin-top:4px">
-      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th></tr></thead>
+      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th><th></th></tr></thead>
       <tbody>${salidas.map((s,i)=>`<tr>
         <td style="color:var(--text3)">${i+1}</td>
         <td style="font-weight:500">${s.cliente||'--'}</td>
@@ -2553,6 +2582,7 @@ async function verSalidas(id) {
         <td>${s.foto_url?`<a href="${s.foto_url}" target="_blank" style="color:var(--blue);font-size:12px">&#128247; Ver foto</a>`:'--'}</td>
         <td style="color:var(--text2)">${s.registrado_por||'--'}</td>
         <td style="color:var(--text3)">${new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td><button class="btn sm danger" onclick="eliminarSalida('${s.id}','${id}')" title="Eliminar esta salida">&#10005;</button></td>
       </tr>`).join('')}</tbody>
     </table>`;
     el.style.display='block';
