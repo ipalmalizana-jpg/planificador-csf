@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1159,12 +1160,14 @@ function agregarGrupo() {
   guardarGrupos();
   document.getElementById('mg-nombre').value='';
   renderMgLista();
-  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  // Nav móvil para despachador
   if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) {
-      mn.style.display = 'flex';
-      // En desktop también mostrar como tabs normales via sidebar
+    if(mn) mn.style.display = 'flex';
+    // Ocultar topbar en móvil para más espacio
+    if(window.innerWidth <= 480) {
+      var topbar = document.querySelector('.topbar');
+      if(topbar) topbar.style.display = 'none';
     }
   }
 
@@ -1175,12 +1178,14 @@ function eliminarGrupo(nombre) {
   gruposHoy = gruposHoy.filter(g=>g.nombre!==nombre);
   guardarGrupos();
   renderMgLista();
-  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  // Nav móvil para despachador
   if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) {
-      mn.style.display = 'flex';
-      // En desktop también mostrar como tabs normales via sidebar
+    if(mn) mn.style.display = 'flex';
+    // Ocultar topbar en móvil para más espacio
+    if(window.innerWidth <= 480) {
+      var topbar = document.querySelector('.topbar');
+      if(topbar) topbar.style.display = 'none';
     }
   }
 
@@ -1968,12 +1973,14 @@ function initApp() {
   var rolEl = document.getElementById('tb-rol');
   if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
 
-  // Mostrar nav móvil para despachador siempre (en móvil se ve abajo)
+  // Nav móvil para despachador
   if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) {
-      mn.style.display = 'flex';
-      // En desktop también mostrar como tabs normales via sidebar
+    if(mn) mn.style.display = 'flex';
+    // Ocultar topbar en móvil para más espacio
+    if(window.innerWidth <= 480) {
+      var topbar = document.querySelector('.topbar');
+      if(topbar) topbar.style.display = 'none';
     }
   }
 
@@ -2046,7 +2053,11 @@ function refreshActual() {
   else if(tabActual==='despacho') { cargarPlanDespacho(); }
   else if(tabActual==='ingresos') { cargarIngresos(); }
   else if(tabActual==='stock') { if(!stockCache.length) cargarStock(); else filtrarStock(); }
-  else if(tabActual==='desp-reg') { cargarDespReg(); }
+  else if(tabActual==='desp-reg') {
+    var fdr = document.getElementById('filtro-desp-reg-fecha');
+    if(fdr && !fdr.value) fdr.value = hoy();
+    cargarDespReg();
+  }
   else if(tabActual==='mis-despachos') {
     var fi2 = document.getElementById('mis-desp-fecha');
     if(fi2 && !fi2.value) fi2.value = hoy();
@@ -2882,6 +2893,9 @@ async function cargarDespReg() {
   if(!el) return;
   var fi = document.getElementById('filtro-desp-reg-fecha');
   if(fi && !fi.value) fi.value = hoy();
+  // En móvil forzar modo fecha si no hay valor en el select
+  var modoEl = document.getElementById('filtro-desp-reg-modo');
+  if(modoEl && !modoEl.value) modoEl.value = 'fecha';
   var modo = document.getElementById('filtro-desp-reg-modo')?.value || 'fecha';
   var fecha = fi?.value || hoy();
   el.innerHTML = '<div class="empty">Cargando...</div>';
