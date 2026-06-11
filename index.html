@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -352,12 +353,12 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
 /* RESPONSIVE */
 @media(max-width:768px){
-  .sidebar{display:none;width:0;overflow:hidden}
-  .main-area{margin-left:0 !important;width:100%}
+  .sidebar{display:none !important;width:0 !important;overflow:hidden}
+  .main-area{margin-left:0 !important;width:100% !important;max-width:100%}
   .app{flex-direction:column}
   .metrics{grid-template-columns:1fr 1fr}
-  .content{padding:12px}
-  .topbar{padding:0 14px}
+  .content{padding:12px;padding-bottom:75px}
+  .topbar{padding:0 14px;height:44px}
 
   /* Barra de navegación inferior para móvil */
   .mobile-nav{display:flex !important}
@@ -881,7 +882,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
     <!-- DESPACHADOR: Registrar Despacho -->
     <div class="sec" id="sec-desp-reg">
-      <div id="debug-box" style="background:#1a1a00;border:1px solid #ff0;color:#ff0;padding:10px;border-radius:8px;font-size:11px;margin-bottom:10px;font-family:monospace;display:none"></div>
+
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
         <input type="date" id="desp-reg-fecha" style="height:40px;font-size:14px;flex:1">
         <button class="btn primary" onclick="cargarDespReg()" style="height:40px;padding:0 16px">↻ Cargar</button>
@@ -2224,22 +2225,15 @@ async function cargarDespLive() {
   } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
 }
 
-function dbg(msg) {
-  var d = document.getElementById('debug-box');
-  if(d) { d.style.display='block'; d.innerHTML += msg+'<br>'; }
-}
-
 async function cargarDespReg() {
   var fi = document.getElementById('desp-reg-fecha');
   if(fi && !fi.value) fi.value = hoy();
   var fecha = fi ? fi.value : hoy();
   var el = document.getElementById('desp-reg-output');
   if(!el) { dbg('ERROR: desp-reg-output no encontrado'); return; }
-  dbg('Fecha: '+fecha);
   el.innerHTML = '<div class="empty">Cargando...</div>';
   try {
-    dbg('Consultando Supabase...');
-    var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*&order=hora_despacho.asc.nullslast');
+      var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*&order=hora_despacho.asc.nullslast');
     dbg('Respuesta: '+(desps?desps.length+' registros':'null'));
     if(!desps||!desps.length) {
       el.innerHTML='<div class="empty">Sin despachos programados para el '+fecha+'.</div>';
@@ -2267,17 +2261,17 @@ async function cargarDespReg() {
           '</span>'+
         '</div>'+
         // Inputs
-        '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
           '<input type="number" id="dr-cant-'+d.id+'" placeholder="Cantidad" '+
-            'style="flex:1;min-width:100px;height:44px;font-size:16px;font-weight:700;text-align:center" '+
+            'style="height:48px;font-size:18px;font-weight:700;text-align:center;border-radius:8px" '+
             'inputmode="numeric" min="1">'+
           '<input type="text" id="dr-guia-'+d.id+'" placeholder="N° guía" '+
-            'style="flex:1;min-width:100px;height:44px;font-size:15px;text-align:center" '+
+            'style="height:48px;font-size:16px;text-align:center;border-radius:8px" '+
             'inputmode="numeric">'+
         '</div>'+
-        '<div style="display:flex;gap:8px">'+
+        '<div style="display:flex;gap:8px;margin-bottom:4px">'+
           '<button id="btn-reg-'+d.id+'" '+
-            'style="flex:1;height:48px;font-size:15px;font-weight:700;background:var(--csf);color:#fff;border:none;border-radius:8px;cursor:pointer">'+
+            'style="flex:1;height:52px;font-size:16px;font-weight:700;background:var(--csf);color:#fff;border:none;border-radius:8px;cursor:pointer;letter-spacing:.02em">'+
             '✓ Registrar salida'+
           '</button>'+
           (pct>0?'<button id="btn-ver-'+d.id+'" '+
