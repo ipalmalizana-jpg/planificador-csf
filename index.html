@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -872,65 +871,37 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
-      <div class="metrics" id="met-desp-live" style="min-height:0"></div>
-      <div class="card">
-        <div class="card-title">
-          <span>Plan del día</span>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <input type="date" id="desp-live-fecha-input" style="height:28px;font-size:12px" onchange="cargarDespLive()">
-            <span style="font-size:11px;color:var(--text3)">Actualiza cada 30 seg.</span>
-            <button class="btn sm primary" onclick="cargarDespLive()">↻ Actualizar</button>
-          </div>
-        </div>
-        <div id="desp-live-output"><div class="empty">Cargando...</div></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <input type="date" id="desp-live-fecha-input" style="height:40px;font-size:14px;flex:1">
+        <button class="btn primary" onclick="cargarDespLive()" style="height:40px;padding:0 16px">↻ Ver plan</button>
       </div>
+      <div id="met-desp-live" class="metrics" style="margin-bottom:14px;min-height:0"></div>
+      <div id="desp-live-output"><div class="empty">Selecciona una fecha y presiona Ver plan.</div></div>
+    </div>
+
     <!-- DESPACHADOR: Registrar Despacho -->
     <div class="sec" id="sec-desp-reg">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-        <input type="date" id="filtro-desp-reg-fecha" style="height:40px;font-size:14px;flex:1" onchange="cargarDespReg()">
-        <button class="btn primary" onclick="cargarDespReg()" style="height:40px;padding:0 16px">↻ Actualizar</button>
+      <div id="debug-box" style="background:#1a1a00;border:1px solid #ff0;color:#ff0;padding:10px;border-radius:8px;font-size:11px;margin-bottom:10px;font-family:monospace;display:none"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <input type="date" id="desp-reg-fecha" style="height:40px;font-size:14px;flex:1">
+        <button class="btn primary" onclick="cargarDespReg()" style="height:40px;padding:0 16px">↻ Cargar</button>
       </div>
-      <div id="desp-reg-output"><div class="empty">Cargando...</div></div>
+      <div id="desp-reg-output"><div class="empty">Selecciona una fecha para ver los despachos pendientes.</div></div>
     </div>
 
     <!-- DESPACHADOR: Mis Despachos -->
     <div class="sec" id="sec-mis-despachos">
-
-      <!-- Barra de filtros fuera de la card -->
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-        <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden">
-          <button id="md-modo-dia" onclick="setMisDespachosModo('dia')"
-            style="padding:0 16px;height:36px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--csf);color:#fff">
-            Un día
-          </button>
-          <button id="md-modo-rango" onclick="setMisDespachosModo('rango')"
-            style="padding:0 16px;height:36px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3)">
-            Rango
-          </button>
-        </div>
-
-        <div id="md-filtro-dia" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px;height:36px">
-          <span style="font-size:11px;color:var(--text3)">Fecha</span>
-          <input type="date" id="mis-desp-fecha" style="height:30px;font-size:13px;background:transparent;border:none;color:var(--text);outline:none">
-        </div>
-
-        <div id="md-filtro-rango" style="display:none;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:0 12px;height:36px">
-          <input type="date" id="mis-desp-desde" style="height:30px;font-size:13px;background:transparent;border:none;color:var(--text);outline:none">
-          <span style="font-size:11px;color:var(--text3)">→</span>
-          <input type="date" id="mis-desp-hasta" style="height:30px;font-size:13px;background:transparent;border:none;color:var(--text);outline:none">
-        </div>
-
-        <button class="btn primary" onclick="cargarMisDespachos()" style="height:36px;padding:0 16px">↻ Generar</button>
+        <input type="date" id="mis-desp-desde" style="height:40px;font-size:14px;flex:1">
+        <span style="color:var(--text3);font-size:14px">→</span>
+        <input type="date" id="mis-desp-hasta" style="height:40px;font-size:14px;flex:1">
+        <button class="btn primary" onclick="cargarMisDespachos()" style="height:40px;padding:0 16px">↻ Ver</button>
       </div>
-
-      <!-- Métricas -->
-      <div id="mis-desp-metrics" class="metrics" style="margin-bottom:14px"></div>
-
-      <!-- Resultados -->
-      <div id="mis-desp-output"><div class="empty">Selecciona una fecha y presiona Generar.</div></div>
-
+      <div id="mis-desp-metrics" class="metrics" style="margin-bottom:14px;min-height:0"></div>
+      <div id="mis-desp-output"><div class="empty">Selecciona un rango de fechas.</div></div>
     </div>
 
+    
   </div>
 </div>
 
@@ -2207,1027 +2178,222 @@ async function cargarGraficos() {
 }
 
 async function cargarDespLive() {
-  const el = document.getElementById('desp-live-output');
-  if(!el) return;
-  const fi = document.getElementById('desp-live-fecha-input');
+  var fi = document.getElementById('desp-live-fecha-input');
   if(fi && !fi.value) fi.value = hoy();
-  const fechaDesp = fi ? fi.value : hoy();
-  const esMobil = window.innerWidth <= 480;
-  try {
-    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fechaDesp+'&estado=neq.Cancelado&order=creado_en.asc&select=*');
-    if(!pedidos||!pedidos.length) { el.innerHTML='<div class="empty">No hay pedidos programados para hoy.</div>'; renderMetDespLive([]); return; }
-
-    renderMetDespLive(pedidos);
-
-    // Agrupar por hora_entrega
-    const sinHora = pedidos.filter(p=>!p.hora_entrega);
-    const conHora = pedidos.filter(p=>p.hora_entrega);
-
-    // Ordenar por hora
-    conHora.sort((a,b)=>a.hora_entrega.localeCompare(b.hora_entrega));
-
-    const grupos = {};
-    conHora.forEach(p=>{
-      const h = p.hora_entrega;
-      if(!grupos[h]) grupos[h]=[];
-      grupos[h].push(p);
-    });
-    if(sinHora.length) grupos['Sin hora asignada'] = sinHora;
-
-    // Cargar plan_despacho para este día
-    const planDesp = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fechaDesp+'&select=*');
-    const planMap = {};
-    (planDesp||[]).forEach(function(d){ planMap[d.pedido_id]=d; });
-
-    el.innerHTML = Object.entries(grupos).map(([hora, items])=>
-      '<div class="grupo">'+
-        '<div class="grupo-hdr">'+
-          '<span style="font-size:16px;font-weight:700;color:'+(hora==='Sin hora asignada'?'var(--text3)':'var(--yellow)')+'">'+
-            (hora==='Sin hora asignada'?'Sin hora asignada':'🕐 '+hora)+
-          '</span>'+
-          '<span class="grupo-meta">'+items.length+' pedido(s) · '+items.reduce(function(s,p){return s+p.cantidad_pedida;},0).toLocaleString('es-CL')+' u.</span>'+
-        '</div>'+
-        '<table class="dt">'+
-        '<thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Cajas</th><th>Armado</th><th>Estado</th></tr></thead>'+
-        '<tbody>'+
-        items.map(function(p){
-          var pct=p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
-          var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-          return '<tr>'+
-            '<td style="font-weight:600">'+p.cliente+'</td>'+
-            '<td><code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code></td>'+
-            '<td style="color:var(--text2);font-size:12px">'+p.destino+'</td>'+
-            '<td style="font-weight:600">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
-            '<td>'+
-              '<div style="display:flex;align-items:center;gap:6px">'+
-                '<div class="prog-bar" style="width:50px;height:5px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
-                '<span style="font-size:11px;color:'+col+';font-weight:600">'+pct+'%</span>'+
-              '</div>'+
-            '</td>'+
-            '<td><span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span></td>'+
-          '</tr>';
-        }).join('')+
-        '</tbody></table>'+
-      '</div>'
-    ).join('');
-  } catch(e) { if(el&&el.closest('.sec.active')) el.innerHTML=`<div class="wbox">Error: ${e.message}</div>`; }
-}
-
-function renderMetDespLive(pedidos) {
-  const el = document.getElementById('met-desp-live');
-  if(!el) return;
-  const total = pedidos.length;
-  const cajas = pedidos.reduce((s,p)=>s+p.cantidad_pedida,0);
-  const armadas = pedidos.reduce((s,p)=>s+p.cantidad_armada,0);
-  const conHora = pedidos.filter(p=>p.hora_entrega).length;
-  el.innerHTML=`
-    <div class="metric"><div class="metric-label">Pedidos del día</div><div class="metric-val green">${total}</div></div>
-    <div class="metric"><div class="metric-label">Cajas a despachar</div><div class="metric-val">${cajas.toLocaleString('es-CL')}</div></div>
-    <div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">${armadas.toLocaleString('es-CL')}</div><div class="metric-sub">${cajas?Math.round(armadas/cajas*100):0}%</div></div>
-    <div class="metric"><div class="metric-label">Con hora asignada</div><div class="metric-val">${conHora}</div><div class="metric-sub">de ${total} pedidos</div></div>
-  `;
-}
-
-// -- Métricas --------------------------------------------------
-function renderMetricasPlan() {
-  const el = document.getElementById('met-planificar');
-  if(!el) return;
-  const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
-  const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-  const pedidos = pedidosCache;
-  const activos = pedidos.filter(function(p){return p.estado==='Activo';}).length;
-  const completados = pedidos.filter(function(p){return p.estado==='Completado';}).length;
-  const cancelados = pedidos.filter(function(p){return p.estado==='Cancelado';}).length;
-  const totalCajas = pedidos.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
-  const armadas = pedidos.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
-  const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
-  const labelFecha = modoPlan2==='todos' ? 'todos los días' : fechaPlan2;
-
-  el.innerHTML =
-    '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+(activos+completados)+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-    '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-    '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'% de lo solicitado</div></div>'+
-    '<div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val '+(cancelados>0?'red':'')+'">'+cancelados+'</div><div class="metric-sub">'+labelFecha+'</div></div>';
-}
-
-async function cargarMetricas() {
-  const el = document.getElementById('met-planificar');
-  if(!el) return;
-  try {
-    const modoPlan2 = document.getElementById('filtro-plan-modo')?.value || 'fecha';
-    const fechaPlan2 = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    // Siempre usar pedidosCache — se actualiza en cargarPlanDia
-    const pedidos = pedidosCache;
-    const activos = pedidos.filter(p=>p.estado==='Activo').length;
-    const cancelados = pedidos.filter(p=>p.estado==='Cancelado').length;
-    const totalCajas = pedidos.filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
-    const armadas = pedidos.reduce((s,p)=>s+p.cantidad_armada,0);
-    const labelFecha = modoPlan2==='todos' ? 'todos los días' : fechaPlan2;
-    const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
-
-    // Cargar despachado para el mismo período
-    let totalDesp = 0;
-    try {
-      const salidasQ = modoPlan2==='todos'
-        ? '?select=cantidad'
-        : '?creado_en=gte.'+fechaPlan2+'T00:00:00&creado_en=lte.'+fechaPlan2+'T23:59:59&select=cantidad';
-      const sals = await sb('salidas_despacho','GET',null, salidasQ);
-      totalDesp = (sals||[]).reduce((s,d)=>s+(d.cantidad||0),0);
-    } catch(e2){}
-
-    const pctDesp = armadas>0?Math.round(totalDesp/armadas*100):0;
-
-    document.getElementById('met-planificar').innerHTML =
-      '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+activos+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-      '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-      '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'% de lo solicitado</div></div>'+
-      '<div class="metric"><div class="metric-label">Cajas despachadas</div><div class="metric-val green">'+totalDesp.toLocaleString('es-CL')+'</div><div class="metric-sub">'+(cancelados>0?cancelados+' cancelado(s) · ':'')+pctDesp+'% de lo armado</div></div>';
-    } catch(e) { console.error(e); }
-}
-
-// -- Plan del día -----------------------------------------------
-async function cargarPlanDia() {
-  const el = document.getElementById('plan-dia-output');
-  if(!el) return;
-  try {
-    const modoPlan = document.getElementById('filtro-plan-modo')?.value || 'fecha';
-    const fechaPlan = document.getElementById('filtro-fecha-plan')?.value || hoy();
-    const queryPlan = modoPlan==='todos'
-      ? '?order=fecha_armado.asc,creado_en.asc&select=*&limit=500'
-      : '?or=(fecha_armado.eq.'+fechaPlan+',and(fecha_armado.is.null,fecha.eq.'+fechaPlan+'))&order=creado_en.asc&select=*';
-    const pedidos = await sb('pedidos_dia','GET',null, queryPlan);
-    pedidosCache = pedidos || [];
-
-    // Cargar despachos para mostrar progreso
-    const ids = (pedidos||[]).map(function(p){return p.id;}).filter(Boolean);
-    if(ids.length) {
-      const despQuery = '?pedido_id=in.('+ids.join(',')+')&select=pedido_id,cantidad_despachar,cantidad_despachada,estado';
-      const desps = await sb('plan_despacho','GET',null, despQuery);
-      // Indexar por pedido_id
-      window._despCache = {};
-      (desps||[]).forEach(function(d){
-        if(!window._despCache[d.pedido_id]) window._despCache[d.pedido_id]={total:0,despachado:0};
-        window._despCache[d.pedido_id].total += d.cantidad_despachar||0;
-        window._despCache[d.pedido_id].despachado += d.cantidad_despachada||0;
-      });
-    } else {
-      window._despCache = {};
-    }
-    renderPlanDia();
-    renderMetricasPlan(); // actualizar métricas con datos ya cargados
-    // Poblar select modal despacho
-    const sel = document.getElementById('md-pedido');
-    if(sel) sel.innerHTML = (pedidos||[]).filter(p=>p.estado==='Activo').map(p=>'<option value="'+p.id+'">'+p.cliente+' -- '+p.codigo+' ('+p.cantidad_pedida.toLocaleString('es-CL')+' u.)</option>').join('');
-  } catch(e) {
-    mostrarSinConexion();
-    console.warn('cargarPlanDia error:', e.message);
-  }
-}
-
-function renderPlanDia() {
-  var el = document.getElementById('plan-dia-output');
-  if(!el) return;
-  var orden = document.getElementById('orden-plan').value;
-  var pedidos = pedidosCache.slice();
-  if(orden==='prio') pedidos.sort(function(a,b){return pp(a.prioridad)-pp(b.prioridad);});
-  else if(orden==='cliente') pedidos.sort(function(a,b){return a.cliente.localeCompare(b.cliente);});
-
-  if(!pedidos.length) { el.innerHTML='<div class="empty">No hay pedidos para hoy. Agrega el primero arriba.</div>'; return; }
-
-  var turnos = {'Manana':[],'Tarde':[],'Sin turno':[]};
-  var turnoMap = {};
-  pedidos.forEach(function(p) {
-    var t = p.turno==='Tarde'?'Tarde':p.turno?'Manana':'Sin turno';
-    var g = p.grupo||'Sin grupo';
-    if(!turnoMap[t]) turnoMap[t]={};
-    if(!turnoMap[t][g]) turnoMap[t][g]=[];
-    turnoMap[t][g].push(p);
-  });
-
-  var out = '';
-  ['Manana','Tarde','Sin turno'].forEach(function(turnoKey) {
-    var grps = turnoMap[turnoKey];
-    if(!grps||!Object.keys(grps).length) return;
-    var turnoLabel = turnoKey==='Manana'?'Mañana':turnoKey;
-    var col = turnoKey==='Manana'?'var(--blue)':turnoKey==='Tarde'?'var(--purple)':'var(--text3)';
-    out += '<div style="margin-bottom:6px">';
-    out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
-    out += '<span style="font-size:12px;font-weight:600;color:'+col+';text-transform:uppercase;letter-spacing:.06em">'+turnoLabel+'</span>';
-    out += '<div style="flex:1;height:1px;background:var(--border)"></div></div>';
-
-    Object.keys(grps).forEach(function(grp) {
-      var items = grps[grp];
-      var gObj = gruposHoy.filter(function(g){return g.nombre===grp;})[0] || {};
-      var maqGrupo = gObj.maquina || (items[0]?items[0].maquina:'')||'';
-      var totalU = items.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
-
-      out += '<div class="grupo">';
-      out += '<div class="grupo-hdr">';
-      out += '<div class="dot" style="background:var(--green);width:10px;height:10px;border-radius:50%"></div>';
-      out += '<span class="grupo-name">'+grp+'</span>';
-      if(maqGrupo) out += '<span class="chip green" style="font-size:11px">'+maqGrupo+'</span>';
-      out += '<span class="grupo-meta">'+items.length+' pedido(s) . '+totalU.toLocaleString('es-CL')+' u.</span>';
-      out += '</div>';
-
-      items.forEach(function(p, pidx) {
-        var armadas = p.cantidad_armada||0;
-        var despNV = p.nv_referencia?(DESP_HIST[String(p.nv_referencia)]||{}):{};
-        var despachado = despNV[p.codigo]||0;
-        try {
-          if(pidx>0&&orden==='sinergia'){
-            var prev=items[pidx-1];
-            var ca=COD_IDX[prev.codigo],cb=COD_IDX[p.codigo];
-            if(ca&&cb){
-              var c=compat(ca,cb);
-              var sL,sC,sB,sI;
-              if(c==='solo-altura'){sL='Solo altura';sC='#22c98a';sB='rgba(34,201,138,.1)';sI='&#8597;';}
-              else if(c==='ajuste-mayor'){sL='Ajuste mayor';sC='#f0b429';sB='rgba(240,180,41,.1)';sI='&#8644;';}
-              else if(c==='maquina-diferente'){sL='Maq. diferente';sC='#a855f7';sB='rgba(168,85,247,.1)';sI='&#9889;';}
-              else{sL='Cambio completo';sC='#e85555';sB='rgba(232,85,85,.1)';sI='&#9881;';}
-              var tpo=c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'':'~45 min';
-              var dims=(ca.largo&&cb.largo)?ca.largo+'x'+ca.ancho+'x'+ca.alto+' > '+cb.largo+'x'+cb.ancho+'x'+cb.alto:'';
-              out+='<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin:2px 0;background:'+sB+';border-radius:6px;border-left:3px solid '+sC+'">';
-              out+='<span style="font-size:14px">'+sI+'</span>';
-              out+='<span style="font-size:11px;color:'+sC+';font-weight:700">'+sL+'</span>';
-              if(dims) out+='<span style="font-size:10px;color:var(--text3)">'+dims+'</span>';
-              if(tpo) out+='<span style="font-size:10px;color:var(--text3);margin-left:auto">'+tpo+'</span>';
-              out+='</div>';
-            }
-          }
-        } catch(eSin){console.warn('Sinergia:',eSin.message);}
-        var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
-
-        // Iconos prioridad y estado
-        var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
-        var estadoIcon = p.estado==='Activo'?'&#9654;':p.estado==='Modificado'?'&#9998;':p.estado==='Cancelado'?'&#10005;':'&#10003;';
-        var estadoCol = p.estado==='Activo'?'var(--green)':p.estado==='Modificado'?'var(--yellow)':p.estado==='Cancelado'?'var(--red)':'var(--blue)';
-
-        // Barras de progreso
-        var pctArm = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
-        var colArm = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
-        var despInfo = window._despCache && window._despCache[p.id];
-        var despachado = despInfo?(despInfo.despachado||0):0;
-        var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
-        var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
-
-        out += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);flex-wrap:nowrap">';
-
-        // Col 1: Prioridad + Estado
-        out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
-        out += '<span title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
-        out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
-        out += '</div>';
-
-        // Col 2: Info principal
-        out += '<div style="flex:1;min-width:0">';
-        // Línea 1: cliente + código
-        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">';
-        out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
-        out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
-        out += '</div>';
-        // Línea 2: descripción (corta) + destino destacado
-        out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
-        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+p.descripcion+'</span>';
-        if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
-        out += '</div>';
-        // Línea 3: fechas más grandes
-        out += '<div style="display:flex;gap:12px">';
-        if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
-        if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
-        out += '</div>';
-        out += '</div>';
-
-        // Col 3: Cantidad
-        out += '<div style="flex-shrink:0;text-align:right;min-width:70px">';
-        out += '<div style="font-size:15px;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
-        out += '<div style="font-size:10px;color:var(--text3)">unidades</div>';
-        out += '</div>';
-
-        // Col 4: Barras de progreso
-        out += '<div style="flex-shrink:0;width:100px">';
-        // Armado
-        out += '<div style="margin-bottom:5px">';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Armado</span>';
-        out += '<span style="font-size:10px;color:'+colArm+';font-weight:600">'+pctArm+'%</span>';
-        out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div>';
-        out += '</div></div>';
-        // Despachado
-        out += '<div>';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Despachado</span>';
-        out += '<span style="font-size:10px;color:'+colDesp+';font-weight:600">'+pctDesp+'%</span>';
-        out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div>';
-        out += '</div></div>';
-        out += '</div>';
-        if(despachado>0) {
-          var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
-          var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-          out += '<span style="font-size:11px;color:'+col2+';font-weight:500">'+despachado.toLocaleString('es-CL')+' desp. ('+pct+'%)</span>';
-        }
-        if(USER.rol==='jefe') {
-          out += '<div style="margin-left:auto;display:flex;gap:4px">';
-          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
-          out += '<button title="Cambio" class="btn sm warning" data-action="cambio" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#9998;</button>';
-          if(p.estado!=='Cancelado') out += '<button title="Cancelar" class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#10005;</button>';
-          out += '<button title="Eliminar" class="btn sm danger" data-action="eliminar" data-id="'+p.id+'" style="padding:2px 8px;font-size:14px;line-height:1;opacity:.6">&#128465;</button>';
-          out += '</div>';
-        }
-        out += '</div>';
-      });
-      out += '</div>';
-    });
-    out += '</div>';
-  });
-  el.innerHTML = out || '<div class="empty">Sin pedidos.</div>';
-  verificarAlertas(pedidos);
-  renderCargaMaquinas(pedidos);
-}
-
-
-async function agregarPedido() {
-  const codigo   = document.getElementById('p-codigo').value.trim();
-  const cliente  = document.getElementById('p-cliente').value.trim();
-  const destino  = document.getElementById('p-destino').value.trim();
-  const cantidad = parseInt(document.getElementById('p-cantidad').value)||0;
-  const maquina  = document.getElementById('p-maquina').value;
-  const prio     = document.getElementById('p-prioridad').value;
-
-  if(!codigo||!cliente||!cantidad) { alert('Completa código, cliente y cantidad.'); return; }
-
-  const cat = COD_IDX[codigo];
-  const body = {
-    fecha: hoy(), cliente, destino, codigo,
-    descripcion: cat?.descripcion||'',
-    tipo: cat?.tipo||'Otro',
-    cantidad_pedida: cantidad,
-    cantidad_armada: 0,
-    maquina: maquina||null,
-    prioridad: prio,
-    estado: 'Activo',
-    fecha_armado: document.getElementById('p-fecha-armado').value||hoy(),
-    fecha_despacho: document.getElementById('p-fecha-desp').value||null,
-    hora_despacho: document.getElementById('p-hora-desp').value||null,
-    hora_entrega: document.getElementById('p-hora-desp').value||null,
-    grupo: document.getElementById('p-grupo').value||null,
-    turno: document.getElementById('p-turno').value||'Mañana',
-  };
-
-  try {
-    await sb('pedidos_dia','POST',body);
-    // Obtener el pedido recién creado -- tomar el último por fecha
-    const pedidos = await sb('pedidos_dia','GET',null,
-      `?fecha=eq.${hoy()}&order=creado_en.desc&limit=1&select=*`);
-    
-    // Crear despacho automáticamente
-    if(pedidos && pedidos.length) {
-      const p = pedidos[0];
-      await sb('plan_despacho','POST',{
-        pedido_id: p.id,
-        fecha: p.fecha,
-        fecha_despacho: p.fecha_despacho||p.fecha_armado||p.fecha,
-        hora_despacho: p.hora_despacho||null,
-        cliente: p.cliente,
-        destino: p.destino||'',
-        codigo: p.codigo,
-        cantidad_despachar: p.cantidad_pedida,
-        cantidad_despachada: 0,
-        estado: 'Pendiente',
-        nota: ''
-      });
-    } else {
-      // Si no se puede obtener el pedido, crear despacho con los datos del formulario
-      await sb('plan_despacho','POST',{
-        pedido_id: null,
-        fecha: hoy(),
-        cliente: cliente,
-        destino: destino||'',
-        codigo: codigo,
-        cantidad_despachar: cantidad,
-        cantidad_despachada: 0,
-        estado: 'Pendiente',
-        nota: ''
-      });
-    }
-    ['p-codigo','p-cliente','p-destino','p-cantidad'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-    var _el_p_fecha_desp=document.getElementById('p-fecha-desp');if(_el_p_fecha_desp)_el_p_fecha_desp.value='';
-    var _el_p_hora_desp=document.getElementById('p-hora-desp');if(_el_p_hora_desp)_el_p_hora_desp.value='';
-    var _el_p_grupo=document.getElementById('p-grupo');if(_el_p_grupo)_el_p_grupo.value='';
-    var _el_p_fecha_armado=document.getElementById('p-fecha-armado');if(_el_p_fecha_armado)_el_p_fecha_armado.value='';
-    document.getElementById('cod-info').textContent='';
-    cargarPlanDia(); cargarMetricas();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-// -- Cambios ---------------------------------------------------
-let pedidoCambioActual = null;
-
-function buscarPedidoActivo(q) {
-  const box = document.getElementById('sugg-cambio');
-  if(!q||q.length<2) { box.style.display='none'; return; }
-  const ql = q.toLowerCase();
-  const matches = pedidosCache.filter(p=>p.estado==='Activo'&&(
-    p.cliente.toLowerCase().includes(ql)||p.codigo.toLowerCase().includes(ql)||
-    (p.destino||'').toLowerCase().includes(ql)
-  )).slice(0,8);
-  if(!matches.length) { box.style.display='none'; return; }
-  box.innerHTML = matches.map(p=>`
-    <div class="sitem" onclick="abrirCambio('${p.id}')">
-      <span class="snv">${p.codigo}</span>
-      <span class="smeta"> . ${p.cliente} . ${p.destino||''} . ${p.cantidad_pedida.toLocaleString('es-CL')} u.</span>
-    </div>`).join('');
-  box.style.display='block';
-}
-
-function abrirCambio(id) {
-  document.getElementById('sugg-cambio').style.display='none';
-  pedidoCambioActual = pedidosCache.find(p=>p.id===id);
-  if(!pedidoCambioActual) return;
-  const p = pedidoCambioActual;
-  document.getElementById('cambio-pedido-info').innerHTML=`
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <span class="nv-tag">${p.nv_referencia||'Sin NV'}</span>
-      <strong>${p.cliente}</strong>
-      <code style="font-size:11px;color:var(--text2)">${p.codigo}</code>
-      <span style="color:var(--text2)">${p.destino||''}</span>
-      <span style="color:var(--text)">${p.cantidad_pedida.toLocaleString('es-CL')} u.</span>
-      <span class="chip ${chipPrio(p.prioridad)}">${p.prioridad}</span>
-    </div>`;
-  document.getElementById('cambio-form').style.display='block';
-  renderCamposCambio();
-  showTab('cambios');
-}
-
-function cerrarCambioForm() {
-  document.getElementById('cambio-form').style.display='none';
-  pedidoCambioActual=null;
-}
-
-function renderCamposCambio() {
-  const tipo = document.getElementById('c-tipo').value;
-  const el = document.getElementById('campos-cambio');
-  const p = pedidoCambioActual;
-  if(!p) return;
-  if(tipo==='cantidad') el.innerHTML=`<div class="fg"><label>Nueva cantidad</label><input type="number" id="c-val" value="${p.cantidad_pedida}" style="width:150px"></div>`;
-  else if(tipo==='destino') el.innerHTML=`<div class="fg"><label>Nuevo destino</label><input type="text" id="c-val" value="${p.destino||''}" style="width:250px"></div>`;
-  else if(tipo==='codigo') el.innerHTML=`<div class="fg"><label>Nuevo código</label><input type="text" id="c-val" value="${p.codigo}" style="width:150px"></div>`;
-  else if(tipo==='maquina') el.innerHTML=`<div class="fg"><label>Nueva máquina</label><select id="c-val" style="width:160px">${maquinasConfig.map(m=>`<option value="${m.nombre}" ${m.nombre===p.maquina?'selected':''}>${m.nombre}</option>`).join('')}</select></div>`;
-  else if(tipo==='prioridad') el.innerHTML=`<div class="fg"><label>Nueva prioridad</label><select id="c-val" style="width:130px"><option ${p.prioridad==='Alta'?'selected':''}>Alta</option><option ${p.prioridad==='Media'?'selected':''}>Media</option><option ${p.prioridad==='Baja'?'selected':''}>Baja</option></select></div>`;
-  else if(tipo==='cancelado') el.innerHTML=`<div class="wbox">⚠️ Esto marcará el pedido como Cancelado. Quedará en el historial.</div>`;
-  else el.innerHTML='';
-}
-
-async function guardarCambio() {
-  const p = pedidoCambioActual;
-  if(!p) return;
-  const tipo = document.getElementById('c-tipo').value;
-  const nota = document.getElementById('c-nota').value.trim();
-  const valEl = document.getElementById('c-val');
-  const valNuevo = valEl ? valEl.value : '';
-  const valAnterior = tipo==='cantidad'?p.cantidad_pedida:tipo==='destino'?p.destino:tipo==='codigo'?p.codigo:tipo==='maquina'?p.maquina:tipo==='prioridad'?p.prioridad:'Activo';
-
-  try {
-    // Registrar cambio
-    await sb('cambios_pedido','POST',{
-      pedido_id: p.id,
-      tipo_cambio: tipo,
-      valor_anterior: String(valAnterior||''),
-      valor_nuevo: tipo==='cancelado'?'Cancelado':valNuevo,
-      nota,
-      usuario: USER.nombre,
-    });
-
-    // Actualizar pedido
-    const update = {};
-    if(tipo==='cantidad') update.cantidad_pedida=parseInt(valNuevo)||0;
-    else if(tipo==='destino') update.destino=valNuevo;
-    else if(tipo==='codigo') { update.codigo=valNuevo; update.descripcion=COD_IDX[valNuevo]?.descripcion||''; update.tipo=COD_IDX[valNuevo]?.tipo||'Otro'; }
-    else if(tipo==='maquina') update.maquina=valNuevo;
-    else if(tipo==='prioridad') update.prioridad=valNuevo;
-    else if(tipo==='cancelado') update.estado='Cancelado';
-
-    if(tipo!=='cancelado') update.estado='Modificado';
-    await sb('pedidos_dia','PATCH',update,`?id=eq.${p.id}`);
-
-    // Actualizar despacho asociado automáticamente
-    const despUpdate = {};
-    if(tipo==='cantidad') despUpdate.cantidad_despachar=parseInt(valNuevo)||0;
-    else if(tipo==='destino') despUpdate.destino=valNuevo;
-    else if(tipo==='codigo') despUpdate.codigo=valNuevo;
-    else if(tipo==='cancelado') despUpdate.estado='Cancelado';
-    if(Object.keys(despUpdate).length) {
-      await sb('plan_despacho','PATCH',despUpdate,`?pedido_id=eq.${p.id}&estado=neq.Despachado`);
-    }
-
-    cerrarCambioForm();
-    cargarPlanDia(); cargarMetricas(); cargarCambiosDia();
-    document.getElementById('c-nota').value='';
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function cancelarPedido(id) {
-  if(!confirm('¿Cancelar este pedido? Quedará en el historial como Cancelado.')) return;
-  try {
-    // Registrar el cambio
-    await sb('cambios_pedido','POST',{
-      pedido_id: id,
-      tipo_cambio: 'cancelado',
-      valor_anterior: 'Activo',
-      valor_nuevo: 'Cancelado',
-      nota: 'Cancelado manualmente',
-      usuario: USER.nombre,
-    });
-    // Actualizar pedido
-    await sb('pedidos_dia','PATCH',{estado:'Cancelado'},`?id=eq.${id}`);
-    // Cancelar despacho asociado
-    await sb('plan_despacho','PATCH',{estado:'Cancelado'},`?pedido_id=eq.${id}&estado=neq.Despachado`);
-    cargarPlanDia(); cargarMetricas();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function eliminarPedido(id) {
-  if(!confirm('¿Eliminar este pedido definitivamente? Esta acción no se puede deshacer.')) return;
-  try {
-    // Eliminar cambios asociados primero
-    await sb('cambios_pedido','DELETE',null,`?pedido_id=eq.${id}`);
-    // Eliminar despachos asociados
-    await sb('plan_despacho','DELETE',null,`?pedido_id=eq.${id}`);
-    // Eliminar pedido
-    await sb('pedidos_dia','DELETE',null,`?id=eq.${id}`);
-    cargarPlanDia(); cargarMetricas();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-function setMisDespachosModo(modo) {
-  var esDia = modo === 'dia';
-  document.getElementById('md-filtro-dia').style.display = esDia ? 'flex' : 'none';
-  document.getElementById('md-filtro-rango').style.display = esDia ? 'none' : 'flex';
-  var btnDia = document.getElementById('md-modo-dia');
-  var btnRango = document.getElementById('md-modo-rango');
-  if(btnDia) { btnDia.style.background = esDia?'var(--csf)':'transparent'; btnDia.style.color = esDia?'#fff':'var(--text3)'; }
-  if(btnRango) { btnRango.style.background = esDia?'transparent':'var(--csf)'; btnRango.style.color = esDia?'var(--text3)':'#fff'; }
-  if(esDia) {
-    var f = document.getElementById('mis-desp-fecha')?.value || hoy();
-    var d = document.getElementById('mis-desp-desde'); if(d) d.value = f;
-    var h = document.getElementById('mis-desp-hasta'); if(h) h.value = f;
-  }
-}
-
-function abrirModalDespacho(despId, codigo, cliente, totalPedido, yaDesp) {
-  document.getElementById('mdl-desp-id').value = despId;
-  document.getElementById('mdl-desp-codigo').value = codigo;
-  document.getElementById('mdl-desp-cliente').value = cliente;
-  document.getElementById('mdl-cliente').textContent = cliente;
-  document.getElementById('mdl-codigo').textContent = codigo;
-  document.getElementById('mdl-progreso').textContent = 'Ya despachado: '+yaDesp.toLocaleString('es-CL')+' / '+totalPedido.toLocaleString('es-CL')+' u.';
-  document.getElementById('mdl-cant').value = '';
-  document.getElementById('mdl-guia').value = '';
-  document.getElementById('mdl-foto').value = '';
-  var lbl = document.getElementById('mdl-foto-lbl');
-  lbl.style.borderColor = ''; lbl.style.color = '';
-  lbl.childNodes[0].textContent = '📷 Adjuntar foto';
-  document.getElementById('modal-despacho-live').classList.add('open');
-  setTimeout(function(){ document.getElementById('mdl-cant').focus(); }, 200);
-}
-
-async function confirmarDespachoLive() {
-  var despId = document.getElementById('mdl-desp-id').value;
-  var codigo = document.getElementById('mdl-desp-codigo').value;
-  var cliente = document.getElementById('mdl-desp-cliente').value;
-  var cant = parseInt(document.getElementById('mdl-cant').value)||0;
-  var guia = document.getElementById('mdl-guia').value.trim();
-  var fotoEl = document.getElementById('mdl-foto');
-  if(!cant) { alert('Ingresa la cantidad.'); return; }
-  try {
-    var fotoUrl = null;
-    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
-      fotoUrl = await subirFotoGuia(despId, cliente, fotoEl.files[0]);
-    }
-    await sb('salidas_despacho','POST',{
-      despacho_id:despId, cliente:cliente, codigo:codigo,
-      cantidad:cant, numero_guia:guia||null, foto_url:fotoUrl||null,
-      registrado_por:USER.nombre
-    });
-    var salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
-    var totalDesp = (salidas||[]).reduce(function(s,d){return s+(d.cantidad||0);},0);
-    var desp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
-    var total = desp&&desp[0]?desp[0].cantidad_despachar:0;
-    var nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
-    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+despId);
-    try {
-      var stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
-      if(stockBod&&stockBod.length) {
-        var totalStock = stockBod.reduce(function(s,r){return s+(r.unidades||0);},0);
-        await sb('stock_pallets','PATCH',{unidades:Math.max(0,totalStock-cant)},'?id=eq.'+stockBod[0].id);
-      }
-    } catch(eS){}
-    closeModal('modal-despacho-live');
-    cargarDespLive();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function registrarSalidaLive(despId, codigo, cliente) {
-  const cantEl = document.getElementById('live-cant-'+despId);
-  const guiaEl = document.getElementById('live-guia-'+despId);
-  const fotoEl = document.getElementById('live-foto-'+despId);
-  const cant = parseInt(cantEl?.value)||0;
-  const guia = guiaEl?.value?.trim()||'';
-  if(!cant) { alert('Ingresa la cantidad.'); return; }
-  try {
-    // Subir foto si hay
-    let fotoUrl = null;
-    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
-      fotoUrl = await subirFotoGuia(despId, cliente, fotoEl.files[0]);
-    }
-    // Registrar salida
-    await sb('salidas_despacho','POST',{
-      despacho_id: despId, cliente: cliente, codigo: codigo,
-      cantidad: cant, numero_guia: guia||null, foto_url: fotoUrl||null,
-      registrado_por: USER.nombre
-    });
-    // Actualizar plan_despacho
-    const salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
-    const totalDesp = (salidas||[]).reduce(function(s,d){return s+(d.cantidad||0);},0);
-    const desp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
-    const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
-    const nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
-    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+despId);
-    // Descontar stock 002
-    try {
-      const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
-      if(stockBod&&stockBod.length) {
-        const totalStock = stockBod.reduce(function(s,r){return s+(r.unidades||0);},0);
-        await sb('stock_pallets','PATCH',{unidades:Math.max(0,totalStock-cant)},'?id=eq.'+stockBod[0].id);
-        for(var si=1;si<stockBod.length;si++) await sb('stock_pallets','DELETE',null,'?id=eq.'+stockBod[si].id);
-      }
-    } catch(eS){}
-    // Limpiar campos
-    if(cantEl) cantEl.value='';
-    if(guiaEl) guiaEl.value='';
-    if(fotoEl) { fotoEl.value=''; var lbl=document.getElementById('live-foto-lbl-'+despId); if(lbl){lbl.style.borderColor='';lbl.style.color='';} }
-    cargarDespLive();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-function toggleFiltroDespReg() {}
-
-async function cargarDespReg() {
-  var el = document.getElementById('desp-reg-output');
-  if(!el) return;
-  var fi = document.getElementById('filtro-desp-reg-fecha');
-  if(!fi) return;
-  if(!fi.value) fi.value = hoy();
-  var fecha = fi.value;
-  el.innerHTML = '<div class="empty">Cargando...</div>';
-  try {
-    var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*&order=hora_despacho.asc.nullslast,creado_en.asc');
-    if(!desps||!desps.length) {
-      el.innerHTML='<div class="empty">Sin despachos para esta fecha.</div>';
-      return;
-    }
-    // Agrupar por cliente
-    var porCli = {};
-    desps.forEach(function(d){ var c=d.cliente||'Sin cliente'; if(!porCli[c]) porCli[c]=[]; porCli[c].push(d); });
-    el.innerHTML = Object.keys(porCli).sort().map(function(cli){
-      return '<div style="margin-bottom:16px">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--text);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px">'+cli+'</div>'+
-        porCli[cli].map(function(d){
-          var pct = d.cantidad_despachar>0?Math.min(100,Math.round((d.cantidad_despachada||0)/d.cantidad_despachar*100)):0;
-          var col = pct>=100?'var(--green)':pct>0?'var(--yellow)':'var(--text3)';
-          var pendiente = Math.max(0,(d.cantidad_despachar||0)-(d.cantidad_despachada||0));
-          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:8px">'+
-            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">'+
-              '<div>'+
-                '<code style="font-size:12px;color:var(--csf)">'+d.codigo+'</code>'+
-                '<span style="font-size:11px;color:var(--text2);margin-left:8px">→ '+d.destino+'</span>'+
-                (d.hora_despacho?'<span style="font-size:11px;color:var(--yellow);margin-left:8px">🕐 '+d.hora_despacho+'</span>':'')+
-              '</div>'+
-              '<span class="chip '+(d.estado==='Despachado'?'green':d.estado==='En proceso'?'yellow':'gray')+'">'+d.estado+'</span>'+
-            '</div>'+
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
-              '<div class="prog-bar" style="flex:1;height:7px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
-              '<span style="font-size:12px;color:'+col+';font-weight:700;min-width:80px;text-align:right">'+
-                (d.cantidad_despachada||0).toLocaleString('es-CL')+' / '+d.cantidad_despachar.toLocaleString('es-CL')+
-              '</span>'+
-            '</div>'+
-            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-              '<input type="number" id="dreg-cant-'+d.id+'" placeholder="Cantidad" '+
-                'style="width:100px;height:40px;font-size:15px;font-weight:600;text-align:center" '+
-                'min="1" inputmode="numeric" pattern="[0-9]*">'+
-              '<input type="text" id="dreg-guia-'+d.id+'" placeholder="N° guía" '+
-                'style="width:110px;height:40px;font-size:14px" '+
-                'inputmode="numeric" pattern="[0-9]*">'+
-              '<label style="display:flex;align-items:center;gap:4px;height:40px;padding:0 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2)" id="dreg-foto-lbl-'+d.id+'">'+
-                '📷'+
-                '<input type="file" id="dreg-foto-'+d.id+'" accept="image/*,application/pdf" capture="environment" style="display:none">'+
-              '</label>'+
-              '<button class="btn primary" onclick="registrarDespReg(\"'+d.id+'\",\"'+d.codigo+'\",\"'+d.cliente.replace(/"/g,'')+'\")" '+
-                'style="height:40px;padding:0 16px;font-size:13px;font-weight:700;flex:1">✓ Registrar</button>'+
-              (pct>0?'<button class="btn sm blue" onclick="verSalidas(\"'+d.id+'\")" style="height:40px">Ver salidas</button>':'')+
-            '</div>'+
-            '<div id="salidas-'+d.id+'" style="display:none;margin-top:8px"></div>'+
-          '</div>';
-        }).join('')+
-      '</div>';
-    }).join('');
-  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
-}
-
-async function registrarDespReg(despId, codigo, cliente) {
-  var cantEl = document.getElementById('dreg-cant-'+despId);
-  var guiaEl = document.getElementById('dreg-guia-'+despId);
-  var fotoEl = document.getElementById('dreg-foto-'+despId);
-  var cant = parseInt(cantEl?.value)||0;
-  var guia = guiaEl?.value?.trim()||'';
-  if(!cant) { alert('Ingresa la cantidad.'); return; }
-  try {
-    var fotoUrl = null;
-    if(fotoEl && fotoEl.files && fotoEl.files[0]) fotoUrl = await subirFotoGuia(despId, cliente, fotoEl.files[0]);
-    await sb('salidas_despacho','POST',{despacho_id:despId,cliente:cliente,codigo:codigo,cantidad:cant,numero_guia:guia||null,foto_url:fotoUrl||null,registrado_por:USER.nombre});
-    var salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
-    var totalDesp = (salidas||[]).reduce(function(s,d){return s+(d.cantidad||0);},0);
-    var desp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
-    var total = desp&&desp[0]?desp[0].cantidad_despachar:0;
-    var nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
-    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+despId);
-    try {
-      var stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
-      if(stockBod&&stockBod.length) { var ts=stockBod.reduce(function(s,r){return s+(r.unidades||0);},0); await sb('stock_pallets','PATCH',{unidades:Math.max(0,ts-cant)},'?id=eq.'+stockBod[0].id); }
-    } catch(eS){}
-    if(cantEl) cantEl.value=''; if(guiaEl) guiaEl.value='';
-    cargarDespReg();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function cargarMisDespachos() {
-  var esDia = document.getElementById('md-filtro-dia')?.style.display !== 'none';
-  var fecha = document.getElementById('mis-desp-fecha')?.value || '';
-  var desde = esDia ? fecha : (document.getElementById('mis-desp-desde')?.value || '');
-  var hasta = esDia ? fecha : (document.getElementById('mis-desp-hasta')?.value || '');
-
-  const el = document.getElementById('mis-desp-output');
-  const metEl = document.getElementById('mis-desp-metrics');
+  var fecha = fi ? fi.value : hoy();
+  var el = document.getElementById('desp-live-output');
+  var metEl = document.getElementById('met-desp-live');
   if(!el) return;
   el.innerHTML = '<div class="empty">Cargando...</div>';
-
   try {
-    // Construir query - si no hay fecha carga todo
-    var q = '?order=creado_en.desc&select=*';
-    if(desde) q += '&creado_en=gte.'+desde+'T00:00:00';
-    if(hasta) q += '&creado_en=lte.'+hasta+'T23:59:59';
-
-    const salidas = await sb('salidas_despacho','GET',null,q);
-
-    if(!salidas||!salidas.length) {
-      el.innerHTML='<div class="empty">Sin despachos registrados'+(desde?' para este período':'')+'.</div>';
+    var pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&estado=neq.Cancelado&order=creado_en.asc&select=*');
+    if(!pedidos||!pedidos.length) {
+      el.innerHTML='<div class="empty">Sin pedidos para esta fecha.</div>';
       if(metEl) metEl.innerHTML='';
       return;
     }
-
     // Métricas
-    const totalUn = salidas.reduce(function(s,r){return s+(r.cantidad||0);},0);
-    const clientes = new Set(salidas.map(function(r){return r.cliente;})).size;
-    const guias = new Set(salidas.filter(function(r){return r.numero_guia;}).map(function(r){return r.numero_guia;})).size;
-    if(metEl) metEl.innerHTML =
-      '<div class="metric"><div class="metric-label">Salidas</div><div class="metric-val">'+salidas.length+'</div><div class="metric-sub">registros</div></div>'+
-      '<div class="metric"><div class="metric-label">Unidades</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div><div class="metric-sub">cajas</div></div>'+
-      '<div class="metric"><div class="metric-label">Clientes</div><div class="metric-val yellow">'+clientes+'</div><div class="metric-sub">distintos</div></div>'+
-      '<div class="metric"><div class="metric-label">Guías</div><div class="metric-val">'+guias+'</div><div class="metric-sub">documentos</div></div>';
-
-    // Agrupar por fecha y luego cliente
-    var porFecha = {};
-    salidas.forEach(function(s){
-      var f = (s.creado_en||'').slice(0,10);
-      if(!porFecha[f]) porFecha[f] = {};
-      var cli = s.cliente||'Sin cliente';
-      if(!porFecha[f][cli]) porFecha[f][cli] = [];
-      porFecha[f][cli].push(s);
-    });
-
-    var html2 = '';
-    Object.keys(porFecha).sort().reverse().forEach(function(fecha2){
-      var fechaStr = new Date(fecha2+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
-      html2 += '<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 6px">'+fechaStr+'</div>';
-
-      Object.keys(porFecha[fecha2]).sort().forEach(function(cli){
-        var rows = porFecha[fecha2][cli];
-        var totalCli = rows.reduce(function(s,r){return s+(r.cantidad||0);},0);
-
-        html2 += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden">'+
-          '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">'+
-            '<span style="font-size:13px;font-weight:700;color:var(--text)">'+cli+'</span>'+
-            '<span style="font-size:12px;color:var(--green);font-weight:600;margin-left:auto">'+totalCli.toLocaleString('es-CL')+' u.</span>'+
-            '<span style="font-size:11px;color:var(--text3)">'+rows.length+' salida(s)</span>'+
-          '</div>'+
-          '<div style="overflow-x:auto"><table class="dt" style="font-size:12px">'+
-          '<thead><tr><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Hora</th><th></th></tr></thead>'+
-          '<tbody>'+
-          rows.map(function(s){
-            var hora = new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-            return '<tr>'+
-              '<td><code style="font-size:11px">'+s.codigo+'</code></td>'+
-              '<td style="color:var(--text2);font-size:11px">'+s.destino+'</td>'+
-              '<td style="font-weight:700;color:var(--green)">'+s.cantidad.toLocaleString('es-CL')+'</td>'+
-              '<td>'+(s.numero_guia?'<span class="nv-tag">'+s.numero_guia+'</span>':'—')+'</td>'+
-              '<td>'+(s.foto_url?'<a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:11px">📷</a>':'—')+'</td>'+
-              '<td style="color:var(--text3);font-size:11px;white-space:nowrap">'+hora+'</td>'+
-              '<td><button class="btn sm danger" onclick="eliminarSalidaDesp(\"'+s.id+'\")">✕</button></td>'+
-            '</tr>';
-          }).join('')+
-          '</tbody></table></div></div>';
-      });
-    });
-
-    el.innerHTML = html2;
-  } catch(e) {
-    el.innerHTML='<div class="empty">Error: '+e.message+'</div>';
-    console.error('cargarMisDespachos:', e);
-  }
+    if(metEl) {
+      var totalPed = pedidos.length;
+      var totalCaj = pedidos.reduce(function(s,p){return s+p.cantidad_pedida;},0);
+      var totalArm = pedidos.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
+      var pctArm = totalCaj>0?Math.round(totalArm/totalCaj*100):0;
+      metEl.innerHTML =
+        '<div class="metric"><div class="metric-label">Pedidos</div><div class="metric-val green">'+totalPed+'</div></div>'+
+        '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCaj.toLocaleString('es-CL')+'</div></div>'+
+        '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+totalArm.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'%</div></div>'+
+        '<div class="metric"><div class="metric-label">Fecha</div><div class="metric-val" style="font-size:16px">'+fecha+'</div></div>';
+    }
+    // Tabla simple
+    el.innerHTML = '<table class="dt"><thead><tr>'+
+      '<th>Cliente</th><th>Código</th><th>Destino</th><th>Solicitado</th><th>Armado</th><th>Estado</th>'+
+      '</tr></thead><tbody>'+
+      pedidos.map(function(p){
+        var pct=p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
+        var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+        return '<tr>'+
+          '<td style="font-weight:600">'+p.cliente+'</td>'+
+          '<td><code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code></td>'+
+          '<td style="color:var(--text2);font-size:12px">'+p.destino+'</td>'+
+          '<td style="font-weight:600">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
+          '<td><span style="color:'+col+';font-weight:700">'+pct+'%</span></td>'+
+          '<td><span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span></td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table>';
+  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
 }
 
+function dbg(msg) {
+  var d = document.getElementById('debug-box');
+  if(d) { d.style.display='block'; d.innerHTML += msg+'<br>'; }
+}
+
+async function cargarDespReg() {
+  var fi = document.getElementById('desp-reg-fecha');
+  if(fi && !fi.value) fi.value = hoy();
+  var fecha = fi ? fi.value : hoy();
+  var el = document.getElementById('desp-reg-output');
+  if(!el) { dbg('ERROR: desp-reg-output no encontrado'); return; }
+  dbg('Fecha: '+fecha);
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  try {
+    dbg('Consultando Supabase...');
+    var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*&order=hora_despacho.asc.nullslast');
+    dbg('Respuesta: '+(desps?desps.length+' registros':'null'));
+    if(!desps||!desps.length) {
+      el.innerHTML='<div class="empty">Sin despachos programados para el '+fecha+'.</div>';
+      return;
+    }
+    var html2 = '';
+    desps.forEach(function(d) {
+      var pct = d.cantidad_despachar>0?Math.min(100,Math.round((d.cantidad_despachada||0)/d.cantidad_despachar*100)):0;
+      var col = pct>=100?'var(--green)':pct>0?'var(--yellow)':'var(--text3)';
+      html2 += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">'+
+        // Info
+        '<div style="margin-bottom:10px">'+
+          '<div style="font-size:16px;font-weight:700;margin-bottom:2px">'+d.cliente+'</div>'+
+          '<code style="font-size:13px;color:var(--csf)">'+d.codigo+'</code>'+
+          (d.destino?'<span style="font-size:12px;color:var(--text2);margin-left:8px">→ '+d.destino+'</span>':'')+
+          (d.hora_despacho?'<span style="font-size:12px;color:var(--yellow);margin-left:8px">🕐 '+d.hora_despacho+'</span>':'')+
+        '</div>'+
+        // Progreso
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+          '<div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">'+
+            '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:4px"></div>'+
+          '</div>'+
+          '<span style="font-size:13px;color:'+col+';font-weight:700;white-space:nowrap">'+
+            (d.cantidad_despachada||0).toLocaleString('es-CL')+' / '+d.cantidad_despachar.toLocaleString('es-CL')+' u.'+
+          '</span>'+
+        '</div>'+
+        // Inputs
+        '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+
+          '<input type="number" id="dr-cant-'+d.id+'" placeholder="Cantidad" '+
+            'style="flex:1;min-width:100px;height:44px;font-size:16px;font-weight:700;text-align:center" '+
+            'inputmode="numeric" min="1">'+
+          '<input type="text" id="dr-guia-'+d.id+'" placeholder="N° guía" '+
+            'style="flex:1;min-width:100px;height:44px;font-size:15px;text-align:center" '+
+            'inputmode="numeric">'+
+        '</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button id="btn-reg-'+d.id+'" '+
+            'style="flex:1;height:48px;font-size:15px;font-weight:700;background:var(--csf);color:#fff;border:none;border-radius:8px;cursor:pointer">'+
+            '✓ Registrar salida'+
+          '</button>'+
+          (pct>0?'<button id="btn-ver-'+d.id+'" '+
+            'style="height:48px;padding:0 14px;font-size:12px;background:var(--bg3);color:var(--csf);border:1px solid var(--border2);border-radius:8px;cursor:pointer">'+
+            'Ver salidas'+
+          '</button>':'')+
+          '<input type="hidden" id="dr-cod-'+d.id+'" value="'+d.codigo.replace(/"/g,'')+'">'+
+          '<input type="hidden" id="dr-cli-'+d.id+'" value="'+d.cliente.replace(/"/g,'')+'">'+
+        '</div>'+
+        '<div id="salidas-'+d.id+'" style="display:none;margin-top:8px"></div>'+
+      '</div>';
+    });
+    el.innerHTML = html2;
+    // Agregar event listeners
+    desps.forEach(function(d){
+      var btnReg = document.getElementById('btn-reg-'+d.id);
+      if(btnReg) btnReg.addEventListener('click', function(){ regDespacho(d.id); });
+      var btnVer = document.getElementById('btn-ver-'+d.id);
+      if(btnVer) btnVer.addEventListener('click', function(){ verSalidas(d.id); });
+    });
+  } catch(e) { dbg('ERROR: '+e.message); el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+}
+
+async function regDespacho(despId) {
+  var codigo = document.getElementById('dr-cod-'+despId)?.value||'';
+  var cliente = document.getElementById('dr-cli-'+despId)?.value||'';
+  var cant = parseInt(document.getElementById('dr-cant-'+despId)?.value)||0;
+  var guia = document.getElementById('dr-guia-'+despId)?.value?.trim()||'';
+  if(!cant) { alert('Ingresa la cantidad.'); return; }
+  try {
+    await sb('salidas_despacho','POST',{
+      despacho_id:despId, cliente:cliente, codigo:codigo,
+      cantidad:cant, numero_guia:guia||null,
+      registrado_por:USER.nombre
+    });
+    var sal2 = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&select=cantidad');
+    var tot = (sal2||[]).reduce(function(s,r){return s+(r.cantidad||0);},0);
+    var dp = await sb('plan_despacho','GET',null,'?id=eq.'+despId+'&select=cantidad_despachar');
+    var mx = dp&&dp[0]?dp[0].cantidad_despachar:0;
+    var est = tot>=mx?'Despachado':tot>0?'En proceso':'Pendiente';
+    await sb('plan_despacho','PATCH',{cantidad_despachada:tot,estado:est},'?id=eq.'+despId);
+    try {
+      var st = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(codigo)+'&centro=eq.002&select=id,unidades');
+      if(st&&st.length) { var ts=st.reduce(function(s,r){return s+(r.unidades||0);},0); await sb('stock_pallets','PATCH',{unidades:Math.max(0,ts-cant)},'?id=eq.'+st[0].id); }
+    } catch(e2){}
+    var cantEl = document.getElementById('dr-cant-'+despId);
+    var guiaEl = document.getElementById('dr-guia-'+despId);
+    if(cantEl) cantEl.value='';
+    if(guiaEl) guiaEl.value='';
+    cargarDespReg();
+  } catch(e) { alert('Error al registrar: '+e.message); }
+}
+
+async function cargarMisDespachos() {
+  var desde = document.getElementById('mis-desp-desde')?.value||'';
+  var hasta = document.getElementById('mis-desp-hasta')?.value||'';
+  var el = document.getElementById('mis-desp-output');
+  var metEl = document.getElementById('mis-desp-metrics');
+  if(!el) return;
+  if(!desde && !hasta) {
+    desde = hoy(); hasta = hoy();
+    var fd = document.getElementById('mis-desp-desde'); if(fd) fd.value = desde;
+    var fh = document.getElementById('mis-desp-hasta'); if(fh) fh.value = hasta;
+  }
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  try {
+    var q = '?order=creado_en.desc&select=*';
+    if(desde) q += '&creado_en=gte.'+desde+'T00:00:00';
+    if(hasta) q += '&creado_en=lte.'+hasta+'T23:59:59';
+    var salidas = await sb('salidas_despacho','GET',null,q);
+    if(!salidas||!salidas.length) {
+      el.innerHTML='<div class="empty">Sin despachos en el período.</div>';
+      if(metEl) metEl.innerHTML='';
+      return;
+    }
+    var totalUn = salidas.reduce(function(s,r){return s+(r.cantidad||0);},0);
+    var clientes = new Set(salidas.map(function(r){return r.cliente;})).size;
+    if(metEl) metEl.innerHTML =
+      '<div class="metric"><div class="metric-label">Salidas</div><div class="metric-val">'+salidas.length+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Unidades</div><div class="metric-val green">'+totalUn.toLocaleString('es-CL')+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Clientes</div><div class="metric-val yellow">'+clientes+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Período</div><div class="metric-val" style="font-size:14px">'+desde+'</div></div>';
+    // Tabla simple
+    el.innerHTML = '<table class="dt"><thead><tr>'+
+      '<th>Fecha</th><th>Cliente</th><th>Código</th><th>Cantidad</th><th>N° Guía</th><th>Hora</th><th></th>'+
+      '</tr></thead><tbody>'+
+      salidas.map(function(s){
+        var f = (s.creado_en||'').slice(0,10);
+        var h = s.creado_en?new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'';
+        return '<tr>'+
+          '<td style="font-size:11px;color:var(--text3)">'+f+'</td>'+
+          '<td style="font-weight:600">'+s.cliente+'</td>'+
+          '<td><code style="font-size:11px;color:var(--csf)">'+s.codigo+'</code></td>'+
+          '<td style="font-weight:700;color:var(--green)">'+s.cantidad.toLocaleString('es-CL')+'</td>'+
+          '<td style="font-size:11px">'+(s.numero_guia||'—')+'</td>'+
+          '<td style="font-size:11px;color:var(--text3)">'+h+'</td>'+
+          '<td><button id="btn-del-'+s.id+'" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--red);cursor:pointer;padding:2px 8px;font-size:11px">✕</button></td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table>';
+    // Event listeners para eliminar
+    salidas.forEach(function(s){
+      var b = document.getElementById('btn-del-'+s.id);
+      if(b) b.addEventListener('click', function(){ eliminarSalidaDesp(s.id); });
+    });
+  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+}
 
 async function eliminarSalidaDesp(salidaId) {
-  if(!confirm('¿Eliminar este despacho?')) return;
+  if(!confirm('¿Eliminar este registro?')) return;
   try {
-    const sal = await sb('salidas_despacho','GET',null,'?id=eq.'+salidaId+'&select=*');
-    if(sal&&sal[0]) {
-      const s = sal[0];
-      try {
-        const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(s.codigo||'')+'&centro=eq.002&select=id,unidades');
-        if(stockBod&&stockBod.length) {
-          await sb('stock_pallets','PATCH',{unidades:(stockBod[0].unidades||0)+(s.cantidad||0)},'?id=eq.'+stockBod[0].id);
-        }
-      } catch(eS){}
-      await sb('salidas_despacho','DELETE',null,'?id=eq.'+salidaId);
-      if(s.despacho_id) {
-        const salidas2 = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+s.despacho_id+'&select=cantidad');
-        const totalDesp = (salidas2||[]).reduce(function(a,r){return a+(r.cantidad||0);},0);
-        const desp = await sb('plan_despacho','GET',null,'?id=eq.'+s.despacho_id+'&select=cantidad_despachar');
-        const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
-        const nuevoEstado = totalDesp>=total?'Despachado':totalDesp>0?'En proceso':'Pendiente';
-        await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp,estado:nuevoEstado},'?id=eq.'+s.despacho_id);
-      }
-    }
+    await sb('salidas_despacho','DELETE',null,'?id=eq.'+salidaId);
     cargarMisDespachos();
   } catch(e) { alert('Error: '+e.message); }
 }
 
-async function eliminarSalida(salidaId, despachoId) {
-  if(!confirm('¿Eliminar esta salida? Se revertirá el descuento de stock.')) return;
-  try {
-    // Obtener datos de la salida antes de eliminar
-    const sal = await sb('salidas_despacho','GET',null,'?id=eq.'+salidaId+'&select=*');
-    if(sal && sal[0]) {
-      const s = sal[0];
-      // Revertir descuento en stock bodega 002
-      try {
-        const stockBod = await sb('stock_pallets','GET',null,'?codigo=eq.'+encodeURIComponent(s.codigo||'')+'&centro=eq.002&select=id,unidades');
-        if(stockBod && stockBod.length) {
-          await sb('stock_pallets','PATCH',{unidades: (stockBod[0].unidades||0) + (s.cantidad||0)},'?id=eq.'+stockBod[0].id);
-        }
-      } catch(eS) { console.warn('No se pudo revertir stock:', eS.message); }
-    }
-    await sb('salidas_despacho','DELETE',null,'?id=eq.'+salidaId);
-    // Actualizar cantidad despachada en plan_despacho
-    const salidas2 = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despachoId+'&select=cantidad');
-    const totalDesp = (salidas2||[]).reduce(function(s,r){return s+(r.cantidad||0);},0);
-    const desp = await sb('plan_despacho','GET',null,'?id=eq.'+despachoId+'&select=cantidad_despachar');
-    const total = desp&&desp[0]?desp[0].cantidad_despachar:0;
-    const nuevoEstado = totalDesp >= total ? 'Despachado' : totalDesp > 0 ? 'En proceso' : 'Pendiente';
-    await sb('plan_despacho','PATCH',{cantidad_despachada:totalDesp, estado:nuevoEstado},'?id=eq.'+despachoId);
-    verSalidas(despachoId);
-    cargarPlanDespacho();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-async function verSalidas(id) {
-  const el = document.getElementById('salidas-'+id);
-  if(!el) return;
-  if(el.style.display !== 'none') { el.style.display='none'; return; }
-  try {
-    const salidas = await sb('salidas_despacho','GET',null,`?despacho_id=eq.${id}&order=creado_en.asc&select=*`);
-    if(!salidas||!salidas.length) { el.innerHTML='<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>'; el.style.display='block'; return; }
-    el.innerHTML=`<table class="dt" style="font-size:12px;margin-top:4px">
-      <thead><tr><th>#</th><th>Cliente</th><th>Código</th><th>Destino</th><th>Cantidad</th><th>N° Guía</th><th>Foto</th><th>Registrado por</th><th>Hora</th><th></th></tr></thead>
-      <tbody>${salidas.map((s,i)=>`<tr>
-        <td style="color:var(--text3)">${i+1}</td>
-        <td style="font-weight:500">${s.cliente||'--'}</td>
-        <td><code style="font-size:11px">${s.codigo||'--'}</code></td>
-        <td style="color:var(--text2)">${s.destino||'--'}</td>
-        <td style="font-weight:500;color:var(--green)">${(s.cantidad||0).toLocaleString('es-CL')} u.</td>
-        <td>${s.numero_guia?`<span class="nv-tag">${s.numero_guia}</span>`:'--'}</td>
-        <td>${s.foto_url?`<a href="${s.foto_url}" target="_blank" style="color:var(--blue);font-size:12px">&#128247; Ver foto</a>`:'--'}</td>
-        <td style="color:var(--text2)">${s.registrado_por||'--'}</td>
-        <td style="color:var(--text3)">${new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
-        <td><button class="btn sm danger" onclick="eliminarSalida('${s.id}','${id}')" title="Eliminar esta salida">&#10005;</button></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-    el.style.display='block';
-  } catch(e) { el.innerHTML=`<p style="color:var(--red);font-size:12px">${e.message}</p>`; el.style.display='block'; }
-}
-
-async function cargarCambiosDia() {
-  const el = document.getElementById('historial-cambios');
-  if(!el) return;
-  try {
-    const cambios = await sb('cambios_pedido','GET',null,
-      `?order=hora.desc&select=*,pedidos_dia!inner(fecha,cliente,codigo)&pedidos_dia.fecha=eq.${hoy()}`);
-    const el = document.getElementById('historial-cambios');
-    if(!cambios||!cambios.length) { el.innerHTML='<div class="empty">Sin cambios registrados hoy.</div>'; return; }
-    const iconos = {cantidad:'📦',destino:'📍',codigo:'🔄',maquina:'⚙️',prioridad:'🔺',cancelado:'❌'};
-    el.innerHTML = `<table class="dt"><thead><tr><th>Hora</th><th>Cliente</th><th>Código</th><th>Cambio</th><th>Anterior</th><th>Nuevo</th><th>Nota</th><th>Registró</th></tr></thead><tbody>
-      ${cambios.map(c=>`<tr>
-        <td style="color:var(--text2);white-space:nowrap">${new Date(c.hora).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</td>
-        <td>${c.pedidos_dia?.cliente||'--'}</td>
-        <td><code style="font-size:11px">${c.pedidos_dia?.codigo||'--'}</code></td>
-        <td>${iconos[c.tipo_cambio]||'•'} ${c.tipo_cambio}</td>
-        <td style="color:var(--text2)">${c.valor_anterior||'--'}</td>
-        <td style="color:var(--green)">${c.valor_nuevo||'--'}</td>
-        <td style="color:var(--text2);max-width:150px">${c.nota||'--'}</td>
-        <td style="color:var(--text2)">${c.usuario||'--'}</td>
-      </tr>`).join('')}
-    </tbody></table>`;
-  } catch(e) { console.error(e); }
-}
-
-async function verHistorial(id) {
-  try {
-    const cambios = await sb('cambios_pedido','GET',null,`?pedido_id=eq.${id}&order=hora.asc&select=*`);
-    const p = pedidosCache.find(x=>x.id===id);
-    const iconos = {cantidad:'📦',destino:'📍',codigo:'🔄',maquina:'⚙️',prioridad:'🔺',cancelado:'❌'};
-    document.getElementById('mh-title').textContent = `Historial -- ${p?.cliente} / ${p?.codigo}`;
-    document.getElementById('mh-body').innerHTML = cambios.length
-      ? cambios.map(c=>`<div class="cambio-row">
-          <span class="cambio-icon">${iconos[c.tipo_cambio]||'•'}</span>
-          <div>
-            <div style="font-weight:500">${c.tipo_cambio} ${c.valor_anterior?`. <span style="color:var(--text3)">${c.valor_anterior}</span> -> <span style="color:var(--green)">${c.valor_nuevo}</span>`:'' }</div>
-            ${c.nota?`<div style="color:var(--text2);margin-top:2px">${c.nota}</div>`:''}
-            <div style="color:var(--text3);font-size:11px;margin-top:2px">${new Date(c.hora).toLocaleString('es-CL')} . ${c.usuario}</div>
-          </div>
-        </div>`).join('')
-      : '<div class="empty">Sin cambios registrados.</div>';
-    document.getElementById('modal-historial').classList.add('open');
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-// -- Armados ----------------------------------------------------
-async function cargarArmados() {
-  const el = document.getElementById('armados-list');
-  if(!el) return;
-  const activos = pedidosCache.filter(p=>p.estado!=='Cancelado');
-  if(!activos.length) { el.innerHTML='<div class="empty">Sin pedidos activos hoy.</div>'; return; }
-  el.innerHTML = `<table class="dt">
-    <thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Pedidas</th><th>Armadas</th><th>Avance</th><th></th></tr></thead>
-    <tbody>
-    ${activos.map(p=>{
-      const pct = p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
-      const col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-      return `<tr>
-        <td style="font-weight:500">${p.cliente}</td>
-        <td><code style="font-size:11px">${p.codigo}</code></td>
-        <td style="color:var(--text2)">${p.destino||'--'}</td>
-        <td>${p.cantidad_pedida.toLocaleString('es-CL')}</td>
-        <td><input type="number" value="${p.cantidad_armada}" id="arm-${p.id}" style="width:100px;height:30px;font-size:13px"></td>
-        <td>
-          <div style="display:flex;align-items:center;gap:6px">
-            <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
-            <span style="font-size:11px;color:${col};font-weight:500">${pct}%</span>
-          </div>
-        </td>
-        <td><button class="btn sm primary" onclick="guardarArmado('${p.id}')">Guardar</button></td>
-      </tr>`;
-    }).join('')}
-    </tbody></table>`;
-}
-
-async function guardarArmado(id) {
-  const val = parseInt(document.getElementById('arm-'+id).value)||0;
-  try {
-    await sb('pedidos_dia','PATCH',{cantidad_armada:val},`?id=eq.${id}`);
-    const p = pedidosCache.find(x=>x.id===id);
-    if(p) p.cantidad_armada=val;
-    cargarArmados(); cargarMetricas();
-  } catch(e) { alert('Error: '+e.message); }
-}
-
-// -- Plan despacho ---------------------------------------------
-function toggleFiltroPlanFecha() {
-  const modo = document.getElementById('filtro-plan-modo')?.value;
-  const fechaInput = document.getElementById('filtro-fecha-plan');
-  if(fechaInput) fechaInput.style.display = modo==='todos' ? 'none' : '';
-  cargarPlanDia(); // esto ya llama cargarMetricas internamente
-}
-
-function toggleFiltroDespFecha() {
-  const modo = document.getElementById('filtro-desp-modo')?.value;
-  const fechaInput = document.getElementById('filtro-fecha-desp');
-  if(fechaInput) fechaInput.style.display = modo==='todos' ? 'none' : '';
-  cargarPlanDespacho();
-}
 
 async function cargarPlanDespacho() {
   const el = document.getElementById('plan-despacho-output');
