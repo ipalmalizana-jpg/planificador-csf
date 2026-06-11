@@ -825,8 +825,9 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
       <div class="metrics" id="met-desp-live"></div>
       <div class="card">
         <div class="card-title">
-          <span>Plan del día — <span id="desp-live-fecha"></span></span>
-          <div style="display:flex;align-items:center;gap:8px">
+          <span>Plan del día</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input type="date" id="desp-live-fecha-input" style="height:28px;font-size:12px" onchange="cargarDespLive()">
             <span style="font-size:11px;color:var(--text3)">Actualiza cada 30 seg.</span>
             <button class="btn sm primary" onclick="cargarDespLive()">↻ Actualizar</button>
           </div>
@@ -1987,9 +1988,11 @@ async function cargarGraficos() {
 async function cargarDespLive() {
   const el = document.getElementById('desp-live-output');
   if(!el) return;
-  document.getElementById('desp-live-fecha').textContent = new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  const fi = document.getElementById('desp-live-fecha-input');
+  if(fi && !fi.value) fi.value = hoy();
+  const fechaDesp = fi ? fi.value : hoy();
   try {
-    const pedidos = await sb('pedidos_dia','GET',null,`?fecha=eq.${hoy()}&estado=neq.Cancelado&order=hora_entrega.asc.nullslast,creado_en.asc&select=*`);
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fechaDesp+'&estado=neq.Cancelado&order=creado_en.asc&select=*');
     if(!pedidos||!pedidos.length) { el.innerHTML='<div class="empty">No hay pedidos programados para hoy.</div>'; renderMetDespLive([]); return; }
 
     renderMetDespLive(pedidos);
