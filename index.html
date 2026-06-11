@@ -352,8 +352,9 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
 /* RESPONSIVE */
 @media(max-width:768px){
-  .sidebar{display:none}
-  .main-area{margin-left:0}
+  .sidebar{display:none;width:0;overflow:hidden}
+  .main-area{margin-left:0 !important;width:100%}
+  .app{flex-direction:column}
   .metrics{grid-template-columns:1fr 1fr}
   .content{padding:12px}
   .topbar{padding:0 14px}
@@ -870,7 +871,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
     <!-- DESPACHADOR: Vista en vivo del plan -->
     <div class="sec" id="sec-desp-live">
-      <div class="metrics" id="met-desp-live"></div>
+      <div class="metrics" id="met-desp-live" style="min-height:0"></div>
       <div class="card">
         <div class="card-title">
           <span>Plan del día</span>
@@ -1975,13 +1976,21 @@ function refreshActual() {
   else if(tabActual==='ingresos') { cargarIngresos(); }
   else if(tabActual==='stock') { if(!stockCache.length) cargarStock(); else filtrarStock(); }
   else if(tabActual==='mis-despachos') {
-    // Inicializar fechas
-    var fi2 = document.getElementById('mis-desp-fecha'); if(fi2&&!fi2.value) fi2.value=hoy();
-    var fd = document.getElementById('mis-desp-desde'); if(fd&&!fd.value) fd.value=hoy();
-    var fh = document.getElementById('mis-desp-hasta'); if(fh&&!fh.value) fh.value=hoy();
-    // Asegurar que el modo día esté visible
+    var fi2 = document.getElementById('mis-desp-fecha');
+    if(fi2 && !fi2.value) fi2.value = hoy();
+    var fd = document.getElementById('mis-desp-desde');
+    if(fd && !fd.value) fd.value = hoy();
+    var fh = document.getElementById('mis-desp-hasta');
+    if(fh && !fh.value) fh.value = hoy();
+    // Forzar modo dia visible
     var filtDia = document.getElementById('md-filtro-dia');
-    if(filtDia && filtDia.style.display==='none') setMisDespachosModo('dia');
+    var filtRango = document.getElementById('md-filtro-rango');
+    if(filtDia) filtDia.style.display = 'flex';
+    if(filtRango) filtRango.style.display = 'none';
+    var btnDia = document.getElementById('md-modo-dia');
+    var btnRango = document.getElementById('md-modo-rango');
+    if(btnDia) { btnDia.style.background='var(--csf)'; btnDia.style.color='#fff'; }
+    if(btnRango) { btnRango.style.background='transparent'; btnRango.style.color='var(--text3)'; }
     cargarMisDespachos();
   }
   else if(tabActual==='informes') { cargarInformes(); }
