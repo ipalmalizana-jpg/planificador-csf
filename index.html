@@ -196,8 +196,9 @@ code{font-family:'JetBrains Mono',monospace;font-size:.9em}
 
 /* MAIN */
 .main-area{
-  flex:1;min-height:100vh;
+  flex:1;
   display:flex;flex-direction:column;
+  min-height:0;
 }
 @media(min-width:769px){
   .main-area{ margin-left:var(--sidebar-w); }
@@ -1988,6 +1989,12 @@ function initApp() {
     ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['ingresos','Ingresos'],['stock','Stock'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['desp-reg','Registrar Despacho'],['mis-despachos','Mis Despachos']];
 
+  // Poblar sidebar-bottom con info del usuario
+  var sbBottom = document.getElementById('sidebar-bottom');
+  if(sbBottom) {
+    sbBottom.innerHTML = '<div class="sidebar-user"><strong>'+USER.nombre+'</strong><span style="font-size:11px;color:var(--text3)">'+USER.rol+'</span></div>'+
+      '<button class="btn" onclick="doLogout()" style="width:100%;justify-content:center;font-size:11px;height:30px">Salir</button>';
+  }
   const bar = document.getElementById('tabs-bar');
   const iconMap = {planificar:'📋',cambios:'✏️',armados:'📦',despacho:'🚚',ingresos:'📥',stock:'🏭',informes:'📊','desp-live':'📅','mis-despachos':'🚛'};
   bar.innerHTML = '';
