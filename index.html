@@ -249,6 +249,7 @@ code{font-family:'JetBrains Mono',monospace;font-size:.9em}
 
 /* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metrics:empty{display:none;margin:0}
 .metric{
   background:var(--bg2);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:16px 18px;
@@ -845,7 +846,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
         <button class="btn sm primary" onclick="cargarIngresos()" style="height:34px">↻ Actualizar</button>
       </div>
 
-      <div id="met-ingresos" class="metrics" style="margin-bottom:16px;min-height:0"></div>
+      <div id="met-ingresos" style="margin-bottom:0"></div>
       <div id="tabla-ingresos"><div class="empty">Cargando...</div></div>
     </div>
 
