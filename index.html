@@ -1028,11 +1028,8 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
           <input type="text" id="nueva-maq-nombre" placeholder="Ej: Línea 1, Q1530...">
         </div>
         <div class="fg" style="flex:1;min-width:100px">
-          <label>Tipo</label>
-          <select id="nueva-maq-tipo">
-            <option value="standard">Standard</option>
-            <option value="extended">Extended</option>
-          </select>
+          <label>Tipo de máquina</label>
+          <input type="text" id="nueva-maq-tipo" placeholder="Ej: Q1530, Blissera...">
         </div>
         <div class="fg" style="flex:1;min-width:80px">
           <label>Cap. turno (cajas)</label>
@@ -3230,6 +3227,10 @@ function abrirModalMaquinas() {
   document.getElementById('modal-maquinas').classList.add('open');
 }
 
+function guardarMaquinas() {
+  localStorage.setItem('pl_maq', JSON.stringify(maquinasConfig));
+}
+
 function renderMaquinasModal() {
   var el = document.getElementById('maq-lista');
   if(!el) return;
@@ -3237,67 +3238,69 @@ function renderMaquinasModal() {
     el.innerHTML = '<div class="empty" style="padding:20px">No hay máquinas configuradas.</div>';
     return;
   }
-  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">'+
-    maquinasConfig.map(function(m, i){
-      return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px">'+
-        '<div style="flex:1">'+
-          '<div style="font-size:14px;font-weight:600">'+m.nombre+'</div>'+
-          '<div style="font-size:11px;color:var(--text3)">'+m.tipo+' · '+m.capacidad_base.toLocaleString('es-CL')+' cajas/turno</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:6px;align-items:center">'+
-          '<span class="chip '+(m.activa?'green':'gray')+'">'+( m.activa?'Activa':'Inactiva')+'</span>'+
-          '<button id="btn-toggle-maq-'+i+'" class="btn sm '+(m.activa?'warning':'green')+'" style="height:28px">'+
-            (m.activa?'Desactivar':'Activar')+
-          '</button>'+
-          '<button id="btn-del-maq-'+i+'" class="btn sm danger" style="height:28px">✕</button>'+
-        '</div>'+
-      '</div>';
-    }).join('')+
-  '</div>';
-  // Event listeners
+  var html2 = '<div style="display:flex;flex-direction:column;gap:8px">';
+  maquinasConfig.forEach(function(m, i){
+    var activa = m.activa !== false;
+    var cap = m.capacidad_base || 5000;
+    html2 += '<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px">'+
+      '<div style="flex:1">'+
+        '<div style="font-size:14px;font-weight:600">'+m.nombre+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+(m.tipos?m.tipos.join(', '):'')+' · '+cap.toLocaleString('es-CL')+' cajas/turno</div>'+
+      '</div>'+
+      '<span class="chip '+(activa?'green':'gray')+'" style="margin-right:4px">'+(activa?'Activa':'Inactiva')+'</span>'+
+      '<button id="btn-toggle-maq-'+i+'" class="btn sm '+(activa?'warning':'green')+'" style="height:28px">'+(activa?'Desactivar':'Activar')+'</button>'+
+      '<button id="btn-del-maq-'+i+'" class="btn sm danger" style="height:28px">✕</button>'+
+    '</div>';
+  });
+  html2 += '</div>';
+  el.innerHTML = html2;
   maquinasConfig.forEach(function(m, i){
     var btnT = document.getElementById('btn-toggle-maq-'+i);
     if(btnT) btnT.addEventListener('click', function(){
-      maquinasConfig[i].activa = !maquinasConfig[i].activa;
-      localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+      maquinasConfig[i].activa = maquinasConfig[i].activa === false ? true : false;
+      guardarMaquinas();
       renderMaquinasModal();
-      renderCargaMaquinas();
+      if(typeof renderCargaMaquinas==='function') renderCargaMaquinas();
     });
     var btnD = document.getElementById('btn-del-maq-'+i);
     if(btnD) btnD.addEventListener('click', function(){
-      if(!confirm('¿Eliminar máquina "'+m.nombre+'"?')) return;
+      if(!confirm('¿Eliminar "'+maquinasConfig[i].nombre+'"?')) return;
       maquinasConfig.splice(i, 1);
-      localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+      guardarMaquinas();
       renderMaquinasModal();
-      renderCargaMaquinas();
+      actualizarSelectMaquinas();
+      if(typeof renderCargaMaquinas==='function') renderCargaMaquinas();
     });
+  });
+}
+
+function actualizarSelectMaquinas() {
+  var selMaq = document.getElementById('p-maquina');
+  if(!selMaq) return;
+  selMaq.innerHTML = '';
+  maquinasConfig.filter(function(m){return m.activa!==false;}).forEach(function(m){
+    var o = document.createElement('option');
+    o.value = m.nombre; o.textContent = m.nombre;
+    selMaq.appendChild(o);
   });
 }
 
 function agregarMaquina() {
   var nombre = document.getElementById('nueva-maq-nombre')?.value?.trim();
-  var tipo = document.getElementById('nueva-maq-tipo')?.value || 'standard';
+  var tipo = document.getElementById('nueva-maq-tipo')?.value?.trim() || '';
   var cap = parseInt(document.getElementById('nueva-maq-cap')?.value)||5000;
   if(!nombre) { alert('Ingresa un nombre para la máquina.'); return; }
   if(maquinasConfig.find(function(m){return m.nombre===nombre;})) {
     alert('Ya existe una máquina con ese nombre.'); return;
   }
-  maquinasConfig.push({nombre:nombre, tipo:tipo, capacidad_base:cap, activa:true});
-  localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+  var newId = Math.max(0, ...maquinasConfig.map(function(m){return m.id||0;})) + 1;
+  maquinasConfig.push({id:newId, nombre:nombre, tipos:[tipo], capacidad_base:cap, activa:true});
+  guardarMaquinas();
   document.getElementById('nueva-maq-nombre').value = '';
+  document.getElementById('nueva-maq-tipo').value = '';
   document.getElementById('nueva-maq-cap').value = '';
   renderMaquinasModal();
-  renderCargaMaquinas();
-  // Actualizar select de máquinas en formulario
-  var selMaq = document.getElementById('p-maquina');
-  if(selMaq) {
-    selMaq.innerHTML = '';
-    maquinasConfig.filter(function(m){return m.activa;}).forEach(function(m){
-      var o = document.createElement('option');
-      o.value = m.nombre; o.textContent = m.nombre;
-      selMaq.appendChild(o);
-    });
-  }
+  actualizarSelectMaquinas();
 }
 
 async function eliminarSalida(salidaId, despachoId) {
