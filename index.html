@@ -790,80 +790,138 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
 </div>
 
-    <!-- JEFE: Ingresos -->
-    <div class="sec" id="sec-ingresos">
+            <!-- JEFE: Informes -->
+    <div class="sec" id="sec-informes">
 
-      <!-- Barra superior -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <div>
-          <h2 style="font-size:17px;font-weight:700;color:var(--text)">Ingresos de material</h2>
-          <p style="font-size:12px;color:var(--text3);margin-top:2px">Registro de material recibido de clientes y bodegas</p>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn blue" onclick="exportarExcelIngresos()" style="height:36px">&#8595; Excel</button>
-          <button class="btn primary" onclick="toggleFormIngreso()" style="height:36px">+ Registrar ingreso</button>
-        </div>
-      </div>
-
-      <!-- Formulario -->
-      <div id="form-ingreso" style="display:none">
-        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)">Nuevo ingreso</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-            <div class="fg"><label>Tipo</label>
-              <select id="ing-tipo" style="width:100%">
-                <option value="cliente">Material de cliente</option>
-                <option value="bodega">Material de bodega</option>
-                <option value="sistema">Movimiento sistema</option>
-              </select>
-            </div>
-            <div class="fg"><label>Fecha</label><input type="date" id="ing-fecha" style="width:100%"></div>
-            <div class="fg"><label>N° Guía</label><input type="text" id="ing-guia" placeholder="Ej: 224836" style="width:100%"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div class="fg"><label>Cliente / Bodega</label><input type="text" id="ing-cliente" placeholder="Nombre" style="width:100%"></div>
-            <div class="fg"><label>Código de caja</label>
-              <div class="rel">
-                <input type="text" id="ing-codigo" placeholder="Ej: F0999TL1" autocomplete="off" oninput="suggestCodigo2(this.value)" style="width:100%">
-                <div id="sugg-ing-codigo" class="suggest-box" style="display:none"></div>
-              </div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:16px">
-            <div class="fg"><label>Descripción</label><input type="text" id="ing-desc" placeholder="Se autocompleta" style="width:100%"></div>
-            <div class="fg"><label>Cantidad (cajas)</label><input type="number" id="ing-cantidad" placeholder="1000" style="width:100%" inputmode="numeric"></div>
-            <div class="fg"><label>Observación</label><input type="text" id="ing-obs" placeholder="Opcional" style="width:100%"></div>
-          </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button class="btn" onclick="toggleFormIngreso()">Cancelar</button>
-            <button class="btn primary" onclick="guardarIngreso()">Guardar ingreso</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filtros -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-        <div style="display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:36px">
-          <span style="font-size:11px;color:var(--text3)">Desde</span>
-          <input type="date" id="ing-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-          <span style="font-size:11px;color:var(--text3)">→</span>
-          <input type="date" id="ing-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-        </div>
-        <select id="ing-filtro-tipo" style="height:36px;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:0 10px">
-          <option value="">Todos los tipos</option>
-          <option value="cliente">Cliente</option>
-          <option value="bodega">Bodega</option>
-          <option value="sistema">Sistema</option>
-        </select>
-        <button class="btn primary" onclick="cargarIngresos(true)" style="height:36px">↻ Actualizar</button>
-      </div>
-
-      <!-- Métricas y tabla -->
-      <div id="ing-contenido">
-        <div class="empty" style="padding:40px">Presiona Actualizar para cargar los ingresos.</div>
-      </div>
-
+  <!-- Barra de control -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <!-- Toggle día / rango -->
+    <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <button id="inf-modo-dia" onclick="setInfModo('dia')"
+        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--blue);color:#fff">
+        Un día
+      </button>
+      <button id="inf-modo-rango" onclick="setInfModo('rango')"
+        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3)">
+        Rango
+      </button>
     </div>
+    <!-- Filtro día -->
+    <div id="inf-filtro-dia" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
+      <span style="font-size:11px;color:var(--text3)">Fecha</span>
+      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+    <!-- Filtro rango -->
+    <div id="inf-filtro-rango" style="display:none;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
+      <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+      <span style="font-size:11px;color:var(--text3)">→</span>
+      <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
+    </div>
+    <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
+    <button class="btn sm" onclick="generarCierreDelDia()" style="height:34px;background:var(--green);color:#0f1117;border-color:var(--green)">&#128196; Exportar PDF</button>
+  </div>
+
+  <!-- Métricas -->
+  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
+
+  <!-- Tabs de informes -->
+  <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;gap:2px">
+    <button id="inf-tab-1" onclick="showInfTab(1)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid var(--blue);margin-bottom:-2px;cursor:pointer;color:var(--blue)">
+      &#128203; Cierre del día
+    </button>
+    <button id="inf-tab-2" onclick="showInfTab(2)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
+      &#128666; Despachos por cliente
+    </button>
+    <button id="inf-tab-3" onclick="showInfTab(3)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
+      &#9881; Rendimiento grupos
+    </button>
+    <button id="inf-tab-4" onclick="showInfTab(4)"
+      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
+      &#128200; Histórico
+    </button>
+  </div>
+
+  <!-- Panel 1: Cierre del día -->
+  <div id="inf-panel-1">
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Solicitado vs Armado</div>
+            <div style="font-size:11px;color:var(--text3)" id="inf-fecha-label"></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#4a9eff;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="chart-cierre-sol-arm"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Estado de pedidos</div>
+        <div style="position:relative;height:200px"><canvas id="chart-cierre-estados"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos</div>
+      <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Despachos por cliente -->
+  <div id="inf-panel-2" style="display:none">
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Unidades despachadas por cliente</div>
+      <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Resumen por cliente</div>
+      <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Rendimiento grupos -->
+  <div id="inf-panel-3" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Armado por grupo</div>
+        <div style="position:relative;height:240px"><canvas id="chart-grupos-arm"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Distribución por máquina</div>
+        <div style="position:relative;height:240px"><canvas id="chart-maq-arm"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo</div>
+      <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+</div>
+
+  <!-- Panel 4: Histórico -->
+  <div id="inf-panel-4" style="display:none">
+    <div class="card" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Histórico — Armado vs Despachado</div>
+          <div style="font-size:11px;color:var(--text3)">Evolución diaria en el período seleccionado</div>
+        </div>
+        <div style="display:flex;gap:14px">
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#22c98a;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#4a9eff;border-radius:2px;border-top:2px dashed #4a9eff"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
+        </div>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="chart-historico"></canvas></div>
+    </div>
+  </div>
+
+</div>
 
         <!-- JEFE: Stock -->
     <div class="sec" id="sec-stock">
@@ -950,6 +1008,40 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 
     </div>
 
+  </div>
+</div>
+
+<!-- Modal máquinas -->
+<div class="modal-overlay" id="modal-maquinas">
+  <div class="modal" style="width:580px">
+    <div class="modal-title">
+      <span>Gestión de máquinas</span>
+      <button class="btn sm" onclick="closeModal('modal-maquinas')">✕</button>
+    </div>
+    <div id="maq-lista" style="margin-bottom:16px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">Agregar máquina</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="fg" style="flex:2;min-width:120px">
+          <label>Nombre</label>
+          <input type="text" id="nueva-maq-nombre" placeholder="Ej: Línea 1, Q1530...">
+        </div>
+        <div class="fg" style="flex:1;min-width:100px">
+          <label>Tipo</label>
+          <select id="nueva-maq-tipo">
+            <option value="standard">Standard</option>
+            <option value="extended">Extended</option>
+          </select>
+        </div>
+        <div class="fg" style="flex:1;min-width:80px">
+          <label>Cap. turno (cajas)</label>
+          <input type="number" id="nueva-maq-cap" placeholder="5000" min="100">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn primary" onclick="agregarMaquina()" style="height:34px;white-space:nowrap">+ Agregar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1996,17 +2088,25 @@ function initApp() {
   setEl('graf-desde', 'value', hoy());
   setEl('graf-hasta', 'value', hoy());
 
+  // Cargar máquinas desde localStorage si existen
+  var maqGuardadas = localStorage.getItem('csf_maquinas');
+  if(maqGuardadas) {
+    try { maquinasConfig = JSON.parse(maqGuardadas); } catch(e) {}
+  }
   // Poblar select máquinas
-  const selMaq = document.getElementById('p-maquina');
-  maquinasConfig.forEach(m => {
-    const o = document.createElement('option');
-    o.value = m.nombre; o.textContent = m.nombre;
-    selMaq.appendChild(o);
-  });
+  var selMaq = document.getElementById('p-maquina');
+  if(selMaq) {
+    selMaq.innerHTML = '';
+    maquinasConfig.filter(function(m){return m.activa!==false;}).forEach(function(m){
+      var o = document.createElement('option');
+      o.value = m.nombre; o.textContent = m.nombre;
+      selMaq.appendChild(o);
+    });
+  }
 
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
-    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['ingresos','Ingresos'],['stock','Stock'],['informes','Informes']]
+    ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['desp-reg','Registrar Despacho'],['mis-despachos','Mis Despachos']];
 
   // Poblar sidebar-bottom con info del usuario
@@ -3122,6 +3222,76 @@ async function eliminarSalidaDesp(salidaId) {
     }
     cargarMisDespachos();
   } catch(e) { alert('Error: '+e.message); }
+}
+
+function renderMaquinasModal() {
+  var el = document.getElementById('maq-lista');
+  if(!el) return;
+  if(!maquinasConfig.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px">No hay máquinas configuradas.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">'+
+    maquinasConfig.map(function(m, i){
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:14px;font-weight:600">'+m.nombre+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">'+m.tipo+' · '+m.capacidad_base.toLocaleString('es-CL')+' cajas/turno</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<span class="chip '+(m.activa?'green':'gray')+'">'+( m.activa?'Activa':'Inactiva')+'</span>'+
+          '<button id="btn-toggle-maq-'+i+'" class="btn sm '+(m.activa?'warning':'green')+'" style="height:28px">'+
+            (m.activa?'Desactivar':'Activar')+
+          '</button>'+
+          '<button id="btn-del-maq-'+i+'" class="btn sm danger" style="height:28px">✕</button>'+
+        '</div>'+
+      '</div>';
+    }).join('')+
+  '</div>';
+  // Event listeners
+  maquinasConfig.forEach(function(m, i){
+    var btnT = document.getElementById('btn-toggle-maq-'+i);
+    if(btnT) btnT.addEventListener('click', function(){
+      maquinasConfig[i].activa = !maquinasConfig[i].activa;
+      localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+      renderMaquinasModal();
+      renderCargaMaquinas();
+    });
+    var btnD = document.getElementById('btn-del-maq-'+i);
+    if(btnD) btnD.addEventListener('click', function(){
+      if(!confirm('¿Eliminar máquina "'+m.nombre+'"?')) return;
+      maquinasConfig.splice(i, 1);
+      localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+      renderMaquinasModal();
+      renderCargaMaquinas();
+    });
+  });
+}
+
+function agregarMaquina() {
+  var nombre = document.getElementById('nueva-maq-nombre')?.value?.trim();
+  var tipo = document.getElementById('nueva-maq-tipo')?.value || 'standard';
+  var cap = parseInt(document.getElementById('nueva-maq-cap')?.value)||5000;
+  if(!nombre) { alert('Ingresa un nombre para la máquina.'); return; }
+  if(maquinasConfig.find(function(m){return m.nombre===nombre;})) {
+    alert('Ya existe una máquina con ese nombre.'); return;
+  }
+  maquinasConfig.push({nombre:nombre, tipo:tipo, capacidad_base:cap, activa:true});
+  localStorage.setItem('csf_maquinas', JSON.stringify(maquinasConfig));
+  document.getElementById('nueva-maq-nombre').value = '';
+  document.getElementById('nueva-maq-cap').value = '';
+  renderMaquinasModal();
+  renderCargaMaquinas();
+  // Actualizar select de máquinas en formulario
+  var selMaq = document.getElementById('p-maquina');
+  if(selMaq) {
+    selMaq.innerHTML = '';
+    maquinasConfig.filter(function(m){return m.activa;}).forEach(function(m){
+      var o = document.createElement('option');
+      o.value = m.nombre; o.textContent = m.nombre;
+      selMaq.appendChild(o);
+    });
+  }
 }
 
 async function eliminarSalida(salidaId, despachoId) {
