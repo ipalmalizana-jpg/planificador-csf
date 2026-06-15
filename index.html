@@ -220,6 +220,7 @@ code{font-family:'JetBrains Mono',monospace;font-size:.9em}
 .topbar-name{font-size:12px;color:var(--text2)}
 .topbar-rol{font-size:10px;padding:2px 9px;border-radius:3px;font-weight:700;letter-spacing:.04em}
 .rol-jefe{background:var(--csf-bg);color:var(--csf);border:1px solid rgba(61,155,212,.2)}
+.rol-gerente{background:rgba(123,94,167,.12);color:var(--purple);border:1px solid rgba(123,94,167,.2)}
 .rol-desp{background:var(--green-bg);color:var(--green);border:1px solid rgba(13,184,122,.2)}
 .btn-logout{font-size:11px;color:var(--text3);background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
 .btn-logout:hover{color:var(--text);border-color:var(--border3)}
@@ -2093,9 +2094,9 @@ function initApp() {
   document.getElementById('app').classList.add('visible');
   setEl('tb-nombre', 'textContent', USER.nombre);
   setEl('tb-fecha', 'textContent', fechaHoy());
-  setEl('tb-rol', 'textContent', USER.rol === 'jefe' ? 'Jefe' : 'Despachador');
+  setEl('tb-rol', 'textContent', USER.rol === 'jefe' ? 'Jefe' : USER.rol === 'gerente' ? 'Gerente' : 'Despachador');
   var rolEl = document.getElementById('tb-rol');
-  if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':'rol-desp');
+  if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':USER.rol==='gerente'?'rol-gerente':'rol-desp');
 
   // Nav móvil para despachador
   if(USER.rol !== 'jefe') {
@@ -2129,6 +2130,8 @@ function initApp() {
   // Tabs según rol
   const tabs = USER.rol === 'jefe'
     ? [['planificar','Planificar'],['cambios','Cambios'],['armados','Armados'],['despacho','Plan Despacho'],['informes','Informes']]
+    : USER.rol === 'gerente'
+    ? [['planificar','Planificar'],['despacho','Plan Despacho'],['informes','Informes']]
     : [['desp-live','Plan del Día'],['desp-reg','Registrar Despacho'],['mis-despachos','Mis Despachos']];
 
   // Poblar sidebar-bottom con info del usuario
@@ -2154,6 +2157,9 @@ function initApp() {
   showTab(tabs[0][0]);
   if (USER.rol === 'jefe') {
     document.getElementById('btn-add-desp').style.display = 'inline-block';
+  }
+  if (USER.rol === 'gerente') {
+    document.getElementById('btn-toggle-form') && (document.getElementById('btn-toggle-form').style.display = 'none');
   }
 
   // Auto-refresh cada 30s solo para despacho y desp-live
@@ -2678,6 +2684,10 @@ function renderPlanDia() {
           if(p.estado==='Activo'||p.estado==='Modificado') out += '<button title="Cerrar armado" class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="padding:2px 8px;font-size:15px;line-height:1;background:rgba(232,120,32,.15);color:#e87820;border-color:rgba(232,120,32,.3)">&#128274;</button>';
           if(p.estado!=='Cancelado') out += '<button title="Cancelar" class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#10005;</button>';
           out += '<button title="Eliminar" class="btn sm danger" data-action="eliminar" data-id="'+p.id+'" style="padding:2px 8px;font-size:14px;line-height:1;opacity:.6">&#128465;</button>';
+          out += '</div>';
+        } else if(USER.rol==='gerente') {
+          out += '<div style="margin-left:auto;display:flex;gap:4px">';
+          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
           out += '</div>';
         }
         out += '</div>';
@@ -4525,6 +4535,7 @@ document.addEventListener('click',e=>{
 const USUARIOS_LOCAL = {
   'jefe':  {id:'u1',nombre:'Israel Palma',  usuario:'jefe',  password:'jefe123', rol:'jefe'},
   'diego': {id:'u2',nombre:'Diego Quezada', usuario:'diego', password:'diego123',rol:'jefe'},
+  'gerente': {id:'u6',nombre:'Gerente',     usuario:'gerente',password:'gerente123',rol:'gerente'},
   'desp1': {id:'u3',nombre:'Despachador 1', usuario:'desp1', password:'desp123', rol:'despachador'},
   'desp2': {id:'u4',nombre:'Despachador 2', usuario:'desp2', password:'desp123', rol:'despachador'},
   'desp3': {id:'u5',nombre:'Despachador 3', usuario:'desp3', password:'desp123', rol:'despachador'},
