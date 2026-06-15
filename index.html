@@ -2045,6 +2045,30 @@ function initApp() {
   }
   if (USER.rol === 'gerente') {
     document.getElementById('btn-toggle-form') && (document.getElementById('btn-toggle-form').style.display = 'none');
+    // Ocultar carga por máquina
+    var cm = document.getElementById('carga-maquinas');
+    if(cm) cm.style.display = 'none !important';
+    // Ocultar botones de acción: Grupos, Máquinas, Formato, Historial, Cierre
+    ['btn-toggle-form'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.style.display='none';
+    });
+    // Ocultar select de prioridad y grupos-lista via CSS
+    var style = document.createElement('style');
+    style.textContent = `
+      #carga-maquinas { display: none !important; }
+      #grupos-lista { display: none !important; }
+      #orden-plan { display: none !important; }
+      [onclick*="showModalGrupo"],
+      [onclick*="abrirModalMaquinas"],
+      [onclick*="showModalCambioFormato"],
+      [onclick*="verHistorialFormato"],
+      [onclick*="generarCierreDelDia"],
+      [onclick*="toggleFormulario"],
+      #btn-toggle-form { display: none !important; }
+      #p-prioridad, label[for="p-prioridad"] { display: none !important; }
+      .prio-icon { display: none !important; }
+    `;
+    document.head.appendChild(style);
   }
 
   // Auto-refresh cada 30s solo para despacho y desp-live
@@ -2391,6 +2415,16 @@ async function cargarPlanDia() {
     const pedidos = await sb('pedidos_dia','GET',null, queryPlan);
     pedidosCache = pedidos || [];
 
+    // Cargar motivos de cierre parcial
+    window._cierreMotivos = {};
+    const cerrados = (pedidos||[]).filter(p=>p.estado==='Cerrado parcial').map(p=>p.id).filter(Boolean);
+    if(cerrados.length) {
+      const motivos = await sb('cambios_pedido','GET',null,'?pedido_id=in.('+cerrados.join(',')+')+&tipo_cambio=eq.cerrado_parcial&select=pedido_id,nota,valor_nuevo&order=hora.desc');
+      (motivos||[]).forEach(function(m){
+        if(!window._cierreMotivos[m.pedido_id]) window._cierreMotivos[m.pedido_id]={nota:m.nota,cantReal:m.valor_nuevo};
+      });
+    }
+
     // Cargar despachos para mostrar progreso
     const ids = (pedidos||[]).map(function(p){return p.id;}).filter(Boolean);
     if(ids.length) {
@@ -2507,7 +2541,7 @@ function renderPlanDia() {
 
         // Col 1: Prioridad + Estado
         out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
-        out += '<span title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
+        out += '<span class="prio-icon" title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
         out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
         out += '</div>';
 
@@ -2528,6 +2562,17 @@ function renderPlanDia() {
         if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
         if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
         out += '</div>';
+        // Cierre parcial: mostrar motivo
+        if(p.estado==='Cerrado parcial') {
+          var cm = window._cierreMotivos && window._cierreMotivos[p.id];
+          var cantReal = cm ? Number(cm.cantReal).toLocaleString('es-CL') : (p.cantidad_armada||0).toLocaleString('es-CL');
+          var motivo = cm && cm.nota ? cm.nota : '—';
+          out += '<div style="margin-top:4px;padding:5px 8px;background:rgba(232,120,32,.1);border-left:3px solid #e87820;border-radius:0 6px 6px 0;font-size:11px">';
+          out += '<span style="color:#e87820;font-weight:700">&#128274; Cerrado parcial</span>';
+          out += ' &mdash; Armadas: <strong>'+cantReal+'</strong> de '+p.cantidad_pedida.toLocaleString('es-CL');
+          out += ' &nbsp;|&nbsp; <span style="color:var(--text2)">Motivo: '+motivo+'</span>';
+          out += '</div>';
+        }
         out += '</div>';
 
         // Col 3: Cantidad
