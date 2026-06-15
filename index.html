@@ -304,6 +304,7 @@ button{font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s}
 .chip.blue{background:var(--csf-bg);color:var(--csf);border:1px solid rgba(61,155,212,.2)}
 .chip.purple{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(123,94,167,.15)}
 .chip.gray{background:rgba(100,120,160,.07);color:var(--text2);border:1px solid rgba(100,120,160,.12)}
+.chip.orange{background:rgba(232,120,32,.12);color:#e87820;border:1px solid rgba(232,120,32,.2)}
 
 /* TABLE */
 table.dt{width:100%;border-collapse:collapse;font-size:13px}
@@ -1124,6 +1125,28 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
   </div>
 </div>
 
+<!-- Modal cerrar armado parcial -->
+<div class="modal-overlay" id="modal-cerrar-parcial">
+  <div class="modal" style="max-width:420px;width:95vw">
+    <div class="modal-title">
+      <span>&#128274; Cerrar armado</span>
+      <button class="btn sm" onclick="closeModal('modal-cerrar-parcial')">✕</button>
+    </div>
+    <div style="padding:4px 0 12px">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Ingresa la cantidad real armada. El pedido quedará como <span class="chip orange" style="font-size:11px">Cerrado parcial</span> y no aparecerá como activo.</p>
+      <div id="mcp-info" style="background:var(--bg2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px"></div>
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Cantidad real armada</label>
+      <input type="number" id="mcp-cantidad" min="0" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:15px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin:10px 0 4px">Motivo (opcional)</label>
+      <input type="text" id="mcp-motivo" placeholder="Ej: falta de material, cambio de programa..." style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:13px">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-cerrar-parcial')">Cancelar</button>
+      <button class="btn" style="background:#e87820;color:#fff;border-color:#e87820" onclick="confirmarCerrarParcial()">&#128274; Cerrar armado</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal registrar despacho (despachador) -->
 <div class="modal-overlay" id="modal-despacho-live">
   <div class="modal" style="max-width:420px;width:95vw">
@@ -1375,7 +1398,7 @@ function verificarAlertas(pedidos) {
   var ahora = new Date();
   var alertas = [];
   pedidos.forEach(function(p) {
-    if(p.estado==='Cancelado'||p.estado==='Completado') return;
+    if(p.estado==='Cancelado'||p.estado==='Completado'||p.estado==='Cerrado parcial') return;
     if(!p.hora_despacho||!p.fecha_despacho) return;
     var dt = new Date(p.fecha_despacho+'T'+p.hora_despacho);
     var diffMin = (dt-ahora)/60000;
@@ -2651,6 +2674,7 @@ function renderPlanDia() {
           out += '<div style="margin-left:auto;display:flex;gap:4px">';
           out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
           out += '<button title="Cambio" class="btn sm warning" data-action="cambio" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#9998;</button>';
+          if(p.estado==='Activo'||p.estado==='Modificado') out += '<button title="Cerrar armado" class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="padding:2px 8px;font-size:15px;line-height:1;background:rgba(232,120,32,.15);color:#e87820;border-color:rgba(232,120,32,.3)">&#128274;</button>';
           if(p.estado!=='Cancelado') out += '<button title="Cancelar" class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#10005;</button>';
           out += '<button title="Eliminar" class="btn sm danger" data-action="eliminar" data-id="'+p.id+'" style="padding:2px 8px;font-size:14px;line-height:1;opacity:.6">&#128465;</button>';
           out += '</div>';
@@ -2863,6 +2887,42 @@ async function cancelarPedido(id) {
     await sb('pedidos_dia','PATCH',{estado:'Cancelado'},`?id=eq.${id}`);
     // Cancelar despacho asociado
     await sb('plan_despacho','PATCH',{estado:'Cancelado'},`?pedido_id=eq.${id}&estado=neq.Despachado`);
+    cargarPlanDia(); cargarMetricas();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+var _cerrarParcialId = null;
+function abrirCerrarParcial(id) {
+  _cerrarParcialId = id;
+  var p = pedidos.find(function(x){return x.id==id;});
+  if(!p) return;
+  var infoEl = document.getElementById('mcp-info');
+  infoEl.innerHTML =
+    '<strong>'+p.cliente+'</strong> &mdash; '+p.codigo+'<br>'+
+    '<span style="color:var(--text2)">Pedido: <b>'+p.cantidad_pedida.toLocaleString('es-CL')+'</b> &nbsp;|&nbsp; Armado: <b>'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</b></span>';
+  document.getElementById('mcp-cantidad').value = p.cantidad_armada||0;
+  document.getElementById('mcp-motivo').value = '';
+  document.getElementById('modal-cerrar-parcial').classList.add('open');
+}
+
+async function confirmarCerrarParcial() {
+  var id = _cerrarParcialId;
+  if(!id) return;
+  var cantReal = parseInt(document.getElementById('mcp-cantidad').value)||0;
+  var motivo = document.getElementById('mcp-motivo').value.trim()||'Cerrado manualmente';
+  var p = pedidos.find(function(x){return x.id==id;});
+  if(!p) return;
+  try {
+    await sb('cambios_pedido','POST',{
+      pedido_id: id,
+      tipo_cambio: 'cerrado_parcial',
+      valor_anterior: String(p.cantidad_pedida),
+      valor_nuevo: String(cantReal),
+      nota: motivo,
+      usuario: USER.nombre,
+    });
+    await sb('pedidos_dia','PATCH',{estado:'Cerrado parcial', cantidad_armada: cantReal},`?id=eq.${id}`);
+    closeModal('modal-cerrar-parcial');
     cargarPlanDia(); cargarMetricas();
   } catch(e) { alert('Error: '+e.message); }
 }
@@ -4439,7 +4499,7 @@ function pp(p){return p==='Alta'?0:p==='Media'?1:2;}
 function colorPrio(p){return p==='Alta'?'var(--red)':p==='Media'?'var(--yellow)':'var(--green)';}
 function chipPrio(p){return p==='Alta'?'red':p==='Media'?'yellow':'green';}
 function chipTipo(cod){const t=COD_IDX[cod]?.tipo||'';return t==='Device'?'blue':t==='P84'?'purple':t==='Bliss'?'purple':t==='Rotary'?'yellow':'gray';}
-function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Modificado'?'yellow':e==='Completado'?'blue':e==='Despachado'?'green':e==='En proceso'?'yellow':'gray';}
+function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Modificado'?'yellow':e==='Completado'?'blue':e==='Despachado'?'green':e==='En proceso'?'yellow':e==='Cerrado parcial'?'orange':'gray';}
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
@@ -4451,6 +4511,7 @@ document.addEventListener('click',e=>{
     var id = btn.dataset.id;
     if(action==='historial') { verHistorial(id); return; }
     if(action==='cambio') { abrirCambio(id); return; }
+    if(action==='cerrar-parcial') { abrirCerrarParcial(id); return; }
     if(action==='cancelar') { cancelarPedido(id); return; }
     if(action==='eliminar') { eliminarPedido(id); return; }
   }
