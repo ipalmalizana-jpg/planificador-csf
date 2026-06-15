@@ -643,7 +643,13 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
     <!-- JEFE: Armados -->
     <div class="sec" id="sec-armados">
       <div class="card">
-        <div class="card-title"><span>Registrar cajas armadas</span></div>
+        <div class="card-title">
+          <span>Registrar cajas armadas</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="arm-fecha-filtro" style="height:30px;font-size:12px" onchange="cargarArmados()">
+            <button class="btn sm" onclick="document.getElementById('arm-fecha-filtro').value=hoy();cargarArmados()">Hoy</button>
+          </div>
+        </div>
         <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Ingresa la cantidad de cajas producidas para cada pedido del plan.</p>
         <div id="armados-list"><div class="empty">Cargando...</div></div>
       </div>
@@ -673,139 +679,6 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
     </div>
 
     <!-- JEFE: Informes -->
-    <div class="sec" id="sec-informes">
-
-  <!-- Barra de control -->
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-    <!-- Toggle día / rango -->
-    <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-      <button id="inf-modo-dia" onclick="setInfModo('dia')"
-        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--blue);color:#fff">
-        Un día
-      </button>
-      <button id="inf-modo-rango" onclick="setInfModo('rango')"
-        style="padding:0 16px;height:34px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3)">
-        Rango
-      </button>
-    </div>
-    <!-- Filtro día -->
-    <div id="inf-filtro-dia" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
-      <span style="font-size:11px;color:var(--text3)">Fecha</span>
-      <input type="date" id="inf-fecha" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
-    <!-- Filtro rango -->
-    <div id="inf-filtro-rango" style="display:none;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:34px">
-      <input type="date" id="inf-desde" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-      <span style="font-size:11px;color:var(--text3)">→</span>
-      <input type="date" id="inf-hasta" style="height:28px;font-size:12px;background:transparent;border:none;color:var(--text);outline:none">
-    </div>
-    <button class="btn sm primary" onclick="cargarInformes()" style="height:34px">↻ Generar</button>
-    <button class="btn sm" onclick="generarCierreDelDia()" style="height:34px;background:var(--green);color:#0f1117;border-color:var(--green)">&#128196; Exportar PDF</button>
-  </div>
-
-  <!-- Métricas -->
-  <div class="metrics" id="met-informes" style="margin-bottom:16px"></div>
-
-  <!-- Tabs de informes -->
-  <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;gap:2px">
-    <button id="inf-tab-1" onclick="showInfTab(1)"
-      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid var(--blue);margin-bottom:-2px;cursor:pointer;color:var(--blue)">
-      &#128203; Cierre del día
-    </button>
-    <button id="inf-tab-2" onclick="showInfTab(2)"
-      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
-      &#128666; Despachos por cliente
-    </button>
-    <button id="inf-tab-3" onclick="showInfTab(3)"
-      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
-      &#9881; Rendimiento grupos
-    </button>
-    <button id="inf-tab-4" onclick="showInfTab(4)"
-      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
-      &#128200; Histórico
-    </button>
-  </div>
-
-  <!-- Panel 1: Cierre del día -->
-  <div id="inf-panel-1">
-    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px">
-      <div class="card" style="padding:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div>
-            <div style="font-size:13px;font-weight:600">Solicitado vs Armado</div>
-            <div style="font-size:11px;color:var(--text3)" id="inf-fecha-label"></div>
-          </div>
-          <div style="display:flex;gap:10px">
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#4a9eff;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
-          </div>
-        </div>
-        <div style="position:relative;height:200px"><canvas id="chart-cierre-sol-arm"></canvas></div>
-      </div>
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Estado de pedidos</div>
-        <div style="position:relative;height:200px"><canvas id="chart-cierre-estados"></canvas></div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle de pedidos</div>
-      <div id="inf-tabla-cierre" style="overflow-x:auto"></div>
-    </div>
-  </div>
-
-  <!-- Panel 2: Despachos por cliente -->
-  <div id="inf-panel-2" style="display:none">
-    <div class="card" style="padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Unidades despachadas por cliente</div>
-      <div style="position:relative;height:280px"><canvas id="chart-desp-cliente"></canvas></div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Resumen por cliente</div>
-      <div id="inf-tabla-clientes" style="overflow-x:auto"></div>
-    </div>
-  </div>
-
-  <!-- Panel 3: Rendimiento grupos -->
-  <div id="inf-panel-3" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Armado por grupo</div>
-        <div style="position:relative;height:240px"><canvas id="chart-grupos-arm"></canvas></div>
-      </div>
-      <div class="card" style="padding:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:14px">Distribución por máquina</div>
-        <div style="position:relative;height:240px"><canvas id="chart-maq-arm"></canvas></div>
-      </div>
-    </div>
-    <div class="card" style="padding:16px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Detalle por grupo</div>
-      <div id="inf-tabla-grupos" style="overflow-x:auto"></div>
-    </div>
-  </div>
-
-</div>
-
-  <!-- Panel 4: Histórico -->
-  <div id="inf-panel-4" style="display:none">
-    <div class="card" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div>
-          <div style="font-size:13px;font-weight:600">Histórico — Armado vs Despachado</div>
-          <div style="font-size:11px;color:var(--text3)">Evolución diaria en el período seleccionado</div>
-        </div>
-        <div style="display:flex;gap:14px">
-          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#f0b429;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Armado</span></div>
-          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#22c98a;border-radius:2px"></div><span style="font-size:11px;color:var(--text3)">Despachado</span></div>
-          <div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:3px;background:#4a9eff;border-radius:2px;border-top:2px dashed #4a9eff"></div><span style="font-size:11px;color:var(--text3)">Solicitado</span></div>
-        </div>
-      </div>
-      <div style="position:relative;height:320px"><canvas id="chart-historico"></canvas></div>
-    </div>
-  </div>
-
-</div>
-
-            <!-- JEFE: Informes -->
     <div class="sec" id="sec-informes">
 
   <!-- Barra de control -->
@@ -2121,6 +1994,7 @@ function initApp() {
   setEl('inf-hasta', 'value', hoy());
   setEl('graf-desde', 'value', hoy());
   setEl('graf-hasta', 'value', hoy());
+  setEl('arm-fecha-filtro', 'value', hoy());
 
   // Cargar máquinas desde localStorage si existen
   var maqGuardadas = localStorage.getItem('csf_maquinas');
@@ -3487,30 +3361,40 @@ async function verHistorial(id) {
 async function cargarArmados() {
   const el = document.getElementById('armados-list');
   if(!el) return;
-  const activos = pedidosCache.filter(p=>p.estado!=='Cancelado');
-  if(!activos.length) { el.innerHTML='<div class="empty">Sin pedidos activos hoy.</div>'; return; }
-  el.innerHTML = `<table class="dt">
+  var fechaInput = document.getElementById('arm-fecha-filtro');
+  if(fechaInput && !fechaInput.value) fechaInput.value = hoy();
+  var fecha = fechaInput ? fechaInput.value : hoy();
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  try {
+    const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=eq.'+fecha+'&estado=neq.Cancelado&order=creado_en.asc&select=*');
+    if(!pedidos||!pedidos.length) { el.innerHTML='<div class="empty">Sin pedidos para el '+fecha+'.</div>'; return; }
+    el.innerHTML = `<table class="dt">
     <thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Pedidas</th><th>Armadas</th><th>Avance</th><th></th></tr></thead>
     <tbody>
-    ${activos.map(p=>{
-      const pct = p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
+    ${pedidos.map(p=>{
+      const pct = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
       const col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+      const readOnly = USER.rol==='gerente';
       return `<tr>
         <td style="font-weight:500">${p.cliente}</td>
         <td><code style="font-size:11px">${p.codigo}</code></td>
         <td style="color:var(--text2)">${p.destino||'--'}</td>
         <td>${p.cantidad_pedida.toLocaleString('es-CL')}</td>
-        <td><input type="number" value="${p.cantidad_armada}" id="arm-${p.id}" style="width:100px;height:30px;font-size:13px"></td>
+        <td>${readOnly
+          ? `<span style="font-weight:600">${(p.cantidad_armada||0).toLocaleString('es-CL')}</span>`
+          : `<input type="number" value="${p.cantidad_armada||0}" id="arm-${p.id}" style="width:100px;height:30px;font-size:13px">`
+        }</td>
         <td>
           <div style="display:flex;align-items:center;gap:6px">
             <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div>
             <span style="font-size:11px;color:${col};font-weight:500">${pct}%</span>
           </div>
         </td>
-        <td><button class="btn sm primary" onclick="guardarArmado('${p.id}')">Guardar</button></td>
+        <td>${readOnly ? '' : `<button class="btn sm primary" onclick="guardarArmado('${p.id}')">Guardar</button>`}</td>
       </tr>`;
     }).join('')}
     </tbody></table>`;
+  } catch(e) { el.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
 }
 
 async function guardarArmado(id) {
