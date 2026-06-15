@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2894,7 +2895,7 @@ async function cancelarPedido(id) {
 var _cerrarParcialId = null;
 function abrirCerrarParcial(id) {
   _cerrarParcialId = id;
-  var p = pedidos.find(function(x){return x.id==id;});
+  var p = pedidosCache.find(function(x){return String(x.id)===String(id);});
   if(!p) return;
   var infoEl = document.getElementById('mcp-info');
   infoEl.innerHTML =
@@ -2910,7 +2911,7 @@ async function confirmarCerrarParcial() {
   if(!id) return;
   var cantReal = parseInt(document.getElementById('mcp-cantidad').value)||0;
   var motivo = document.getElementById('mcp-motivo').value.trim()||'Cerrado manualmente';
-  var p = pedidos.find(function(x){return x.id==id;});
+  var p = pedidosCache.find(function(x){return String(x.id)===String(id);});
   if(!p) return;
   try {
     await sb('cambios_pedido','POST',{
