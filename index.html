@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -400,6 +401,17 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
   table.dt{font-size:12px}
   table.dt th{font-size:9px;padding:7px 8px}
   table.dt td{padding:7px 8px}
+
+  /* Plan despacho en móvil - corregir anchos fijos */
+  #plan-despacho-output .grupo { margin-bottom: 16px; }
+  #plan-despacho-output [style*="display:flex"] { flex-wrap: wrap !important; }
+  #plan-despacho-output [style*="min-width:90px"] { min-width: unset !important; width: 100% !important; text-align:left !important; margin-top:8px; }
+  #plan-despacho-output input[type="number"],
+  #plan-despacho-output input[type="text"] { width: 100% !important; min-width: unset !important; }
+  #plan-despacho-output .btn { width: 100% !important; justify-content: center; }
+  /* Cards de planificar en móvil */
+  #plan-dia-output [style*="flex-shrink:0;width:100px"] { width: 100% !important; }
+  #plan-dia-output [style*="flex-wrap:nowrap"] { flex-wrap: wrap !important; }
 }
 
 /* Navegación inferior móvil */
@@ -993,8 +1005,9 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
       <div class="fg"><label>Cliente</label><input type="text" id="md-cliente" placeholder="Nombre cliente" style="width:100%"></div>
       <div class="fg"><label>Código</label><input type="text" id="md-codigo-desp" placeholder="Ej: F0999TL1" style="width:100%"></div>
       <div class="fg"><label>Destino</label><input type="text" id="md-destino" placeholder="Ciudad / dirección" style="width:100%"></div>
-      <div class="fg"><label>Cantidad</label><input type="number" id="md-cantidad" placeholder="5000" style="width:100%"></div>
-      <div class="fg"><label>Nota (opcional)</label><input type="text" id="md-nota" placeholder="Ej: despacho parcial, guía 12345" style="width:100%"></div>
+      <div class="fg"><label>Cantidad</label><input type="number" id="md-cantidad" placeholder="5000" style="width:100%" inputmode="numeric"></div>
+      <div class="fg"><label>N° Guía (opcional)</label><input type="text" id="md-guia" placeholder="Ej: 224836" style="width:100%" inputmode="numeric"></div>
+      <div class="fg"><label>Nota (opcional)</label><input type="text" id="md-nota" placeholder="Ej: despacho parcial" style="width:100%"></div>
       <button class="btn primary" onclick="guardarDespacho()" style="margin-top:4px">Guardar</button>
     </div>
   </div>
@@ -1982,11 +1995,16 @@ function initApp() {
   var rolEl = document.getElementById('tb-rol');
   if(rolEl) rolEl.className = 'topbar-rol ' + (USER.rol==='jefe'?'rol-jefe':USER.rol==='gerente'?'rol-gerente':'rol-desp');
 
-  // Nav móvil para despachador
+  // Nav móvil según rol
   if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
-}
+    if(mn) {
+      if(USER.rol === 'gerente') {
+        mn.innerHTML = '<button class="mobile-nav-btn active" id="mnav-planificar" onclick="showTab(\x27planificar\x27);updateMobileNav(\x27planificar\x27)"><span class="mnav-icon">📋</span>Plan</button><button class="mobile-nav-btn" id="mnav-despacho" onclick="showTab(\x27despacho\x27);updateMobileNav(\x27despacho\x27)"><span class="mnav-icon">🚚</span>Despacho</button><button class="mobile-nav-btn" id="mnav-informes" onclick="showTab(\x27informes\x27);updateMobileNav(\x27informes\x27)"><span class="mnav-icon">📊</span>Informes</button>';
+      }
+      mn.style.display = 'flex';
+    }
+  }
 
   renderGruposLista();
   setEl('inf-fecha', 'value', hoy());
@@ -3566,23 +3584,36 @@ async function cargarPlanDespacho() {
 }
 
 async function guardarDespacho() {
-  const pedidoId = document.getElementById('md-pedido').value;
   const cantidad = parseInt(document.getElementById('md-cantidad').value)||0;
   const destino  = document.getElementById('md-destino').value.trim();
   const nota     = document.getElementById('md-nota').value.trim();
-  const cliente = document.getElementById('md-cliente')?.value?.trim()||'';
+  const cliente  = document.getElementById('md-cliente')?.value?.trim()||'';
   const codigoDesp = document.getElementById('md-codigo-desp')?.value?.trim()||'';
+  const fechaDesp = document.getElementById('md-fecha-desp')?.value||hoy();
+  const guiaDesp = document.getElementById('md-guia')?.value?.trim()||null;
   if(!cantidad||!cliente) { alert('Ingresa al menos cliente y cantidad.'); return; }
   try {
-    await sb('plan_despacho','POST',{
+    // Crear el despacho ya como Despachado
+    const nuevo = await sb('plan_despacho','POST',{
       pedido_id: null, fecha: hoy(),
-      fecha_despacho: document.getElementById('md-fecha-desp')?.value||hoy(),
+      fecha_despacho: fechaDesp,
       cliente, destino,
       codigo: codigoDesp, cantidad_despachar: cantidad,
-      cantidad_despachada: 0, estado: 'Pendiente', nota
+      cantidad_despachada: cantidad, estado: 'Despachado', nota
     });
+    // Registrar también en salidas_despacho para tener trazabilidad de guías
+    const despId = nuevo && nuevo[0] ? nuevo[0].id : null;
+    if(despId) {
+      await sb('salidas_despacho','POST',{
+        despacho_id: despId,
+        cliente, codigo: codigoDesp, destino,
+        cantidad, numero_guia: guiaDesp,
+        foto_url: null,
+        registrado_por: USER.nombre,
+      });
+    }
     closeModal('modal-desp');
-    ['md-cantidad','md-destino','md-nota','md-cliente','md-codigo-desp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['md-cantidad','md-destino','md-nota','md-cliente','md-codigo-desp','md-guia'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     cargarPlanDespacho();
   } catch(e) { alert('Error: '+e.message); }
 }
