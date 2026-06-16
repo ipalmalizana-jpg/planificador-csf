@@ -2599,6 +2599,7 @@ function renderPlanDia() {
           }
         } catch(eSin){console.warn('Sinergia:',eSin.message);}
         var tipo = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'--':'--';
+        var especie = COD_IDX[p.codigo]?.especie||null;
 
         // Iconos prioridad y estado
         var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
@@ -2628,9 +2629,11 @@ function renderPlanDia() {
         out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
         out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
         out += '</div>';
-        // Línea 2: descripción (corta) + destino destacado
-        out += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
-        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+p.descripcion+'</span>';
+        // Línea 2: especie + tipo + descripción + destino
+        out += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
+        if(especie) out += '<span class="chip green" style="font-size:10px;padding:1px 6px">'+especie+'</span>';
+        if(tipo && tipo!=='--') out += '<span class="chip '+chipTipo(p.codigo)+'" style="font-size:10px;padding:1px 6px">'+tipo+'</span>';
+        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">'+p.descripcion+'</span>';
         if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
         out += '</div>';
         // Línea 3: fechas más grandes
@@ -4537,8 +4540,14 @@ function selectCodigo(cod) {
   document.getElementById('p-codigo').value=cod;
   document.getElementById('sugg-codigo').style.display='none';
   if(c) {
-    document.getElementById('cod-info').innerHTML=
-      `<span class="chip ${chipTipo(cod)}">${c.tipo}</span> ${c.largo?` . ${c.largo}×${c.ancho}×${c.alto} mm`:' . sin dimensiones'} . ${c.descripcion.slice(0,60)}`;
+    const tipoLabel = c.tipo && c.tipo !== 'null' ? c.tipo : null;
+    const especieLabel = c.especie && c.especie !== 'null' ? c.especie : null;
+    const dimLabel = c.largo ? ` · ${c.largo}×${c.ancho}×${c.alto} mm` : '';
+    document.getElementById('cod-info').innerHTML =
+      (especieLabel ? `<span class="chip green" style="font-size:10px">${especieLabel}</span> ` : '') +
+      (tipoLabel ? `<span class="chip ${chipTipo(cod)}">${tipoLabel}</span> ` : '') +
+      dimLabel +
+      ` · ${c.descripcion.slice(0,60)}`;
     // Auto-asignar máquina según tipo
     const maqSel=document.getElementById('p-maquina');
     const maq=maquinasConfig.find(m=>m.tipos.includes(c.tipo));
