@@ -620,11 +620,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
           <div class="fg"><label>Cantidad</label><input type="number" id="p-cantidad" placeholder="5000" style="width:100%"></div>
           <div class="fg"><label>Prioridad</label>
-            <select id="p-prioridad" style="width:100%">
-              <option value="Alta">Alta</option>
-              <option value="Media" selected>Media</option>
-              <option value="Baja">Baja</option>
-            </select>
+            <input type="number" id="p-prioridad" min="1" max="99" placeholder="1" style="width:100%;height:36px;font-size:15px;font-weight:700;text-align:center">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
@@ -2532,7 +2528,7 @@ function renderPlanDia() {
   if(!el) return;
   var orden = document.getElementById('orden-plan').value;
   var pedidos = pedidosCache.slice();
-  if(orden==='prio') pedidos.sort(function(a,b){return pp(a.prioridad)-pp(b.prioridad);});
+  if(orden==='prio') pedidos.sort(function(a,b){ var pa=parseInt(a.prioridad)||999, pb=parseInt(b.prioridad)||999; return pa-pb; });
   else if(orden==='cliente') pedidos.sort(function(a,b){return a.cliente.localeCompare(b.cliente);});
 
   if(!pedidos.length) { el.innerHTML='<div class="empty">No hay pedidos para hoy. Agrega el primero arriba.</div>'; return; }
@@ -2602,7 +2598,8 @@ function renderPlanDia() {
         var especie = COD_IDX[p.codigo]?.especie||null;
 
         // Iconos prioridad y estado
-        var prioIcon = p.prioridad==='Alta'?'&#128308;':p.prioridad==='Media'?'&#128993;':'&#128994;';
+        var prioNum = parseInt(p.prioridad)||null;
+        var prioIcon = prioNum ? '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--csf);color:#fff;font-size:10px;font-weight:800;line-height:1">'+prioNum+'</span>' : '';
         var estadoIcon = p.estado==='Activo'?'&#9654;':p.estado==='Modificado'?'&#9998;':p.estado==='Cancelado'?'&#10005;':'&#10003;';
         var estadoCol = p.estado==='Activo'?'var(--green)':p.estado==='Modificado'?'var(--yellow)':p.estado==='Cancelado'?'var(--red)':'var(--blue)';
 
@@ -2817,7 +2814,7 @@ function abrirCambio(id) {
       <code style="font-size:11px;color:var(--text2)">${p.codigo}</code>
       <span style="color:var(--text2)">${p.destino||''}</span>
       <span style="color:var(--text)">${p.cantidad_pedida.toLocaleString('es-CL')} u.</span>
-      <span class="chip ${chipPrio(p.prioridad)}">${p.prioridad}</span>
+      <span class="chip blue">#${p.prioridad||'—'}</span>
     </div>`;
   document.getElementById('cambio-form').style.display='block';
   renderCamposCambio();
@@ -2838,7 +2835,7 @@ function renderCamposCambio() {
   else if(tipo==='destino') el.innerHTML=`<div class="fg"><label>Nuevo destino</label><input type="text" id="c-val" value="${p.destino||''}" style="width:250px"></div>`;
   else if(tipo==='codigo') el.innerHTML=`<div class="fg"><label>Nuevo código</label><input type="text" id="c-val" value="${p.codigo}" style="width:150px"></div>`;
   else if(tipo==='maquina') el.innerHTML=`<div class="fg"><label>Nueva máquina</label><select id="c-val" style="width:160px">${maquinasConfig.map(m=>`<option value="${m.nombre}" ${m.nombre===p.maquina?'selected':''}>${m.nombre}</option>`).join('')}</select></div>`;
-  else if(tipo==='prioridad') el.innerHTML=`<div class="fg"><label>Nueva prioridad</label><select id="c-val" style="width:130px"><option ${p.prioridad==='Alta'?'selected':''}>Alta</option><option ${p.prioridad==='Media'?'selected':''}>Media</option><option ${p.prioridad==='Baja'?'selected':''}>Baja</option></select></div>`;
+  else if(tipo==='prioridad') el.innerHTML=`<div class="fg"><label>Nueva prioridad</label><input type="number" id="c-val" min="1" max="99" value="${parseInt(p.prioridad)||1}" style="width:100px;height:36px;font-size:18px;font-weight:800;text-align:center"></div>`;
   else if(tipo==='cancelado') el.innerHTML=`<div class="wbox">⚠️ Esto marcará el pedido como Cancelado. Quedará en el historial.</div>`;
   else el.innerHTML='';
 }
@@ -4570,9 +4567,9 @@ function compat(a,b) {
   if(a.alto===b.alto) return 'ajuste-mayor';
   return 'cambio-completo';
 }
-function pp(p){return p==='Alta'?0:p==='Media'?1:2;}
-function colorPrio(p){return p==='Alta'?'var(--red)':p==='Media'?'var(--yellow)':'var(--green)';}
-function chipPrio(p){return p==='Alta'?'red':p==='Media'?'yellow':'green';}
+function pp(p){return parseInt(p)||999;}
+function colorPrio(p){return 'var(--csf)';}
+function chipPrio(p){return 'blue';}
 function chipTipo(cod){const t=COD_IDX[cod]?.tipo||'';return t==='Device'?'blue':t==='P84'?'purple':t==='Bliss'?'purple':t==='Rotary'?'yellow':'gray';}
 function chipEstado(e){return e==='Activo'?'green':e==='Cancelado'?'red':e==='Modificado'?'yellow':e==='Completado'?'blue':e==='Despachado'?'green':e==='En proceso'?'yellow':e==='Cerrado parcial'?'orange':'gray';}
 
