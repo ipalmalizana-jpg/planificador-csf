@@ -2368,37 +2368,57 @@ async function cargarDespLive() {
     const planMap = {};
     (planDesp||[]).forEach(function(d){ planMap[d.pedido_id]=d; });
 
-    el.innerHTML = Object.entries(grupos).map(([hora, items])=>
-      '<div class="grupo">'+
+    el.innerHTML = Object.entries(grupos).map(([hora, items])=>{
+      const totalCajas = items.reduce(function(s,p){return s+p.cantidad_pedida;},0);
+      const filas = items.map(function(p){
+        var pct=p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
+        var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+        if(esMobil) {
+          return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'+
+            '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:6px">'+
+              '<div style="min-width:0;flex:1">'+
+                '<div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.cliente+'</div>'+
+                '<code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code>'+
+              '</div>'+
+              '<span class="chip '+chipEstado(p.estado)+'" style="flex-shrink:0;font-size:10px">'+p.estado+'</span>'+
+            '</div>'+
+            '<div style="font-size:12px;color:var(--text2);margin-bottom:8px">&#8594; '+(p.destino||'--')+'</div>'+
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+              '<div style="display:flex;align-items:center;gap:6px;flex:1">'+
+                '<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+                '<span style="font-size:11px;color:'+col+';font-weight:700;flex-shrink:0">'+pct+'%</span>'+
+              '</div>'+
+              '<span style="font-weight:700;font-size:13px;flex-shrink:0">'+p.cantidad_pedida.toLocaleString('es-CL')+'</span>'+
+            '</div>'+
+          '</div>';
+        }
+        return '<tr>'+
+          '<td style="font-weight:600">'+p.cliente+'</td>'+
+          '<td><code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code></td>'+
+          '<td style="color:var(--text2);font-size:12px">'+p.destino+'</td>'+
+          '<td style="font-weight:600">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
+          '<td>'+
+            '<div style="display:flex;align-items:center;gap:6px">'+
+              '<div class="prog-bar" style="width:50px;height:5px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+              '<span style="font-size:11px;color:'+col+';font-weight:600">'+pct+'%</span>'+
+            '</div>'+
+          '</td>'+
+          '<td><span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span></td>'+
+        '</tr>';
+      }).join('');
+      return '<div class="grupo">'+
         '<div class="grupo-hdr">'+
           '<span style="font-size:16px;font-weight:700;color:'+(hora==='Sin hora asignada'?'var(--text3)':'var(--yellow)')+'">'+
             (hora==='Sin hora asignada'?'Sin hora asignada':'🕐 '+hora)+
           '</span>'+
-          '<span class="grupo-meta">'+items.length+' pedido(s) · '+items.reduce(function(s,p){return s+p.cantidad_pedida;},0).toLocaleString('es-CL')+' u.</span>'+
+          '<span class="grupo-meta">'+items.length+' pedido(s) · '+totalCajas.toLocaleString('es-CL')+' u.</span>'+
         '</div>'+
-        '<table class="dt">'+
-        '<thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Cajas</th><th>Armado</th><th>Estado</th></tr></thead>'+
-        '<tbody>'+
-        items.map(function(p){
-          var pct=p.cantidad_pedida>0?Math.min(100,Math.round(p.cantidad_armada/p.cantidad_pedida*100)):0;
-          var col=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-          return '<tr>'+
-            '<td style="font-weight:600">'+p.cliente+'</td>'+
-            '<td><code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code></td>'+
-            '<td style="color:var(--text2);font-size:12px">'+p.destino+'</td>'+
-            '<td style="font-weight:600">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>'+
-            '<td>'+
-              '<div style="display:flex;align-items:center;gap:6px">'+
-                '<div class="prog-bar" style="width:50px;height:5px"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
-                '<span style="font-size:11px;color:'+col+';font-weight:600">'+pct+'%</span>'+
-              '</div>'+
-            '</td>'+
-            '<td><span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span></td>'+
-          '</tr>';
-        }).join('')+
-        '</tbody></table>'+
-      '</div>'
-    ).join('');
+        (esMobil
+          ? '<div>'+filas+'</div>'
+          : '<table class="dt"><thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Cajas</th><th>Armado</th><th>Estado</th></tr></thead><tbody>'+filas+'</tbody></table>'
+        )+
+      '</div>';
+    }).join('');
   } catch(e) { if(el&&el.closest('.sec.active')) el.innerHTML=`<div class="wbox">Error: ${e.message}</div>`; }
 }
 
