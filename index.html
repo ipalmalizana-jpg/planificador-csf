@@ -1176,12 +1176,6 @@ function agregarGrupo() {
   guardarGrupos();
   document.getElementById('mg-nombre').value='';
   renderMgLista();
-  // Nav móvil para despachador
-  if(USER.rol !== 'jefe') {
-    var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
-}
-
   renderGruposLista();
 }
 
@@ -1189,12 +1183,6 @@ function eliminarGrupo(nombre) {
   gruposHoy = gruposHoy.filter(g=>g.nombre!==nombre);
   guardarGrupos();
   renderMgLista();
-  // Nav móvil para despachador
-  if(USER.rol !== 'jefe') {
-    var mn = document.getElementById('mobile-nav');
-    if(mn) mn.style.display = 'flex';
-}
-
   renderGruposLista();
 }
 
@@ -1992,12 +1980,7 @@ function initApp() {
   // Nav móvil según rol
   if(USER.rol !== 'jefe') {
     var mn = document.getElementById('mobile-nav');
-    if(mn) {
-      if(USER.rol === 'gerente' || USER.rol === 'despachador') {
-        mn.innerHTML = '<button class="mobile-nav-btn active" id="mnav-planificar" onclick="showTab(\x27planificar\x27);updateMobileNav(\x27planificar\x27)"><span class="mnav-icon">📋</span>Plan</button><button class="mobile-nav-btn" id="mnav-despacho" onclick="showTab(\x27despacho\x27);updateMobileNav(\x27despacho\x27)"><span class="mnav-icon">🚚</span>Despacho</button><button class="mobile-nav-btn" id="mnav-informes" onclick="showTab(\x27informes\x27);updateMobileNav(\x27informes\x27)"><span class="mnav-icon">📊</span>Informes</button>';
-      }
-      mn.style.display = 'flex';
-    }
+    if(mn && window.innerWidth <= 768) mn.style.display = 'flex';
   }
 
   renderGruposLista();
