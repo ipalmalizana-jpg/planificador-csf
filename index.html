@@ -629,7 +629,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
           <div class="fg"><label>Grupo</label>
-            <select id="p-grupo" style="width:100%"><option value="">Sin grupo</option></select>
+            <select id="p-grupo" style="width:100%" onchange="autoFillMaquinaDesdeGrupo(this.value)"><option value="">Sin grupo</option></select>
           </div>
           <div class="fg"><label>Turno</label>
             <select id="p-turno" style="width:100%">
@@ -3360,6 +3360,14 @@ function actualizarSelectMaquinas() {
     o.value = m.nombre; o.textContent = m.nombre;
     selMaq.appendChild(o);
   });
+}
+
+function autoFillMaquinaDesdeGrupo(nombreGrupo) {
+  if(!nombreGrupo) return;
+  var grupo = gruposHoy.find(function(g){ return g.nombre === nombreGrupo; });
+  if(!grupo || !grupo.maquina) return;
+  var selMaq = document.getElementById('p-maquina');
+  if(selMaq) selMaq.value = grupo.maquina;
 }
 
 function agregarMaquina() {
