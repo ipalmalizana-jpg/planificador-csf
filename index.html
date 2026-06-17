@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2566,38 +2567,38 @@ function renderPlanDia() {
         }
         out += '</div>';
 
-        // Col 3: Cantidad
-        out += '<div style="flex-shrink:0;text-align:right;min-width:70px">';
-        out += '<div style="font-size:15px;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
-        out += '<div style="font-size:10px;color:var(--text3)">unidades</div>';
+        // Col 3: Cantidad + Barras integradas
+        out += '<div style="flex-shrink:0;width:130px;display:flex;flex-direction:column;gap:6px">';
+
+        // Cantidad pedida
+        out += '<div style="text-align:right;padding-bottom:4px;border-bottom:1px solid var(--border)">';
+        out += '<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
+        out += '<div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">solicitadas</div>';
         out += '</div>';
 
-        // Col 4: Barras de progreso
-        out += '<div style="flex-shrink:0;width:100px">';
-        // Armado
-        out += '<div style="margin-bottom:5px">';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Armado</span>';
-        out += '<span style="font-size:10px;color:'+colArm+';font-weight:600">'+pctArm+'%</span>';
-        out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div>';
-        out += '</div></div>';
-        // Despachado
+        // Barra armado
         out += '<div>';
-        out += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        out += '<span style="font-size:10px;color:var(--text3)">Despachado</span>';
-        out += '<span style="font-size:10px;color:'+colDesp+';font-weight:600">'+pctDesp+'%</span>';
+        out += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">';
+        out += '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Armado</span>';
+        out += '<span style="font-size:11px;color:'+colArm+';font-weight:700">'+pctArm+'%</span>';
         out += '</div>';
-        out += '<div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">';
-        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div>';
-        out += '</div></div>';
+        out += '<div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:2px">';
+        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:3px"></div></div>';
+        out += '<div style="font-size:11px;color:'+colArm+';font-weight:600;text-align:right">'+(p.cantidad_armada||0).toLocaleString('es-CL')+' u.</div>';
         out += '</div>';
-        if(despachado>0) {
-          var pct=Math.min(100,Math.round(despachado/p.cantidad_pedida*100));
-          var col2=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-          out += '<span style="font-size:11px;color:'+col2+';font-weight:500">'+despachado.toLocaleString('es-CL')+' desp. ('+pct+'%)</span>';
-        }
+
+        // Barra despachado
+        out += '<div>';
+        out += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">';
+        out += '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Despachado</span>';
+        out += '<span style="font-size:11px;color:'+colDesp+';font-weight:700">'+pctDesp+'%</span>';
+        out += '</div>';
+        out += '<div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:2px">';
+        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:3px"></div></div>';
+        out += '<div style="font-size:11px;color:'+colDesp+';font-weight:600;text-align:right">'+despachado.toLocaleString('es-CL')+' u.</div>';
+        out += '</div>';
+
+        out += '</div>';
         if(USER.rol==='jefe') {
           out += '<div style="margin-left:auto;display:flex;gap:4px">';
           out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
