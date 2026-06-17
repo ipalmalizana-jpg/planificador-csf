@@ -334,7 +334,7 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
 .sitem .smeta{font-size:11px;color:var(--text2)}
 
 /* GRUPOS PLAN */
-.grupo{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px}
+.grupo{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px}
 .grupo:hover{border-color:var(--border2)}
 .grupo-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .grupo-name{font-size:13px;font-weight:600}
@@ -2526,7 +2526,7 @@ function renderPlanDia() {
         var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
         var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
 
-        out += '<div style="margin-bottom:8px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden">';
+        out += '<div style="margin-bottom:8px;background:var(--bg);border:1px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.2)">';
 
         // ── Cabecera ──────────────────────────────────────────────
         out += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">';
