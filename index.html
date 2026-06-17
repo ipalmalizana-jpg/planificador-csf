@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2527,91 +2526,89 @@ function renderPlanDia() {
         var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
         var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
 
-        out += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);flex-wrap:nowrap">';
+        out += '<div style="margin-bottom:8px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden">';
 
-        // Col 1: Prioridad + Estado
-        out += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;width:20px">';
-        out += '<span class="prio-icon" title="'+p.prioridad+'" style="font-size:14px;line-height:1">'+prioIcon+'</span>';
-        out += '<span title="'+p.estado+'" style="font-size:11px;color:'+estadoCol+';font-weight:700">'+estadoIcon+'</span>';
-        out += '</div>';
-
-        // Col 2: Info principal
+        // ── Cabecera ──────────────────────────────────────────────
+        out += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">';
+        if(prioNum) out += '<div class="prio-icon" style="display:flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:8px;background:var(--csf);color:#fff;font-size:13px;font-weight:800;flex-shrink:0">'+prioNum+'</div>';
         out += '<div style="flex:1;min-width:0">';
-        // Línea 1: cliente + código
-        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">';
-        out += '<span style="font-weight:600;font-size:13px;white-space:nowrap">'+p.cliente+'</span>';
-        out += '<code style="font-size:11px;color:var(--text2);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0">'+p.codigo+'</code>';
+        out += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">';
+        out += '<span style="font-size:14px;font-weight:700;color:var(--text)">'+p.cliente+'</span>';
+        out += '<code style="font-size:11px;color:var(--csf);background:rgba(61,155,212,.12);padding:2px 8px;border-radius:5px;font-weight:600;letter-spacing:.02em">'+p.codigo+'</code>';
         out += '</div>';
-        // Línea 2: especie + tipo + descripción + destino
-        out += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">';
-        if(especie) out += '<span class="chip green" style="font-size:10px;padding:1px 6px">'+especie+'</span>';
-        if(tipo && tipo!=='--') out += '<span class="chip '+chipTipo(p.codigo)+'" style="font-size:10px;padding:1px 6px">'+tipo+'</span>';
-        if(p.descripcion) out += '<span style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">'+p.descripcion+'</span>';
-        if(p.destino) out += '<span style="font-size:12px;color:var(--blue);font-weight:500;background:var(--blue-bg);padding:1px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0">&#8594; '+p.destino+'</span>';
+        out += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+        if(especie) out += '<span class="chip green" style="font-size:10px;padding:1px 8px">'+especie+'</span>';
+        if(tipo && tipo!=='--') out += '<span class="chip '+chipTipo(p.codigo)+'" style="font-size:10px;padding:1px 8px">'+tipo+'</span>';
+        if(p.destino) out += '<span style="font-size:11px;color:var(--text2)">→ <b style="color:var(--text)">'+p.destino+'</b></span>';
         out += '</div>';
-        // Línea 3: fechas más grandes
-        out += '<div style="display:flex;gap:12px">';
-        if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text2);font-weight:500">&#9881; Arm: '+p.fecha_armado+'</span>';
-        if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--yellow);font-weight:500">&#128666; Desp: '+p.fecha_despacho+(p.hora_despacho?' <strong>'+p.hora_despacho+'</strong>':'')+'</span>';
         out += '</div>';
-        // Cierre parcial: mostrar motivo
+        out += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">';
+        out += '<span class="chip '+chipEstado(p.estado)+'" style="font-size:10px;padding:2px 9px">'+p.estado+'</span>';
+        out += '<div style="display:flex;gap:3px">';
+        if(USER.rol==='jefe') {
+          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 7px;font-size:13px">&#128203;</button>';
+          out += '<button title="Editar" class="btn sm warning" data-action="cambio" data-id="'+p.id+'" style="padding:2px 7px;font-size:13px">&#9998;</button>';
+          if(p.estado==='Activo'||p.estado==='Modificado') out += '<button title="Cerrar" class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="padding:2px 7px;font-size:12px;background:rgba(232,120,32,.15);color:#e87820;border-color:rgba(232,120,32,.3)">&#128274;</button>';
+          if(p.estado!=='Cancelado') out += '<button title="Cancelar" class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" style="padding:2px 7px;font-size:13px">&#10005;</button>';
+          out += '<button title="Eliminar" class="btn sm danger" data-action="eliminar" data-id="'+p.id+'" style="padding:2px 7px;font-size:11px;opacity:.4">&#128465;</button>';
+        } else if(USER.rol==='gerente'||USER.rol==='despachador') {
+          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 7px;font-size:13px">&#128203;</button>';
+        }
+        out += '</div>';
+        out += '</div>';
+        out += '</div>';
+
+        // ── Fechas ────────────────────────────────────────────────
+        if(p.fecha_armado || p.fecha_despacho) {
+          out += '<div style="display:flex;gap:16px;padding:6px 14px;background:var(--bg3);border-bottom:1px solid var(--border)">';
+          if(p.fecha_armado) out += '<span style="font-size:11px;color:var(--text3)">⚙ Arm: <b style="color:var(--text2)">'+p.fecha_armado+'</b></span>';
+          if(p.fecha_despacho) out += '<span style="font-size:11px;color:var(--text3)">🚚 Desp: <b style="color:var(--yellow)">'+p.fecha_despacho+(p.hora_despacho?' '+p.hora_despacho:'')+'</b></span>';
+          out += '</div>';
+        }
+
+        // ── Cierre parcial ────────────────────────────────────────
         if(p.estado==='Cerrado parcial') {
           var cm = window._cierreMotivos && window._cierreMotivos[p.id];
           var cantReal = cm ? Number(cm.cantReal).toLocaleString('es-CL') : (p.cantidad_armada||0).toLocaleString('es-CL');
           var motivo = cm && cm.nota ? cm.nota : '—';
-          out += '<div style="margin-top:4px;padding:5px 8px;background:rgba(232,120,32,.1);border-left:3px solid #e87820;border-radius:0 6px 6px 0;font-size:11px">';
-          out += '<span style="color:#e87820;font-weight:700">&#128274; Cerrado parcial</span>';
-          out += ' &mdash; Armadas: <strong>'+cantReal+'</strong> de '+p.cantidad_pedida.toLocaleString('es-CL');
-          out += ' &nbsp;|&nbsp; <span style="color:var(--text2)">Motivo: '+motivo+'</span>';
+          out += '<div style="display:flex;align-items:center;gap:10px;padding:7px 14px;background:rgba(232,120,32,.07);border-bottom:1px solid rgba(232,120,32,.2)">';
+          out += '<span style="font-size:13px">🔒</span>';
+          out += '<span style="font-size:11px;color:#e87820;font-weight:600">Cerrado con '+cantReal+' u.</span>';
+          out += '<span style="font-size:11px;color:var(--text3)">· '+motivo+'</span>';
           out += '</div>';
         }
+
+        // ── Métricas ──────────────────────────────────────────────
+        out += '<div style="display:grid;grid-template-columns:repeat(3,1fr)">';
+
+        out += '<div style="padding:12px 14px;border-right:1px solid var(--border)">';
+        out += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:4px">Pedidas</div>';
+        out += '<div style="font-size:22px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-1px">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
+        out += '<div style="font-size:10px;color:var(--text3);margin-top:2px">unidades</div>';
         out += '</div>';
 
-        // Col 3: Cantidad + Barras integradas
-        out += '<div style="flex-shrink:0;width:130px;display:flex;flex-direction:column;gap:6px">';
-
-        // Cantidad pedida
-        out += '<div style="text-align:right;padding-bottom:4px;border-bottom:1px solid var(--border)">';
-        out += '<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div>';
-        out += '<div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">solicitadas</div>';
+        out += '<div style="padding:12px 14px;border-right:1px solid var(--border)">';
+        out += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:4px">Armado</div>';
+        out += '<div style="display:flex;align-items:baseline;gap:5px;margin-bottom:6px">';
+        out += '<span style="font-size:22px;font-weight:900;color:'+colArm+';line-height:1;letter-spacing:-1px">'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</span>';
+        out += '<span style="font-size:12px;color:'+colArm+';font-weight:700;opacity:.85">'+pctArm+'%</span>';
+        out += '</div>';
+        out += '<div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">';
+        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:3px;transition:width .4s ease"></div></div>';
         out += '</div>';
 
-        // Barra armado
-        out += '<div>';
-        out += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">';
-        out += '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Armado</span>';
-        out += '<span style="font-size:11px;color:'+colArm+';font-weight:700">'+pctArm+'%</span>';
+        out += '<div style="padding:12px 14px">';
+        out += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:4px">Despachado</div>';
+        out += '<div style="display:flex;align-items:baseline;gap:5px;margin-bottom:6px">';
+        out += '<span style="font-size:22px;font-weight:900;color:'+colDesp+';line-height:1;letter-spacing:-1px">'+despachado.toLocaleString('es-CL')+'</span>';
+        out += '<span style="font-size:12px;color:'+colDesp+';font-weight:700;opacity:.85">'+pctDesp+'%</span>';
         out += '</div>';
-        out += '<div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:2px">';
-        out += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:3px"></div></div>';
-        out += '<div style="font-size:11px;color:'+colArm+';font-weight:600;text-align:right">'+(p.cantidad_armada||0).toLocaleString('es-CL')+' u.</div>';
-        out += '</div>';
-
-        // Barra despachado
-        out += '<div>';
-        out += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">';
-        out += '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Despachado</span>';
-        out += '<span style="font-size:11px;color:'+colDesp+';font-weight:700">'+pctDesp+'%</span>';
-        out += '</div>';
-        out += '<div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:2px">';
-        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:3px"></div></div>';
-        out += '<div style="font-size:11px;color:'+colDesp+';font-weight:600;text-align:right">'+despachado.toLocaleString('es-CL')+' u.</div>';
+        out += '<div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">';
+        out += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:3px;transition:width .4s ease"></div></div>';
         out += '</div>';
 
         out += '</div>';
-        if(USER.rol==='jefe') {
-          out += '<div style="margin-left:auto;display:flex;gap:4px">';
-          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
-          out += '<button title="Cambio" class="btn sm warning" data-action="cambio" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#9998;</button>';
-          if(p.estado==='Activo'||p.estado==='Modificado') out += '<button title="Cerrar armado" class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="padding:2px 8px;font-size:15px;line-height:1;background:rgba(232,120,32,.15);color:#e87820;border-color:rgba(232,120,32,.3)">&#128274;</button>';
-          if(p.estado!=='Cancelado') out += '<button title="Cancelar" class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#10005;</button>';
-          out += '<button title="Eliminar" class="btn sm danger" data-action="eliminar" data-id="'+p.id+'" style="padding:2px 8px;font-size:14px;line-height:1;opacity:.6">&#128465;</button>';
-          out += '</div>';
-        } else if(USER.rol==='gerente'||USER.rol==='despachador') {
-          out += '<div style="margin-left:auto;display:flex;gap:4px">';
-          out += '<button title="Historial" class="btn sm" data-action="historial" data-id="'+p.id+'" style="padding:2px 8px;font-size:16px;line-height:1">&#128203;</button>';
-          out += '</div>';
-        }
+        out += '</div>';
         out += '</div>';
       });
       out += '</div>';
