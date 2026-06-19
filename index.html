@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2372,12 +2373,27 @@ async function cargarMetricas() {
     // Cargar despachado para el mismo período
     let totalDesp = 0;
     try {
-      const salidasQ = modoPlan2==='todos'
-        ? '?select=cantidad'
-        : '?creado_en=gte.'+fechaPlan2+'T00:00:00&creado_en=lte.'+fechaPlan2+'T23:59:59&select=cantidad';
-      const sals = await sb('salidas_despacho','GET',null, salidasQ);
+      let sals = [];
+      if(modoPlan2==='todos') {
+        // Traer solo salidas de despachos vinculados a pedidos del cache
+        const ids = pedidos.map(p=>p.id).filter(Boolean);
+        if(ids.length) {
+          const desps = await sb('plan_despacho','GET',null,'?pedido_id=in.('+ids.join(',')+')+&select=id');
+          const despIds = (desps||[]).map(d=>d.id);
+          if(despIds.length) {
+            sals = await sb('salidas_despacho','GET',null,'?despacho_id=in.('+despIds.join(',')+')+&select=cantidad');
+          }
+        }
+      } else {
+        // Traer salidas cuyo despacho tenga fecha igual al día filtrado
+        const desps = await sb('plan_despacho','GET',null,'?fecha=eq.'+fechaPlan2+'&select=id');
+        const despIds = (desps||[]).map(d=>d.id);
+        if(despIds.length) {
+          sals = await sb('salidas_despacho','GET',null,'?despacho_id=in.('+despIds.join(',')+')+&select=cantidad');
+        }
+      }
       totalDesp = (sals||[]).reduce((s,d)=>s+(d.cantidad||0),0);
-    } catch(e2){}
+    } catch(e2){ console.warn('metricas desp:', e2); }
 
     const pctDesp = armadas>0?Math.round(totalDesp/armadas*100):0;
 
