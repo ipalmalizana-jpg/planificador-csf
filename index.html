@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -795,9 +796,6 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
       style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
       &#128200; Histórico
     </button>
-    <button id="inf-tab-5" onclick="showInfTab(5)"
-      style="padding:8px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;color:var(--text3)">
-      &#128197; Vista semanal
     </button>
   </div>
 
@@ -876,16 +874,6 @@ table.dt tbody tr:hover td{background:rgba(61,155,212,.03)}
       </div>
       <div style="position:relative;height:320px"><canvas id="chart-historico"></canvas></div>
     </div>
-  <!-- Panel 5: Vista semanal -->
-  <div id="inf-panel-5" style="display:none">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn sm" onclick="semanaAnterior()" style="height:32px;padding:0 12px">&#8592; Anterior</button>
-      <div style="font-size:13px;font-weight:600;color:var(--text)" id="sem-label">Semana actual</div>
-      <button class="btn sm" onclick="semanaSiguiente()" style="height:32px;padding:0 12px">Siguiente &#8594;</button>
-      <button class="btn sm primary" onclick="cargarVistaSemanal()" style="height:32px;padding:0 14px;margin-left:4px">↻ Actualizar</button>
-    </div>
-    <div id="sem-output"><div class="empty">Cargando...</div></div>
-  </div>
 
 </div>
     <div class="sec" id="sec-stock">
@@ -3829,7 +3817,7 @@ const datalabelsPlugin = {
 };
 
 function showInfTab(n) {
-  [1,2,3,4,5].forEach(function(i) {
+  [1,2,3,4].forEach(function(i) {
     var panel = document.getElementById('inf-panel-'+i);
     var btn = document.getElementById('inf-tab-'+i);
     if(panel) panel.style.display = i===n?'block':'none';
@@ -3839,207 +3827,9 @@ function showInfTab(n) {
     }
   });
   if(n===4) cargarInformeHistorico();
-  if(n===5) cargarVistaSemanal();
 }
 
 // -- Vista Semanal -----------------------------------------------
-var _semOffset = 0; // 0 = semana actual, -1 = anterior, etc.
-
-function getLunesSemana(offset) {
-  var hoyDate = new Date();
-  var dia = hoyDate.getDay(); // 0=dom, 1=lun...
-  var diffLunes = (dia === 0 ? -6 : 1 - dia);
-  var lunes = new Date(hoyDate);
-  lunes.setDate(hoyDate.getDate() + diffLunes + (offset * 7));
-  lunes.setHours(0,0,0,0);
-  return lunes;
-}
-
-function fmtFecha(d) {
-  return d.toISOString().split('T')[0];
-}
-
-function fmtFechaChile(d) {
-  var dd = String(d.getDate()).padStart(2,'0');
-  var mm = String(d.getMonth()+1).padStart(2,'0');
-  var yyyy = d.getFullYear();
-  return dd+'-'+mm+'-'+yyyy;
-}
-
-function fmtFechaCorta(d) {
-  return d.toLocaleDateString('es-CL', {weekday:'short', day:'numeric', month:'short'});
-}
-
-function semanaAnterior() { _semOffset--; cargarVistaSemanal(); }
-function semanaSiguiente() { _semOffset++; cargarVistaSemanal(); }
-
-var _semDetalle = {}; // cache de pedidos por fecha
-
-async function cargarVistaSemanal() {
-  var el = document.getElementById('sem-output');
-  if(!el) return;
-  el.innerHTML = '<div class="empty">Cargando semana...</div>';
-
-  var lunes = getLunesSemana(_semOffset);
-  var domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
-  var desde = fmtFecha(lunes);
-  var hasta = fmtFecha(domingo);
-
-  // Label de la semana
-  var label = document.getElementById('sem-label');
-  if(label) label.textContent = fmtFechaCorta(lunes) + ' — ' + fmtFechaCorta(domingo);
-
-  try {
-    // Generar los 7 días de la semana
-    var dias = [];
-    for(var i=0;i<7;i++){
-      var d = new Date(lunes); d.setDate(lunes.getDate()+i);
-      dias.push(d);
-    }
-    var fechasChile = dias.map(function(d){ return fmtFechaChile(d); });
-
-    // Cargar todos los pedidos de la semana filtrando por fechas en formato chileno
-    var pedidos = await sb('pedidos_dia','GET',null,'?fecha=in.('+fechasChile.join(',')+')+&order=fecha.asc&select=*');
-    pedidos = pedidos || [];
-
-    // Cargar despachos de la semana
-    var desps = await sb('plan_despacho','GET',null,'?fecha=in.('+fechasChile.join(',')+')+&select=id,fecha,cantidad_despachada,estado');
-    desps = desps || [];
-    var despIds = desps.map(function(d){return d.id;});
-    var salidas = [];
-    if(despIds.length) {
-      salidas = await sb('salidas_despacho','GET',null,'?despacho_id=in.('+despIds.join(',')+')+&select=despacho_id,cantidad');
-      salidas = salidas || [];
-    }
-
-    // Agrupar salidas por despacho_id
-    var salidasPorDesp = {};
-    salidas.forEach(function(s){ salidasPorDesp[s.despacho_id] = (salidasPorDesp[s.despacho_id]||0)+s.cantidad; });
-
-    // Agrupar despachos por fecha
-    var despPorFecha = {};
-    desps.forEach(function(d){
-      var f = typeof d.fecha==='string'?d.fecha:fmtFechaChile(new Date(d.fecha));
-      if(!despPorFecha[f]) despPorFecha[f] = 0;
-      despPorFecha[f] += salidasPorDesp[d.id]||0;
-    });
-
-    // Agrupar pedidos por fecha
-    var pedPorFecha = {};
-    pedidos.forEach(function(p){
-      var f = p.fecha||'sin-fecha';
-      if(!pedPorFecha[f]) pedPorFecha[f] = [];
-      pedPorFecha[f].push(p);
-    });
-    _semDetalle = pedPorFecha;
-
-    var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px">';
-    dias.forEach(function(d) {
-      var f = fmtFechaChile(d);
-      var ps = pedPorFecha[f] || [];
-      var esHoy = f === fmtFechaChile(new Date());
-      var esFinde = d.getDay()===0||d.getDay()===6;
-      var solicitadas = ps.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
-      var armadas = ps.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
-      var despachadas = despPorFecha[f]||0;
-      var pctArm = solicitadas>0?Math.min(100,Math.round(armadas/solicitadas*100)):0;
-      var pctDesp = solicitadas>0?Math.min(100,Math.round(despachadas/solicitadas*100)):0;
-      var colArm = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--red)';
-      var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
-      var borderColor = esHoy?'var(--csf)':esFinde?'var(--border)':'var(--border2)';
-      var bgColor = esHoy?'rgba(61,155,212,.06)':esFinde?'var(--bg3)':'var(--bg2)';
-
-      html += '<div onclick="toggleSemDetalle(\''+f+'\')" style="background:'+bgColor+';border:2px solid '+borderColor+';border-radius:10px;padding:10px 10px 8px;cursor:pointer;transition:box-shadow .15s" '
-            + 'onmouseover="this.style.boxShadow=\'0 0 0 2px var(--csf)\'" onmouseout="this.style.boxShadow=\'\'">';
-      // Encabezado día
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-      html += '<span style="font-size:11px;font-weight:700;color:'+(esHoy?'var(--csf)':esFinde?'var(--text3)':'var(--text2)')+';text-transform:uppercase;letter-spacing:.05em">'
-            + d.toLocaleDateString('es-CL',{weekday:'short'})+'</span>';
-      html += '<span style="font-size:13px;font-weight:800;color:'+(esHoy?'var(--csf)':'var(--text)')+'">'+d.getDate()+'</span>';
-      html += '</div>';
-
-      if(ps.length===0) {
-        html += '<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">Sin pedidos</div>';
-      } else {
-        // Métricas compactas
-        html += '<div style="font-size:18px;font-weight:900;color:var(--text);line-height:1;margin-bottom:2px">'+solicitadas.toLocaleString('es-CL')+'</div>';
-        html += '<div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">'+ps.length+' pedido'+(ps.length>1?'s':'')+'</div>';
-        // Barra armado
-        html += '<div style="margin-bottom:5px">';
-        html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        html += '<span style="font-size:9px;color:var(--text3)">Arm.</span>';
-        html += '<span style="font-size:9px;color:'+colArm+';font-weight:700">'+pctArm+'%</span>';
-        html += '</div>';
-        html += '<div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">';
-        html += '<div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px"></div></div>';
-        html += '</div>';
-        // Barra despachado
-        html += '<div>';
-        html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-        html += '<span style="font-size:9px;color:var(--text3)">Desp.</span>';
-        html += '<span style="font-size:9px;color:'+colDesp+';font-weight:700">'+pctDesp+'%</span>';
-        html += '</div>';
-        html += '<div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">';
-        html += '<div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px"></div></div>';
-        html += '</div>';
-      }
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Zona de detalle al hacer clic en un día
-    html += '<div id="sem-detalle-output"></div>';
-    el.innerHTML = html;
-
-  } catch(e) { el.innerHTML = '<div class="empty">Error: '+e.message+'</div>'; }
-}
-
-function toggleSemDetalle(fecha) {
-  var el = document.getElementById('sem-detalle-output');
-  if(!el) return;
-  // Si ya está mostrando este día, colapsar
-  if(el.dataset.fecha === fecha && el.innerHTML !== '') {
-    el.innerHTML = '';
-    el.dataset.fecha = '';
-    return;
-  }
-  el.dataset.fecha = fecha;
-  var ps = _semDetalle[fecha] || [];
-  if(!ps.length) { el.innerHTML = ''; return; }
-
-  var d = new Date(fecha+'T12:00:00');
-  var titulo = d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
-  titulo = titulo.charAt(0).toUpperCase()+titulo.slice(1);
-
-  var html = '<div class="card" style="padding:16px;margin-top:4px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
-  html += '<span style="font-size:13px;font-weight:700;color:var(--text)">'+titulo+'</span>';
-  html += '<span style="font-size:12px;color:var(--text3)">'+ps.length+' pedido'+(ps.length>1?'s':'')+'</span>';
-  html += '</div>';
-
-  html += '<table class="dt" style="font-size:12px">';
-  html += '<thead><tr><th>Cliente</th><th>Código</th><th>Destino</th><th>Estado</th><th style="text-align:right">Pedidas</th><th style="text-align:right">Armadas</th><th style="text-align:right">Avance</th></tr></thead>';
-  html += '<tbody>';
-  ps.forEach(function(p) {
-    var pct = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
-    var col = pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
-    html += '<tr>';
-    html += '<td style="font-weight:600">'+p.cliente+'</td>';
-    html += '<td><code style="font-size:11px;color:var(--csf)">'+p.codigo+'</code></td>';
-    html += '<td style="color:var(--text2)">'+(p.destino||'—')+'</td>';
-    html += '<td><span class="chip '+chipEstado(p.estado)+'" style="font-size:10px">'+p.estado+'</span></td>';
-    html += '<td style="text-align:right;font-weight:600">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>';
-    html += '<td style="text-align:right;color:'+col+';font-weight:600">'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</td>';
-    html += '<td style="text-align:right">';
-    html += '<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">';
-    html += '<div style="width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+col+'"></div></div>';
-    html += '<span style="font-size:11px;color:'+col+';font-weight:700;min-width:28px">'+pct+'%</span>';
-    html += '</div></td>';
-    html += '</tr>';
-  });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
 
 function setInfModo(modo) {
   var esDia = modo === 'dia';
