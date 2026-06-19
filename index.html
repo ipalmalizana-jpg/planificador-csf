@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3860,6 +3859,13 @@ function fmtFecha(d) {
   return d.toISOString().split('T')[0];
 }
 
+function fmtFechaChile(d) {
+  var dd = String(d.getDate()).padStart(2,'0');
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var yyyy = d.getFullYear();
+  return dd+'-'+mm+'-'+yyyy;
+}
+
 function fmtFechaCorta(d) {
   return d.toLocaleDateString('es-CL', {weekday:'short', day:'numeric', month:'short'});
 }
@@ -3884,12 +3890,20 @@ async function cargarVistaSemanal() {
   if(label) label.textContent = fmtFechaCorta(lunes) + ' — ' + fmtFechaCorta(domingo);
 
   try {
-    // Cargar todos los pedidos de la semana
-    var pedidos = await sb('pedidos_dia','GET',null,'?fecha=gte.'+desde+'&fecha=lte.'+hasta+'&order=fecha.asc&select=*');
+    // Generar los 7 días de la semana
+    var dias = [];
+    for(var i=0;i<7;i++){
+      var d = new Date(lunes); d.setDate(lunes.getDate()+i);
+      dias.push(d);
+    }
+    var fechasChile = dias.map(function(d){ return fmtFechaChile(d); });
+
+    // Cargar todos los pedidos de la semana filtrando por fechas en formato chileno
+    var pedidos = await sb('pedidos_dia','GET',null,'?fecha=in.('+fechasChile.join(',')+')+&order=fecha.asc&select=*');
     pedidos = pedidos || [];
 
-    // Cargar salidas de despacho de la semana
-    var desps = await sb('plan_despacho','GET',null,'?fecha=gte.'+desde+'&fecha=lte.'+hasta+'&select=id,fecha,cantidad_despachada,estado');
+    // Cargar despachos de la semana
+    var desps = await sb('plan_despacho','GET',null,'?fecha=in.('+fechasChile.join(',')+')+&select=id,fecha,cantidad_despachada,estado');
     desps = desps || [];
     var despIds = desps.map(function(d){return d.id;});
     var salidas = [];
@@ -3905,7 +3919,7 @@ async function cargarVistaSemanal() {
     // Agrupar despachos por fecha
     var despPorFecha = {};
     desps.forEach(function(d){
-      var f = typeof d.fecha==='string'?d.fecha.slice(0,10):fmtFecha(new Date(d.fecha));
+      var f = typeof d.fecha==='string'?d.fecha:fmtFechaChile(new Date(d.fecha));
       if(!despPorFecha[f]) despPorFecha[f] = 0;
       despPorFecha[f] += salidasPorDesp[d.id]||0;
     });
@@ -3919,18 +3933,11 @@ async function cargarVistaSemanal() {
     });
     _semDetalle = pedPorFecha;
 
-    // Generar los 7 días
-    var dias = [];
-    for(var i=0;i<7;i++){
-      var d = new Date(lunes); d.setDate(lunes.getDate()+i);
-      dias.push(d);
-    }
-
     var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px">';
     dias.forEach(function(d) {
-      var f = fmtFecha(d);
+      var f = fmtFechaChile(d);
       var ps = pedPorFecha[f] || [];
-      var esHoy = f === hoy();
+      var esHoy = f === fmtFechaChile(new Date());
       var esFinde = d.getDay()===0||d.getDay()===6;
       var solicitadas = ps.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
       var armadas = ps.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
