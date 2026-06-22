@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,34 +21,34 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --brand:      #2563eb;
-  --brand-l:    #3b82f6;
-  --brand-d:    #1d4ed8;
-  --brand-bg:   rgba(37,99,235,.08);
+  --brand:      #3d9bd4;
+  --brand-l:    #55aee0;
+  --brand-d:    #2a7fb5;
+  --brand-bg:   rgba(61,155,212,.1);
 
-  --bg:         #111318;
-  --bg2:        #16191f;
-  --bg3:        #1c2028;
-  --bg4:        #222733;
+  --bg:         #0d1117;
+  --bg2:        #131920;
+  --bg3:        #18202c;
+  --bg4:        #1e2838;
 
-  --border:     #252a35;
-  --border2:    #2e3545;
-  --border3:    #3a4460;
+  --border:     #1e2a3a;
+  --border2:    #263548;
+  --border3:    #2f4060;
 
-  --text:       #f1f5fd;
-  --text2:      #7d8fae;
-  --text3:      #3d4e6a;
+  --text:       #eaf0f8;
+  --text2:      #7a90b0;
+  --text3:      #3d5270;
 
-  --green:      #16c98a;
-  --green-bg:   rgba(22,201,138,.08);
-  --yellow:     #f59e0b;
-  --yellow-bg:  rgba(245,158,11,.08);
-  --red:        #ef4444;
-  --red-bg:     rgba(239,68,68,.08);
-  --purple:     #8b5cf6;
-  --purple-bg:  rgba(139,92,246,.08);
-  --orange:     #f97316;
-  --orange-bg:  rgba(249,115,22,.08);
+  --green:      #0db87a;
+  --green-bg:   rgba(13,184,122,.08);
+  --yellow:     #e8a020;
+  --yellow-bg:  rgba(232,160,32,.08);
+  --red:        #e03c4e;
+  --red-bg:     rgba(224,60,78,.08);
+  --purple:     #7b5ea7;
+  --purple-bg:  rgba(123,94,167,.08);
+  --orange:     #e87820;
+  --orange-bg:  rgba(232,120,32,.08);
 
   --csf:        var(--brand);
   --csf-l:      var(--brand-l);
@@ -75,7 +74,7 @@ code{font-family:'JetBrains Mono',monospace;font-size:.88em}
   width:100%;max-width:420px;margin:auto;
   background:var(--bg2);border:1px solid var(--border2);
   border-radius:20px;padding:44px 44px 40px;
-  box-shadow:0 32px 80px rgba(0,0,0,.5);
+  box-shadow:0 24px 80px rgba(0,0,0,.5);
   position:relative;z-index:1;
 }
 .login-box label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:7px;letter-spacing:.01em}
@@ -104,14 +103,14 @@ code{font-family:'JetBrains Mono',monospace;font-size:.88em}
 /* SIDEBAR — fondo muy oscuro, casi negro */
 .sidebar{
   width:var(--sidebar-w);min-height:100vh;
-  background:#0d1016;
-  border-right:1px solid var(--border);
+  background:#0a0d14;
+  border-right:none;
   display:flex;flex-direction:column;
   position:fixed;top:0;left:0;bottom:0;z-index:100;
 }
 .sidebar-logo{
   padding:18px 16px 14px;
-  border-bottom:1px solid var(--border);
+  border-bottom:1px solid rgba(255,255,255,.06);
   display:flex;align-items:center;gap:10px;
 }
 .sidebar-logo-icon{
@@ -119,26 +118,26 @@ code{font-family:'JetBrains Mono',monospace;font-size:.88em}
   background:var(--brand);
   display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:900;color:#fff;letter-spacing:-.5px;
-  flex-shrink:0;box-shadow:0 2px 8px rgba(37,99,235,.35);
+  flex-shrink:0;
 }
-.sidebar-logo-txt{font-size:13px;font-weight:700;color:var(--text);line-height:1.2}
-.sidebar-logo-sub{font-size:9px;font-weight:500;color:var(--text3);letter-spacing:.04em;margin-top:2px}
-.sidebar-section{padding:20px 16px 6px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em}
+.sidebar-logo-txt{font-size:13px;font-weight:700;color:#eaf0f8;line-height:1.2}
+.sidebar-logo-sub{font-size:9px;font-weight:500;color:#3d5270;letter-spacing:.04em;margin-top:2px}
+.sidebar-section{padding:20px 16px 6px;font-size:9px;font-weight:700;color:#3d5270;text-transform:uppercase;letter-spacing:.12em}
 .tabs,#tabs-bar{display:flex;flex-direction:column;padding:4px 0;background:none;border:none;overflow:visible}
 .tab{
   display:flex;align-items:center;gap:10px;
   padding:9px 14px;margin:1px 8px;
-  border-radius:8px;font-size:13px;font-weight:500;color:var(--text3);
+  border-radius:8px;font-size:13px;font-weight:500;color:#3d5270;
   background:none;border:none;cursor:pointer;
   font-family:'Inter',sans-serif;transition:all .14s;
   text-align:left;width:calc(100% - 16px);
 }
-.tab:hover{background:rgba(255,255,255,.04);color:var(--text2)}
-.tab.active{background:rgba(37,99,235,.15);color:var(--brand-l);font-weight:600}
+.tab:hover{background:rgba(255,255,255,.04);color:#7a90b0}
+.tab.active{background:rgba(61,155,212,.15);color:#55aee0;font-weight:600}
 .tab-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
-.sidebar-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border)}
-.sidebar-user strong{color:var(--text);font-weight:600;display:block;font-size:13px}
-.sidebar-user{font-size:11px;color:var(--text2);margin-bottom:8px}
+.sidebar-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid #1e2a3a}
+.sidebar-user strong{color:#eaf0f8;font-weight:600;display:block;font-size:13px}
+.sidebar-user{font-size:11px;color:#7a90b0;margin-bottom:8px}
 
 /* MAIN */
 .main-area{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -150,12 +149,13 @@ code{font-family:'JetBrains Mono',monospace;font-size:.88em}
   border-bottom:1px solid var(--border);
   padding:0 20px;display:flex;align-items:center;gap:10px;
   position:sticky;top:0;z-index:50;
+  
 }
 .topbar-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
 .topbar-rol{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
-.rol-jefe{background:var(--brand-bg);color:var(--brand-l);border:1px solid rgba(37,99,235,.2)}
-.rol-gerente{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(139,92,246,.2)}
-.rol-desp{background:var(--green-bg);color:var(--green);border:1px solid rgba(22,201,138,.2)}
+.rol-jefe{background:rgba(61,155,212,.1);color:var(--brand-l);border:1px solid rgba(61,155,212,.2)}
+.rol-gerente{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(123,94,167,.2)}
+.rol-desp{background:var(--green-bg);color:var(--green);border:1px solid rgba(13,184,122,.2)}
 
 .content{padding:18px 22px;flex:1}
 .sec{display:none}.sec.active{display:block}
@@ -218,7 +218,7 @@ table.dt tbody tr:hover td{background:rgba(37,99,235,.03)}
 
 /* SUGGEST */
 .rel{position:relative}
-.suggest-box{position:absolute;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;max-height:280px;overflow-y:auto;z-index:200;box-shadow:0 20px 60px rgba(0,0,0,.7);min-width:360px;left:0;top:38px}
+.suggest-box{position:absolute;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;max-height:280px;overflow-y:auto;z-index:200;box-shadow:0 24px 80px rgba(0,0,0,.5);min-width:360px;left:0;top:38px}
 .sitem{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s}
 .sitem:last-child{border-bottom:none}
 .sitem:hover{background:var(--bg3)}
@@ -261,10 +261,16 @@ table.dt tbody tr:hover td{background:rgba(37,99,235,.03)}
 @media(max-width:768px){
   .sidebar{display:none !important}
   .main-area{width:100% !important;margin-left:0}
-  .metrics{grid-template-columns:1fr 1fr}
-  .content{padding:12px;padding-bottom:75px}
-  .topbar{padding:0 12px;height:44px}
+  .metrics{grid-template-columns:1fr 1fr;gap:0;border-radius:10px}
+  .content{padding:10px 12px;padding-bottom:75px}
+  .topbar{padding:0 12px;height:46px}
   .mobile-nav{display:flex !important}
+
+  /* Tabla de pedidos — scroll horizontal en móvil */
+  #plan-dia-output .tabla-pedidos-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:0 0 8px 8px}
+  #plan-dia-output table{min-width:600px}
+
+  /* Informes */
   #sec-informes [style*="display:flex;border-bottom"]{overflow-x:auto;flex-wrap:nowrap !important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   #sec-informes [style*="display:flex;border-bottom"]::-webkit-scrollbar{display:none}
   #sec-informes [id^="inf-tab-"]{white-space:nowrap;padding:8px 12px !important;font-size:12px !important}
@@ -300,8 +306,6 @@ table.dt tbody tr:hover td{background:rgba(37,99,235,.03)}
   #plan-despacho-output [style*="min-width:90px"]{min-width:unset !important;width:100% !important;text-align:left !important;margin-top:8px}
   #plan-despacho-output input[type="number"],#plan-despacho-output input[type="text"]{width:100% !important;min-width:unset !important}
   #plan-despacho-output .btn{width:100% !important;justify-content:center}
-  #plan-dia-output [style*="flex-shrink:0;width:100px"]{width:100% !important}
-  #plan-dia-output [style*="flex-wrap:nowrap"]{flex-wrap:wrap !important}
 }
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:100;justify-content:space-around}
 .mobile-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--text3);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;padding:4px 12px;transition:color .15s;min-width:60px}
@@ -312,8 +316,8 @@ table.dt tbody tr:hover td{background:rgba(37,99,235,.03)}
 <body>
 
 <!-- === LOGIN === -->
-<div id="carga-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,17,23,.96);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-  <div style="font-size:22px;font-weight:600;color:#22c98a">CSF Planificador</div>
+<div id="carga-overlay" style="display:none;position:fixed;inset:0;background:rgba(13,17,23,.96);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="font-size:22px;font-weight:600;color:#3d9bd4">CSF Planificador</div>
   <div style="width:180px;height:4px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden">
     <div style="height:100%;background:#22c98a;border-radius:3px;animation:pbar 1.5s ease-in-out infinite"></div>
   </div>
@@ -2296,18 +2300,17 @@ async function cargarPlanDia() {
 function renderPlanDia() {
   const el = document.getElementById('plan-dia-output');
   if(!el) return;
-  if(!pedidosCache.length){ el.innerHTML='<div class="empty">📋 Sin pedidos para esta fecha.<br><span style="font-size:12px">Usa el botón <b>+ Agregar pedido</b> para comenzar.</span></div>'; return; }
+  if(!pedidosCache.length){ el.innerHTML='<div class="empty">Sin pedidos para esta fecha.<br><span style="font-size:12px">Usa el botón <b>+ Agregar pedido</b> para comenzar.</span></div>'; return; }
 
   var orden = document.getElementById('orden-plan')?.value||'prio';
   var pedidos = pedidosCache.slice();
+  var isMobile = window.innerWidth < 768;
 
-  // Ordenar
   if(orden==='prio') pedidos.sort(function(a,b){return (parseInt(a.prioridad)||999)-(parseInt(b.prioridad)||999);});
   else if(orden==='hora') pedidos.sort(function(a,b){return (a.hora_despacho||'99:99')>(b.hora_despacho||'99:99')?1:-1;});
   else if(orden==='cliente') pedidos.sort(function(a,b){return a.cliente.localeCompare(b.cliente);});
   else if(orden==='maquina') pedidos.sort(function(a,b){return (a.maquina||'').localeCompare(b.maquina||'');});
 
-  // Agrupar por grupo → turno
   var turnos = {};
   pedidos.forEach(function(p){
     var t = p.turno||'Sin turno';
@@ -2318,15 +2321,14 @@ function renderPlanDia() {
   });
 
   var turnoColors = {'Mañana':'#f59e0b','Tarde':'#8b5cf6','Noche':'#2563eb','Sin turno':'#374151'};
-
   var out = '';
+
   Object.keys(turnos).forEach(function(turno) {
     var grps = turnos[turno];
     var tColor = turnoColors[turno] || '#374151';
 
-    // Header de turno
-    out += '<div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px">';
-    out += '<div style="width:3px;height:18px;background:'+tColor+';border-radius:2px;flex-shrink:0"></div>';
+    out += '<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px">';
+    out += '<div style="width:3px;height:16px;background:'+tColor+';border-radius:2px;flex-shrink:0"></div>';
     out += '<span style="font-size:11px;font-weight:700;color:'+tColor+';text-transform:uppercase;letter-spacing:.08em">'+turno+'</span>';
     out += '<div style="flex:1;height:1px;background:var(--border)"></div>';
     out += '</div>';
@@ -2336,134 +2338,143 @@ function renderPlanDia() {
       var gObj = gruposHoy.find(function(g){return g.nombre===grp;}) || {};
       var maqGrupo = gObj.maquina || (items[0]?items[0].maquina:'')||'';
       var totalSol = items.filter(function(p){return p.estado!=='Cancelado';}).reduce(function(s,p){return s+p.cantidad_pedida;},0);
-      var totalArm = items.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
 
-      // Header del grupo — compacto
-      out += '<div style="margin-bottom:8px">';
+      out += '<div style="margin-bottom:10px">';
+      // Header grupo
       out += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none">';
       out += '<span style="font-size:12px;font-weight:700;color:var(--text)">'+grp+'</span>';
-      if(maqGrupo) out += '<span class="chip blue" style="font-size:9px">🔧 '+maqGrupo+'</span>';
+      if(maqGrupo) out += '<span class="chip blue" style="font-size:9px">'+maqGrupo+'</span>';
       out += '<span style="font-size:11px;color:var(--text3);margin-left:auto">'+items.length+' pedido'+(items.length!==1?'s':'')+' · '+totalSol.toLocaleString('es-CL')+' u.</span>';
       out += '</div>';
 
-      // Tabla de pedidos
       out += '<div style="border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden">';
-      out += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-      out += '<thead><tr style="background:var(--bg3)">';
-      out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;width:20px">#</th>';
-      out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Cliente</th>';
-      out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Código</th>';
-      out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Especie</th>';
-      out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Destino</th>';
-      out += '<th style="padding:6px 10px;text-align:right;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Pedidas</th>';
-      out += '<th style="padding:6px 20px 6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;min-width:140px">Armado</th>';
-      out += '<th style="padding:6px 20px 6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;min-width:140px">Despachado</th>';
-      out += '<th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Estado</th>';
-      if(USER.rol==='jefe') out += '<th style="padding:6px 10px;width:120px"></th>';
-      out += '</tr></thead><tbody>';
 
-      items.forEach(function(p, pidx) {
-        var tipo    = COD_IDX[p.codigo]?COD_IDX[p.codigo].tipo||'':'';
-        var especie = COD_IDX[p.codigo]?.especie||'';
-        var prioNum = parseInt(p.prioridad)||null;
-        var pctArm  = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
-        var colArm  = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
-        var despInfo = window._despCache && window._despCache[p.id];
-        var despachado = despInfo?(despInfo.despachado||0):0;
-        var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
-        var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
-        var isCanceled = p.estado==='Cancelado';
-        var rowBg = isCanceled?'rgba(239,68,68,.04)':pidx%2===0?'transparent':'rgba(255,255,255,.01)';
+      if(isMobile) {
+        // ── VISTA MÓVIL: cards verticales ────────────────────────
+        items.forEach(function(p, pidx) {
+          var especie = COD_IDX[p.codigo]?.especie||'';
+          var prioNum = parseInt(p.prioridad)||null;
+          var pctArm  = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
+          var colArm  = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
+          var despInfo = window._despCache && window._despCache[p.id];
+          var despachado = despInfo?(despInfo.despachado||0):0;
+          var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
+          var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
 
-        out += '<tr style="background:'+rowBg+';border-top:1px solid var(--border)" data-bg="'+rowBg+'">';
+          out += '<div style="padding:10px 12px;'+(pidx<items.length-1?'border-bottom:1px solid var(--border);':'')+'background:'+(pidx%2===0?'transparent':'rgba(255,255,255,.01)')+'">';
 
-        // # prioridad
-        out += '<td style="padding:8px 10px;'+(isCanceled?'opacity:.4':'')+'">'+
-          (prioNum?'<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--brand);color:#fff;font-size:9px;font-weight:800">'+prioNum+'</span>':'<span style="color:var(--text3)">—</span>')+
-          '</td>';
+          // Fila 1: cliente + estado
+          out += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">';
+          if(prioNum && USER.rol==='jefe') out += '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--brand);color:#fff;font-size:9px;font-weight:800;flex-shrink:0">'+prioNum+'</span>';
+          out += '<span style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.cliente+'</span>';
+          out += '<span class="chip '+chipEstado(p.estado)+'" style="flex-shrink:0;font-size:9px">'+p.estado+'</span>';
+          out += '</div>';
 
-        // Cliente
-        out += '<td style="padding:8px 10px;font-weight:600;color:var(--text);'+(isCanceled?'text-decoration:line-through;opacity:.5':'')+'">'+p.cliente+'</td>';
+          // Fila 2: destino + especie + fecha (sin código para gerente en móvil)
+          out += '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
+          if(USER.rol==='jefe') out += '<code style="font-size:10px;color:var(--brand-l);background:var(--brand-bg);padding:1px 6px;border-radius:3px">'+p.codigo+'</code>';
+          if(especie) out += '<span class="chip green" style="font-size:9px">'+especie+'</span>';
+          if(p.destino) out += '<span style="font-size:11px;color:var(--text2)">→ '+p.destino+'</span>';
+          if(p.fecha_despacho) out += '<span style="font-size:10px;color:var(--yellow);margin-left:auto">🚚 '+p.fecha_despacho+'</span>';
+          out += '</div>';
 
-        // Código
-        out += '<td style="padding:8px 10px"><code style="font-size:10px;color:var(--brand-l);background:var(--brand-bg);padding:1px 6px;border-radius:3px">'+p.codigo+'</code></td>';
+          // Fila 3: métricas compactas
+          out += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--bg3);border-radius:6px;padding:8px">';
 
-        // Especie + tipo
-        out += '<td style="padding:8px 10px"><div style="display:flex;gap:4px;flex-wrap:wrap">';
-        if(especie) out += '<span class="chip green" style="font-size:9px">'+especie+'</span>';
-        if(tipo && tipo!=='--') out += '<span class="chip '+chipTipo(p.codigo)+'" style="font-size:9px">'+tipo+'</span>';
-        out += '</div></td>';
+          out += '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Total</div>';
+          out += '<div style="font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.5px">'+p.cantidad_pedida.toLocaleString('es-CL')+'</div></div>';
 
-        // Destino + fechas
-        out += '<td style="padding:8px 10px"><div style="color:var(--text2);font-size:12px">'+(p.destino||'—')+'</div>';
-        if(p.fecha_despacho) out += '<div style="font-size:10px;color:var(--yellow);margin-top:1px">🚚 '+p.fecha_despacho+(p.hora_despacho?' '+p.hora_despacho:'')+'</div>';
-        out += '</td>';
+          out += '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Armado</div>';
+          out += '<div style="font-size:15px;font-weight:800;color:'+colArm+';letter-spacing:-.5px">'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</div>';
+          out += '<div style="height:2px;background:var(--bg4);border-radius:1px;overflow:hidden;margin-top:3px"><div style="width:'+pctArm+'%;height:100%;background:'+colArm+'"></div></div></div>';
 
-        // Pedidas
-        out += '<td style="padding:8px 10px;text-align:right;font-weight:700;color:var(--text)">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>';
+          out += '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Despachado</div>';
+          out += '<div style="font-size:15px;font-weight:800;color:'+colDesp+';letter-spacing:-.5px">'+despachado.toLocaleString('es-CL')+'</div>';
+          out += '<div style="height:2px;background:var(--bg4);border-radius:1px;overflow:hidden;margin-top:3px"><div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+'"></div></div></div>';
 
-        // Armado
-        out += '<td style="padding:8px 10px">';
-        out += '<div style="display:flex;align-items:center;gap:6px">';
-        out += '<div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+pctArm+'%;height:100%;background:'+colArm+';border-radius:2px;transition:width .4s"></div></div>';
-        out += '<span style="font-size:10px;font-weight:700;color:'+colArm+';min-width:28px;text-align:right">'+pctArm+'%</span>';
-        out += '</div>';
-        out += '<div style="font-size:11px;color:'+colArm+';font-weight:600;margin-top:2px">'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</div>';
-        out += '</td>';
+          out += '</div>'; // métricas
 
-        // Despachado
-        out += '<td style="padding:8px 10px">';
-        out += '<div style="display:flex;align-items:center;gap:6px">';
-        out += '<div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+';border-radius:2px;transition:width .4s"></div></div>';
-        out += '<span style="font-size:10px;font-weight:700;color:'+colDesp+';min-width:28px;text-align:right">'+pctDesp+'%</span>';
-        out += '</div>';
-        out += '<div style="font-size:11px;color:'+colDesp+';font-weight:600;margin-top:2px">'+despachado.toLocaleString('es-CL')+'</div>';
-        out += '</td>';
+          // Botones — solo jefe
+          if(USER.rol==='jefe') {
+            var tipo = COD_IDX[p.codigo]?.tipo||'';
+            out += '<div style="display:flex;gap:4px;margin-top:8px;justify-content:flex-end">';
+            out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'">&#128203;</button>';
+            out += '<button class="btn sm warning" data-action="cambio" data-id="'+p.id+'">&#9998;</button>';
+            if(p.estado==='Activo'||p.estado==='Modificado') out += '<button class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="color:var(--yellow);border-color:rgba(245,158,11,.3)">&#128274;</button>';
+            if(p.estado!=='Cancelado') out += '<button class="btn sm danger" data-action="cancelar" data-id="'+p.id+'">&#10005;</button>';
+            out += '</div>';
+          } else if(USER.rol==='gerente'||USER.rol==='despachador') {
+            out += '<div style="display:flex;justify-content:flex-end;margin-top:6px">';
+            out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'">&#128203; Historial</button>';
+            out += '</div>';
+          }
 
-        // Estado
-        out += '<td style="padding:8px 10px"><span class="chip '+chipEstado(p.estado)+'">'+p.estado+'</span>';
-        if(p.estado==='Cerrado parcial'){
-          var cm=window._cierreMotivos&&window._cierreMotivos[p.id];
-          if(cm&&cm.nota) out+='<div style="font-size:9px;color:var(--text3);margin-top:2px">'+cm.nota+'</div>';
-        }
-        out += '</td>';
+          out += '</div>'; // card móvil
+        });
 
-        // Botones (solo jefe)
-        if(USER.rol==='jefe') {
-          out += '<td style="padding:6px 10px"><div style="display:flex;gap:2px;justify-content:flex-end">';
-          out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'" title="Historial">&#128203;</button>';
-          out += '<button class="btn sm warning" data-action="cambio" data-id="'+p.id+'" title="Editar">&#9998;</button>';
-          if(p.estado==='Activo'||p.estado==='Modificado') out += '<button class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" title="Cerrar" style="color:var(--yellow);border-color:rgba(245,158,11,.3)">&#128274;</button>';
-          if(p.estado!=='Cancelado') out += '<button class="btn sm danger" data-action="cancelar" data-id="'+p.id+'" title="Cancelar">&#10005;</button>';
+      } else {
+        // ── VISTA DESKTOP: tabla ──────────────────────────────────
+        out += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+        out += '<thead><tr style="background:var(--bg3)">';
+        out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;width:24px">#</th>';
+        out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Cliente</th>';
+        out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Código</th>';
+        out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Especie</th>';
+        out += '<th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Destino</th>';
+        out += '<th style="padding:6px 10px;text-align:right;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Total</th>';
+        out += '<th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;min-width:130px">Armado</th>';
+        out += '<th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;min-width:130px">Despachado</th>';
+        out += '<th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Estado</th>';
+        if(USER.rol==='jefe') out += '<th style="padding:6px 10px;width:110px"></th>';
+        out += '</tr></thead><tbody>';
+
+        items.forEach(function(p, pidx) {
+          var tipo    = COD_IDX[p.codigo]?.tipo||'';
+          var especie = COD_IDX[p.codigo]?.especie||'';
+          var prioNum = parseInt(p.prioridad)||null;
+          var pctArm  = p.cantidad_pedida>0?Math.min(100,Math.round((p.cantidad_armada||0)/p.cantidad_pedida*100)):0;
+          var colArm  = pctArm>=100?'var(--green)':pctArm>=50?'var(--yellow)':'var(--text3)';
+          var despInfo = window._despCache && window._despCache[p.id];
+          var despachado = despInfo?(despInfo.despachado||0):0;
+          var pctDesp = p.cantidad_pedida>0?Math.min(100,Math.round(despachado/p.cantidad_pedida*100)):0;
+          var colDesp = pctDesp>=100?'var(--green)':pctDesp>=50?'var(--yellow)':'var(--red)';
+          var isCanceled = p.estado==='Cancelado';
+          var rowBg = isCanceled?'rgba(239,68,68,.04)':pidx%2===0?'transparent':'rgba(255,255,255,.01)';
+
+          out += '<tr style="background:'+rowBg+';border-top:1px solid var(--border)">';
+          out += '<td style="padding:8px 10px">'+(prioNum?'<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--brand);color:#fff;font-size:9px;font-weight:800">'+prioNum+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';
+          out += '<td style="padding:8px 10px;font-weight:600;color:var(--text);'+(isCanceled?'opacity:.5;text-decoration:line-through':'')+'">'+p.cliente+'</td>';
+          out += '<td style="padding:8px 10px"><code style="font-size:10px;color:var(--brand-l);background:var(--brand-bg);padding:1px 6px;border-radius:3px">'+p.codigo+'</code></td>';
+          out += '<td style="padding:8px 10px"><div style="display:flex;gap:3px;flex-wrap:wrap">';
+          if(especie) out += '<span class="chip green" style="font-size:9px">'+especie+'</span>';
+          if(tipo && tipo!=='--') out += '<span class="chip '+chipTipo(p.codigo)+'" style="font-size:9px">'+tipo+'</span>';
           out += '</div></td>';
-        } else if(USER.rol==='gerente'||USER.rol==='despachador') {
-          out += '<td style="padding:6px 10px"><button class="btn sm" data-action="historial" data-id="'+p.id+'">&#128203;</button></td>';
-        }
+          out += '<td style="padding:8px 10px;color:var(--text2)">'+(p.destino||'—');
+          if(p.fecha_despacho) out += '<div style="font-size:10px;color:var(--yellow)">🚚 '+p.fecha_despacho+(p.hora_despacho?' '+p.hora_despacho:'')+'</div>';
+          out += '</td>';
+          out += '<td style="padding:8px 10px;text-align:right;font-weight:700">'+p.cantidad_pedida.toLocaleString('es-CL')+'</td>';
+          out += '<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+pctArm+'%;height:100%;background:'+colArm+'"></div></div><span style="font-size:10px;font-weight:700;color:'+colArm+';min-width:26px;text-align:right">'+pctArm+'%</span></div><div style="font-size:11px;color:'+colArm+';font-weight:600;margin-top:1px">'+(p.cantidad_armada||0).toLocaleString('es-CL')+'</div></td>';
+          out += '<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+pctDesp+'%;height:100%;background:'+colDesp+'"></div></div><span style="font-size:10px;font-weight:700;color:'+colDesp+';min-width:26px;text-align:right">'+pctDesp+'%</span></div><div style="font-size:11px;color:'+colDesp+';font-weight:600;margin-top:1px">'+despachado.toLocaleString('es-CL')+'</div></td>';
+          out += '<td style="padding:8px 10px"><span class="chip '+chipEstado(p.estado)+'" style="font-size:9px">'+p.estado+'</span>';
+          if(p.estado==='Cerrado parcial'){var cm=window._cierreMotivos&&window._cierreMotivos[p.id];if(cm&&cm.nota)out+='<div style="font-size:9px;color:var(--text3);margin-top:1px">'+cm.nota+'</div>';}
+          out += '</td>';
+          if(USER.rol==='jefe') {
+            out += '<td style="padding:6px 10px"><div style="display:flex;gap:2px;justify-content:flex-end">';
+            out += '<button class="btn sm" data-action="historial" data-id="'+p.id+'">&#128203;</button>';
+            out += '<button class="btn sm warning" data-action="cambio" data-id="'+p.id+'">&#9998;</button>';
+            if(p.estado==='Activo'||p.estado==='Modificado') out += '<button class="btn sm" data-action="cerrar-parcial" data-id="'+p.id+'" style="color:var(--yellow);border-color:rgba(245,158,11,.3)">&#128274;</button>';
+            if(p.estado!=='Cancelado') out += '<button class="btn sm danger" data-action="cancelar" data-id="'+p.id+'">&#10005;</button>';
+            out += '</div></td>';
+          } else if(USER.rol==='gerente'||USER.rol==='despachador') {
+            out += '<td style="padding:6px 10px"><button class="btn sm" data-action="historial" data-id="'+p.id+'">&#128203;</button></td>';
+          }
+          out += '</tr>';
+        });
 
-        out += '</tr>';
+        out += '</tbody></table>';
+      } // end desktop
 
-        // Indicador de sinergia entre pedidos consecutivos
-        if(pidx < items.length-1 && orden==='sinergia') {
-          try {
-            var next = items[pidx+1];
-            var ca=COD_IDX[p.codigo],cb=COD_IDX[next.codigo];
-            if(ca&&cb){
-              var c=compat(ca,cb);
-              var sL=c==='solo-altura'?'Solo altura':c==='ajuste-mayor'?'Ajuste mayor':c==='maquina-diferente'?'Maq. diferente':'Cambio completo';
-              var sC=c==='solo-altura'?'#16c98a':c==='ajuste-mayor'?'#f59e0b':c==='maquina-diferente'?'#a855f7':'#ef4444';
-              var tpo=c==='solo-altura'?'~10 min':c==='ajuste-mayor'?'~25 min':c==='maquina-diferente'?'—':'~45 min';
-              var colspan = USER.rol==='jefe'?10:9;
-              out += '<tr><td colspan="'+colspan+'" style="padding:2px 10px">';
-              out += '<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:'+sC+';padding:2px 6px;background:rgba(0,0,0,.2);border-radius:4px">';
-              out += '<span style="font-weight:700">↕ '+sL+'</span><span style="color:var(--text3)">'+tpo+'</span>';
-              out += '</div></td></tr>';
-            }
-          } catch(e){}
-        }
-      });
-
-      out += '</tbody></table>';
-      out += '</div>';
+      out += '</div>'; // border wrapper
       out += '</div>'; // grupo
     });
   });
