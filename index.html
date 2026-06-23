@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3316,6 +3315,13 @@ async function cargarPlanDespacho() {
       ? '?order=fecha_despacho.asc,creado_en.desc&select=*&limit=500'
       : '?fecha_despacho=eq.'+fechaDesp+'&order=creado_en.desc&select=*&limit=200';
     const items = await sb('plan_despacho','GET',null, queryDesp);
+    // DEBUG: mostrar info cruda
+    el.innerHTML = '<div style="background:#1e2838;border:1px solid #3d9bd4;border-radius:8px;padding:14px;font-size:12px;font-family:monospace;color:#eaf0f8;margin-bottom:12px">'+
+      '<b style="color:#55aee0">DEBUG</b><br>'+
+      'Query: '+queryDesp+'<br>'+
+      'Items: '+(items?items.length:0)+'<br>'+
+      (items&&items.length ? 'fecha_despacho[0]: '+JSON.stringify(items[0].fecha_despacho)+'<br>campos: '+Object.keys(items[0]).join(', ') : 'SIN RESULTADOS')+
+      '</div>';
     if(!items||!items.length) { return; }
 
     const porCliente = {};
