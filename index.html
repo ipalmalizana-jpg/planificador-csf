@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2089,7 +2090,7 @@ async function cargarDespLive() {
     if(sinHora.length) grupos['Sin hora asignada'] = sinHora;
 
     // Cargar plan_despacho para este día
-    const planDesp = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+isoToDdmm(fechaDesp)+'&select=*');
+    const planDesp = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fechaDesp+'&select=*');
     const planMap = {};
     (planDesp||[]).forEach(function(d){ planMap[d.pedido_id]=d; });
 
@@ -2817,7 +2818,7 @@ async function cargarDespReg() {
   var fecha = fi.value;
   el.innerHTML = '<div class="empty">Cargando...</div>';
   try {
-    var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+isoToDdmm(fecha)+'&select=*&order=hora_despacho.asc.nullslast,creado_en.asc');
+    var desps = await sb('plan_despacho','GET',null,'?fecha_despacho=eq.'+fecha+'&select=*&order=hora_despacho.asc.nullslast,creado_en.asc');
     if(!desps||!desps.length) {
       el.innerHTML='<div class="empty">Sin despachos para esta fecha.</div>';
       return;
@@ -3313,9 +3314,9 @@ async function cargarPlanDespacho() {
     const fechaDesp = document.getElementById('filtro-fecha-desp')?.value || hoy();
     const queryDesp = modoDesp==='todos'
       ? '?order=fecha_despacho.asc,creado_en.desc&select=*&limit=500'
-      : '?fecha_despacho=eq.'+isoToDdmm(fechaDesp)+'&order=creado_en.desc&select=*&limit=200';
+      : '?fecha_despacho=eq.'+fechaDesp+'&order=creado_en.desc&select=*&limit=200';
     const items = await sb('plan_despacho','GET',null, queryDesp);
-    if(!items||!items.length) { el.innerHTML='<div class="empty">No hay despachos programados aún. Usa el botón + para agregar.</div>'; return; }
+    if(!items||!items.length) { return; }
 
     const porCliente = {};
     items.forEach(d=>{
@@ -3418,7 +3419,7 @@ async function guardarDespacho() {
     // Crear el despacho ya como Despachado
     const nuevo = await sb('plan_despacho','POST',{
       pedido_id: null, fecha: hoy(),
-      fecha_despacho: isoToDdmm(fechaDesp),
+      fecha_despacho: fechaDesp,
       cliente, destino,
       codigo: codigoDesp, cantidad_despachar: cantidad,
       cantidad_despachada: cantidad, estado: 'Despachado', nota
