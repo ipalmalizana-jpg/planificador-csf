@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2370,9 +2371,10 @@ function renderPlanDia() {
           out += '<span class="chip '+chipEstado(p.estado)+'" style="flex-shrink:0;font-size:9px">'+p.estado+'</span>';
           out += '</div>';
 
-          // Fila 2: destino + especie + fecha (sin código para gerente en móvil)
+          // Fila 2: código + destino + especie + fecha (sin código para gerente en móvil)
           out += '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
           if(USER.rol==='jefe') out += '<code style="font-size:10px;color:var(--brand-l);background:var(--brand-bg);padding:1px 6px;border-radius:3px">'+p.codigo+'</code>';
+          else out += '<code style="font-size:10px;color:var(--brand-l);background:var(--brand-bg);padding:1px 6px;border-radius:3px">'+p.codigo+'</code>';
           if(especie) out += '<span class="chip green" style="font-size:9px">'+especie+'</span>';
           if(p.destino) out += '<span style="font-size:11px;color:var(--text2)">→ '+p.destino+'</span>';
           if(p.fecha_despacho) out += '<span style="font-size:10px;color:var(--yellow);margin-left:auto">🚚 '+p.fecha_despacho+'</span>';
