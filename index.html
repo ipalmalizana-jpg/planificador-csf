@@ -3311,39 +3311,47 @@ async function cargarPlanDespacho() {
   try {
     const modoDesp = document.getElementById('filtro-desp-modo')?.value || 'fecha';
     const fechaDesp = document.getElementById('filtro-fecha-desp')?.value || hoy();
+    // El plan de despacho se construye desde pedidos_dia con fecha_despacho definida
     const queryDesp = modoDesp==='todos'
-      ? '?order=fecha_despacho.asc,creado_en.desc&select=*&limit=500'
-      : '?fecha_despacho=eq.'+fechaDesp+'&order=creado_en.desc&select=*&limit=200';
-    const items = await sb('plan_despacho','GET',null, queryDesp);
-    // DEBUG: mostrar info cruda
-    el.innerHTML = '<div style="background:#1e2838;border:1px solid #3d9bd4;border-radius:8px;padding:14px;font-size:12px;font-family:monospace;color:#eaf0f8;margin-bottom:12px">'+
-      '<b style="color:#55aee0">DEBUG</b><br>'+
-      'Query: '+queryDesp+'<br>'+
-      'Items: '+(items?items.length:0)+'<br>'+
-      (items&&items.length ? 'fecha_despacho[0]: '+JSON.stringify(items[0].fecha_despacho)+'<br>campos: '+Object.keys(items[0]).join(', ') : 'SIN RESULTADOS')+
-      '</div>';
-    if(!items||!items.length) { return; }
+      ? '?fecha_despacho=not.is.null&estado=neq.Cancelado&order=fecha_despacho.asc,creado_en.desc&select=*&limit=500'
+      : '?fecha_despacho=eq.'+fechaDesp+'&estado=neq.Cancelado&order=creado_en.desc&select=*&limit=200';
+    const items = await sb('pedidos_dia','GET',null, queryDesp);
+    if(!items||!items.length) { el.innerHTML='<div class="empty">No hay despachos programados para esta fecha.</div>'; return; }
+
+    // Buscar registros de plan_despacho vinculados para saber lo ya despachado
+    const ids = items.map(function(p){return p.id;}).filter(Boolean);
+    let despMap = {};
+    if(ids.length) {
+      const desps = await sb('plan_despacho','GET',null,'?pedido_id=in.('+ids.join(',')+')+&select=pedido_id,id,cantidad_despachada,estado');
+      (desps||[]).forEach(function(d){
+        if(!despMap[d.pedido_id]) despMap[d.pedido_id] = {despachado:0, desp_id:d.id, estado:d.estado};
+        despMap[d.pedido_id].despachado += d.cantidad_despachada||0;
+      });
+    }
 
     const porCliente = {};
-    items.forEach(d=>{
+    items.forEach(function(d){
       if(!porCliente[d.cliente]) porCliente[d.cliente]=[];
       porCliente[d.cliente].push(d);
     });
 
-    el.innerHTML = Object.entries(porCliente).map(([cli,desps])=>`
-      <div class="grupo">
+    el.innerHTML = Object.entries(porCliente).map(function([cli,pedidos]){
+      return `<div class="grupo">
         <div class="grupo-hdr">
           <span class="grupo-name">${cli}</span>
-          <span class="grupo-meta">${desps.length} despacho(s) &middot; ${desps.reduce((s,d)=>s+d.cantidad_despachar,0).toLocaleString('es-CL')} u.</span>
+          <span class="grupo-meta">${pedidos.length} pedido(s) &middot; ${pedidos.reduce(function(s,d){return s+(d.cantidad_pedida||0);},0).toLocaleString('es-CL')} u.</span>
         </div>
-        ${desps.map(d=>{
-          const pendiente = d.cantidad_despachar - (d.cantidad_despachada||0);
-          const pct = d.cantidad_despachar>0?Math.min(100,Math.round((d.cantidad_despachada||0)/d.cantidad_despachar*100)):0;
+        ${pedidos.map(function(d){
+          const solicitadas = d.cantidad_pedida||0;
+          const armadas = d.cantidad_armada||0;
+          const info = despMap[d.id]||{despachado:0};
+          const despachadas = info.despachado||0;
+          const pendiente = solicitadas - despachadas;
+          const pct = solicitadas>0?Math.min(100,Math.round(despachadas/solicitadas*100)):0;
           const col = pct>=100?'var(--green)':pct>0?'var(--yellow)':'var(--text3)';
+          const chipE = chipEstado(d.estado);
           return `
           <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-
-            <!-- Info principal -->
             <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
               <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
@@ -3353,62 +3361,58 @@ async function cargarPlanDespacho() {
                 <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
                   ${d.hora_despacho?`<span style="font-size:13px;color:var(--yellow);font-weight:700">&#128666; ${d.hora_despacho}</span>`:''}
                   ${d.fecha_despacho?`<span style="font-size:11px;color:var(--text3)">${d.fecha_despacho}</span>`:''}
-                  <span class="chip ${d.estado==='Despachado'?'green':d.estado==='Cancelado'?'red':'yellow'}" style="font-size:10px">${d.estado}</span>
+                  <span class="chip ${chipE}" style="font-size:10px">${d.estado}</span>
                 </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px">Armadas: <b style="color:var(--text)">${armadas.toLocaleString('es-CL')}</b> / ${solicitadas.toLocaleString('es-CL')}</div>
               </div>
-              <!-- Totales -->
               <div style="text-align:right;flex-shrink:0;min-width:90px">
-                <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1">${d.cantidad_despachar.toLocaleString('es-CL')}</div>
+                <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1">${solicitadas.toLocaleString('es-CL')}</div>
                 <div style="font-size:10px;color:var(--text3);margin-bottom:4px">solicitadas</div>
                 <div style="font-size:13px;font-weight:700;color:${pendiente>0?'var(--yellow)':'var(--green)'}">${pendiente.toLocaleString('es-CL')} pend.</div>
               </div>
             </div>
-
-            <!-- Barra de progreso -->
             <div style="margin-bottom:12px">
               <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                 <span style="font-size:11px;color:var(--text3)">Progreso despacho</span>
-                <span style="font-size:12px;color:${col};font-weight:700">${(d.cantidad_despachada||0).toLocaleString('es-CL')} de ${d.cantidad_despachar.toLocaleString('es-CL')} &mdash; ${pct}%</span>
+                <span style="font-size:12px;color:${col};font-weight:700">${despachadas.toLocaleString('es-CL')} de ${solicitadas.toLocaleString('es-CL')} &mdash; ${pct}%</span>
               </div>
               <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:${col};height:100%"></div></div>
             </div>
-
-            <!-- Acciones -->
             ${USER.rol==='gerente' ? `
-            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas / guías</button>
-            ` : d.estado!=='Despachado'&&d.estado!=='Cancelado'?`
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
-              <span style="font-size:11px;color:var(--text3);flex-shrink:0">Registrar salida:</span>
-              <input type="number" id="desp-cant-${d.id}" placeholder="Cant." 
-                style="width:90px;height:40px;font-size:15px;font-weight:600" min="1"
-                inputmode="numeric" pattern="[0-9]*">
-              <input type="text" id="desp-guia-${d.id}" placeholder="N° guía" 
-                style="width:110px;height:40px;font-size:14px"
-                inputmode="numeric" pattern="[0-9]*">
-              <label style="display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);white-space:nowrap" title="Adjuntar foto de guía">
-                &#128247; Foto
-                <input type="file" id="desp-foto-${d.id}" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="this.parentElement.style.borderColor='var(--green)';this.parentElement.style.color='var(--green)'">
-              </label>
-              <button class="btn primary" onclick="registrarSalida('${d.id}',${d.cantidad_despachar},${d.cantidad_despachada||0})"
-                style="height:40px;padding:0 18px;font-size:13px;font-weight:600">
-                &#10003; Registrar
-              </button>
-              ${pendiente===0?`<button class="btn green" onclick="marcarDespachado('${d.id}')"
-                style="height:32px;padding:0 16px;font-size:12px;background:var(--green);color:#0f1117;border-color:var(--green)">
-                &#128666; Marcar despachado
-              </button>`:''}
-            </div>
-            <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
-            `:`
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:12px;color:var(--green);font-weight:600">&#10003; Completado</span>
-              <button class="btn sm" onclick="verSalidas('${d.id}')" style="font-size:11px">&#128203; Ver salidas</button>
-            </div>
+              <button class="btn sm" data-action="ver-salidas-ped" data-id="${d.id}" style="font-size:11px">&#128203; Ver salidas / guías</button>
+            ` : (info.desp_id && (info.estado==='Despachado'||info.estado==='Cancelado')) ? `
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px;color:var(--green);font-weight:600">&#10003; Completado</span>
+                <button class="btn sm" data-action="ver-salidas-ped" data-id="${d.id}" style="font-size:11px">&#128203; Ver salidas</button>
+              </div>
+            ` : `
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+                <span style="font-size:11px;color:var(--text3);flex-shrink:0">Registrar salida:</span>
+                <input type="number" id="desp-cant-${d.id}" placeholder="Cant."
+                  style="width:90px;height:40px;font-size:15px;font-weight:600" min="1"
+                  inputmode="numeric" pattern="[0-9]*">
+                <input type="text" id="desp-guia-${d.id}" placeholder="N° guía"
+                  style="width:110px;height:40px;font-size:14px"
+                  inputmode="numeric" pattern="[0-9]*">
+                <label style="display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;color:var(--text2);white-space:nowrap" title="Adjuntar foto de guía">
+                  &#128247; Foto
+                  <input type="file" id="desp-foto-${d.id}" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="this.parentElement.style.borderColor='var(--green)';this.parentElement.style.color='var(--green)'">
+                </label>
+                <button class="btn primary" data-action="registrar-salida-ped" data-id="${d.id}" data-cant="${solicitadas}" data-desp="${despachadas}"
+                  style="height:40px;padding:0 18px;font-size:13px;font-weight:600">
+                  &#10003; Registrar
+                </button>
+                ${pendiente<=0?`<button class="btn green" data-action="marcar-despachado-ped" data-id="${d.id}"
+                  style="height:32px;padding:0 16px;font-size:12px;background:var(--green);color:#0f1117;border-color:var(--green)">
+                  &#128666; Marcar despachado
+                </button>`:''}
+              </div>
+              ${info.desp_id?`<button class="btn sm" data-action="ver-salidas-ped" data-id="${d.id}" style="font-size:11px">&#128203; Ver salidas</button>`:''}
             `}
-            <div id="salidas-${d.id}" style="display:none;width:100%;margin-top:8px"></div>
           </div>`;
         }).join('')}
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { mostrarSinConexion(); console.warn('cargarPlanDespacho:', e.message); }
 }
 
@@ -4301,6 +4305,82 @@ function selectCodigo(cod) {
 
 
 
+
+// -- Registro de salidas desde Plan Despacho (por pedido_id) -----------
+async function registrarSalidaDesdePlan(pedidoId, totalPedido, yaEnviado) {
+  const cantEl = document.getElementById('desp-cant-'+pedidoId);
+  const guiaEl = document.getElementById('desp-guia-'+pedidoId);
+  const fotoEl = document.getElementById('desp-foto-'+pedidoId);
+  const cant = parseInt(cantEl?.value)||0;
+  const guia = guiaEl?.value.trim()||null;
+  if(!cant) { alert('Ingresa una cantidad.'); return; }
+  try {
+    // Buscar o crear registro en plan_despacho vinculado al pedido
+    var desps = await sb('plan_despacho','GET',null,'?pedido_id=eq.'+pedidoId+'&select=*');
+    var desp = desps && desps.length ? desps[0] : null;
+    if(!desp) {
+      // Crear registro en plan_despacho desde el pedido
+      var ped = await sb('pedidos_dia','GET',null,'?id=eq.'+pedidoId+'&select=*');
+      ped = ped && ped[0];
+      if(!ped) { alert('No se encontró el pedido.'); return; }
+      var nuevos = await sb('plan_despacho','POST',{
+        pedido_id: pedidoId,
+        fecha: hoy(),
+        fecha_despacho: ped.fecha_despacho,
+        cliente: ped.cliente,
+        destino: ped.destino,
+        codigo: ped.codigo,
+        cantidad_despachar: ped.cantidad_pedida,
+        cantidad_despachada: 0,
+        estado: 'Pendiente'
+      });
+      desp = nuevos && nuevos[0];
+    }
+    if(!desp) { alert('Error al crear registro de despacho.'); return; }
+    // Subir foto si hay
+    var fotoUrl = null;
+    if(fotoEl && fotoEl.files && fotoEl.files[0]) {
+      try { fotoUrl = await subirFoto(fotoEl.files[0]); } catch(fe) { console.warn('foto:', fe); }
+    }
+    // Registrar salida
+    await sb('salidas_despacho','POST',{
+      despacho_id: desp.id,
+      cliente: desp.cliente,
+      codigo: desp.codigo,
+      destino: desp.destino,
+      cantidad: cant,
+      numero_guia: guia,
+      foto_url: fotoUrl,
+      registrado_por: USER.nombre
+    });
+    // Actualizar totales en plan_despacho
+    var totalDesp = (desp.cantidad_despachada||0) + cant;
+    var nuevoEstado = totalDesp >= desp.cantidad_despachar ? 'Despachado' : 'En proceso';
+    await sb('plan_despacho','PATCH',{cantidad_despachada: totalDesp, estado: nuevoEstado},'?id=eq.'+desp.id);
+    if(cantEl) cantEl.value='';
+    if(guiaEl) guiaEl.value='';
+    cargarPlanDespacho();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function marcarDespachadoDesdePlan(pedidoId) {
+  try {
+    var desps = await sb('plan_despacho','GET',null,'?pedido_id=eq.'+pedidoId+'&select=*');
+    if(desps && desps.length) {
+      await sb('plan_despacho','PATCH',{estado:'Despachado'},'?id=eq.'+desps[0].id);
+    }
+    cargarPlanDespacho();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function verSalidasDesdePlan(pedidoId) {
+  try {
+    var desps = await sb('plan_despacho','GET',null,'?pedido_id=eq.'+pedidoId+'&select=id');
+    if(!desps || !desps.length) { alert('Sin registros de despacho para este pedido.'); return; }
+    verSalidas(desps[0].id);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
 // -- Helpers ---------------------------------------------------
 function compat(a,b) {
   if(!a||!b) return 'desconocido';
@@ -4333,6 +4413,9 @@ document.addEventListener('click',e=>{
     if(action==='cerrar-parcial') { abrirCerrarParcial(id); return; }
     if(action==='cancelar') { cancelarPedido(id); return; }
     if(action==='eliminar') { eliminarPedido(id); return; }
+    if(action==='registrar-salida-ped') { registrarSalidaDesdePlan(id, parseInt(btn.dataset.cant)||0, parseInt(btn.dataset.desp)||0); return; }
+    if(action==='marcar-despachado-ped') { marcarDespachadoDesdePlan(id); return; }
+    if(action==='ver-salidas-ped') { verSalidasDesdePlan(id); return; }
   }
   // Cerrar suggest boxes
   if(!e.target.closest('.rel')) document.querySelectorAll('.suggest-box').forEach(function(b){b.style.display='none';});
@@ -4344,6 +4427,7 @@ const USUARIOS_LOCAL = {
   'jefe':  {id:'u1',nombre:'Israel Palma',  usuario:'jefe',  password:'jefe123', rol:'jefe'},
   'diego': {id:'u2',nombre:'Diego Quezada', usuario:'diego', password:'diego123',rol:'jefe'},
   'gerente': {id:'u6',nombre:'Aldo Traverso',usuario:'gerente',password:'AT001',     rol:'gerente'},
+  'wnavarro': {id:'u7',nombre:'Waldo Navarro', usuario:'wnavarro', password:'WN001',   rol:'despachador'},
 };
 
 async function cargarDatosCatalogo() {
