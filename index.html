@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2179,9 +2180,29 @@ function renderMetricasPlan() {
 
   el.innerHTML =
     '<div class="metric"><div class="metric-label">Pedidos activos</div><div class="metric-val green">'+(activos+completados)+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
-    '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+labelFecha+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Cajas solicitadas</div><div class="metric-val">'+totalCajas.toLocaleString('es-CL')+'</div><div class="metric-sub">unidades</div></div>'+
     '<div class="metric"><div class="metric-label">Cajas armadas</div><div class="metric-val yellow">'+armadas.toLocaleString('es-CL')+'</div><div class="metric-sub">'+pctArm+'% de lo solicitado</div></div>'+
-    '<div class="metric"><div class="metric-label">Cancelados</div><div class="metric-val '+(cancelados>0?'red':'')+'">'+cancelados+'</div><div class="metric-sub">'+labelFecha+'</div></div>';
+    '<div class="metric"><div class="metric-label">Cajas despachadas</div><div class="metric-val" id="met-desp-val">--</div><div class="metric-sub" id="met-desp-sub">calculando...</div></div>';
+  // Cargar despachadas async sin bloquear render
+  (async function(){
+    try {
+      const idsPed2 = pedidos.filter(function(p){return p.estado!=='Cancelado';}).map(function(p){return p.id;}).filter(Boolean);
+      if(idsPed2.length) {
+        const desps2 = await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsPed2.join(',')+')+&select=cantidad_despachada');
+        const td2 = (desps2||[]).reduce(function(s,d){return s+(d.cantidad_despachada||0);},0);
+        const pct2 = armadas>0?Math.round(td2/armadas*100):0;
+        const valEl = document.getElementById('met-desp-val');
+        const subEl = document.getElementById('met-desp-sub');
+        if(valEl) { valEl.textContent = td2.toLocaleString('es-CL'); valEl.className = pct2>=100?'metric-val green':pct2>=50?'metric-val yellow':'metric-val'; }
+        if(subEl) subEl.textContent = pct2+'% de lo armado';
+      } else {
+        const valEl = document.getElementById('met-desp-val');
+        if(valEl) { valEl.textContent = '0'; valEl.className = 'metric-val'; }
+        const subEl = document.getElementById('met-desp-sub');
+        if(subEl) subEl.textContent = '0% de lo armado';
+      }
+    } catch(e3){ console.warn('desp metric:', e3); }
+  })();
 }
 
 async function cargarMetricas() {
