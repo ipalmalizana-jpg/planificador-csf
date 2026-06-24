@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1242,12 +1241,18 @@ async function generarCierreDelDia() {
       ? '?fecha_armado=eq.'+fecha+'&select=*'
       : '?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*';
     var pedidos=await sb('pedidos_dia','GET',null, query);
-    var salidas=await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=cantidad,creado_en,cliente,codigo,destino,numero_guia,registrado_por');
     var formatos=await sb('cambios_formato','GET',null,'?select=*&order=creado_en.desc&limit=50');
     var activos=(pedidos||[]).filter(function(p){return p.estado!=='Cancelado';});
     var cancelados=(pedidos||[]).filter(function(p){return p.estado==='Cancelado';});
     var totalSol=activos.reduce(function(s,p){return s+p.cantidad_pedida;},0);
     var totalArm=activos.reduce(function(s,p){return s+(p.cantidad_armada||0);},0);
+    // Despachado cruzando por pedido_id para respetar fecha_despacho
+    var idsPedPdf=activos.map(function(p){return p.id;}).filter(Boolean);
+    var salidas=[];
+    if(idsPedPdf.length){
+      var despsPdf=await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsPedPdf.join(',')+')+&select=id,cantidad_despachada,cliente,codigo,destino');
+      salidas=(despsPdf||[]).map(function(d){return {cantidad:d.cantidad_despachada||0,cliente:d.cliente,codigo:d.codigo,destino:d.destino};});
+    }
     var totalDesp=(salidas||[]).reduce(function(s,d){return s+d.cantidad;},0);
     var pctArm=totalSol>0?Math.round(totalArm/totalSol*100):0;
     var pctDesp=totalArm>0?Math.round(totalDesp/totalArm*100):0;
@@ -1939,17 +1944,21 @@ async function cargarGraficos() {
 
   try {
     const pedidos = await sb('pedidos_dia','GET',null,`?fecha=gte.${desde}&fecha=lte.${hasta}&estado=neq.Cancelado&select=*`);
-    const salidas = await sb('salidas_despacho','GET',null,`?select=*`);
 
     if(!pedidos||!pedidos.length) {
       document.getElementById('met-graficos').innerHTML='<div class="ibox" style="grid-column:1/-1">Sin datos para el período seleccionado.</div>';
       return;
     }
 
-    // Totales generales
+    // Totales generales — despachado se cruza por pedido_id para respetar fecha_despacho
     const totalSol = pedidos.reduce((s,p)=>s+p.cantidad_pedida,0);
     const totalArm = pedidos.reduce((s,p)=>s+p.cantidad_armada,0);
-    const totalDesp = (salidas||[]).reduce((s,d)=>s+d.cantidad,0);
+    const idsPed = pedidos.map(p=>p.id).filter(Boolean);
+    let totalDesp = 0;
+    if(idsPed.length) {
+      const despsInf = await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsPed.join(',')+')+&select=cantidad_despachada');
+      totalDesp = (despsInf||[]).reduce((s,d)=>s+(d.cantidad_despachada||0),0);
+    }
     const pctArm = totalSol>0?Math.round(totalArm/totalSol*100):0;
     const pctDesp = totalArm>0?Math.round(totalDesp/totalArm*100):0;
 
@@ -3693,7 +3702,16 @@ async function cargarInformeHistorico() {
 
   try {
     var pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&estado=neq.Cancelado&select=fecha_armado,cantidad_pedida,cantidad_armada&order=fecha_armado.asc');
-    var salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=cantidad,creado_en');
+    // Cruzar despachado por pedido_id para respetar fecha_despacho
+    var idsPedHist=(pedidos||[]).map(function(p){return p.id;}).filter(Boolean);
+    var salidas=[];
+    if(idsPedHist.length){
+      var despsHist=await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsPedHist.join(',')+')+&select=pedido_id,cantidad_despachada');
+      // Mapear despachado al mismo formato agrupado por fecha_armado del pedido
+      var despByPed={};
+      (despsHist||[]).forEach(function(d){despByPed[d.pedido_id]=(d.cantidad_despachada||0);});
+      salidas=(pedidos||[]).map(function(p){return {cantidad:despByPed[p.id]||0,creado_en:p.fecha_armado+'T12:00:00'};});
+    }
 
     if(!pedidos||!pedidos.length) {
       var el=document.getElementById('chart-historico');
@@ -3894,7 +3912,19 @@ async function cargarInformeClientes() {
   const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
   const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
   try {
-    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=*');
+    // Filtrar pedidos del período y cruzar con plan_despacho por pedido_id
+    const pedidosCli = await sb('pedidos_dia','GET',null,'?fecha_despacho=gte.'+desde+'&fecha_despacho=lte.'+hasta+'&estado=neq.Cancelado&select=id,cliente,codigo,destino,fecha_despacho');
+    const idsCli = (pedidosCli||[]).map(p=>p.id).filter(Boolean);
+    let salidas = [];
+    if(idsCli.length) {
+      const despsCli = await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsCli.join(',')+')+&select=pedido_id,cantidad_despachada,id');
+      // Enriquecer con datos del pedido
+      const pedMap = {}; (pedidosCli||[]).forEach(p=>{pedMap[p.id]=p;});
+      salidas = (despsCli||[]).filter(d=>d.cantidad_despachada>0).map(d=>({
+        ...d, cliente:pedMap[d.pedido_id]?.cliente||'', codigo:pedMap[d.pedido_id]?.codigo||'',
+        destino:pedMap[d.pedido_id]?.destino||'', cantidad:d.cantidad_despachada||0
+      }));
+    }
     if(!salidas||!salidas.length) {
       document.getElementById('inf-tabla-clientes').innerHTML='<p style="color:var(--text3);font-size:13px">Sin despachos en el período.</p>';
       return;
@@ -4123,10 +4153,15 @@ async function cargarMetricasInforme() {
     const desde = esDia ? fecha : (document.getElementById('inf-desde')?.value || hoy());
     const hasta = esDia ? fecha : (document.getElementById('inf-hasta')?.value || hoy());
     const pedidos = await sb('pedidos_dia','GET',null,'?fecha_armado=gte.'+desde+'&fecha_armado=lte.'+hasta+'&select=*');
-    const salidas = await sb('salidas_despacho','GET',null,'?creado_en=gte.'+desde+'T00:00:00&creado_en=lte.'+hasta+'T23:59:59&select=cantidad');
     const totalPed = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+p.cantidad_pedida,0);
     const totalArm = (pedidos||[]).filter(p=>p.estado!=='Cancelado').reduce((s,p)=>s+(p.cantidad_armada||0),0);
-    const totalDesp = (salidas||[]).reduce((s,d)=>s+(d.cantidad||0),0);
+    // Cruzar por pedido_id para respetar fecha_despacho
+    const idsInf = (pedidos||[]).filter(p=>p.estado!=='Cancelado').map(p=>p.id).filter(Boolean);
+    let totalDesp = 0;
+    if(idsInf.length) {
+      const despsInf2 = await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsInf.join(',')+')+&select=cantidad_despachada');
+      totalDesp = (despsInf2||[]).reduce((s,d)=>s+(d.cantidad_despachada||0),0);
+    }
     const cancelados = (pedidos||[]).filter(p=>p.estado==='Cancelado').length;
     document.getElementById('met-informes').innerHTML=`
       <div class="metric"><div class="metric-label">Cajas pedidas hoy</div><div class="metric-val">${totalPed.toLocaleString('es-CL')}</div></div>
