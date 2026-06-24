@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3748,6 +3747,30 @@ async function cargarInformeHistorico() {
     var minVal = allVals.length ? Math.floor(Math.min.apply(null,allVals)*0.85) : 0;
     var maxVal = allVals.length ? Math.ceil(Math.max.apply(null,allVals)*1.1) : 100;
 
+    // Plugin para mostrar valores encima de cada barra
+    var barLabelsPlugin = {
+      id:'barLabels',
+      afterDatasetsDraw:function(chart){
+        var c=chart.ctx;
+        chart.data.datasets.forEach(function(ds,i){
+          var meta=chart.getDatasetMeta(i);
+          if(meta.hidden) return;
+          meta.data.forEach(function(bar,j){
+            var val=ds.data[j];
+            if(!val||val===0) return;
+            var txt=val>=1000?(val/1000).toFixed(1)+'k':val.toLocaleString('es-CL');
+            c.save();
+            c.font='bold 9px system-ui';
+            c.fillStyle='rgba(255,255,255,0.75)';
+            c.textAlign='center';
+            c.textBaseline='bottom';
+            c.fillText(txt, bar.x, bar.y-2);
+            c.restore();
+          });
+        });
+      }
+    };
+
     chartHistorico = new Chart(ctx, {
       type:'bar',
       data:{labels:labelsFormat,datasets:[
@@ -3767,7 +3790,8 @@ async function cargarInformeHistorico() {
           x:{ticks:{color:'#555d7a',font:{size:10},maxRotation:40,autoSkip:labels.length>15},grid:{display:false},border:{display:false}},
           y:{min:minVal,max:maxVal,ticks:{color:'#555d7a',font:{size:10},callback:function(v){return v>=1000?(v/1000).toFixed(1)+'k':v;}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}}
         }
-      }
+      },
+      plugins:[barLabelsPlugin]
     });
   } catch(e) { console.warn('Historico:', e.message); }
 }
