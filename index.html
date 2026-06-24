@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1307,26 +1308,19 @@ async function generarCierreDelDia() {
     doc.setFillColor(240,240,240);doc.rect(0,ph-10,w,10,'F');
     doc.setFontSize(8);doc.setTextColor(150,150,150);
     doc.text('Contenedores San Fernando SpA.',m,ph-3);
-    // Cargar gráfico histórico si no está cargado
-    try { await cargarInformeHistorico(); } catch(eH2){}
-
-    // Gráfico histórico — siempre en página nueva
+    // Gráfico histórico — capturar directo del canvas de Chart.js
     try {
-      await cargarInformeHistorico();
-      await new Promise(function(r){setTimeout(r,600);});
       var panel4 = document.getElementById('inf-panel-4');
+      var estiloOriginal = panel4 ? panel4.getAttribute('style') || '' : '';
+      // Hacer visible fuera de pantalla para que Chart.js pueda renderizar
+      if(panel4) panel4.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;width:800px;background:#ffffff;z-index:9999';
+      await cargarInformeHistorico();
+      await new Promise(function(r){setTimeout(r,800);});
       var canvasHist = document.getElementById('chart-historico');
       if(canvasHist && chartHistorico) {
-        var eraOculto = panel4 && panel4.style.display === 'none';
-        if(eraOculto) {
-          panel4.style.cssText = 'display:block;visibility:hidden;position:absolute;left:-9999px;top:-9999px;width:900px;background:#ffffff;z-index:-999';
-        }
-        chartHistorico.resize();
-        await new Promise(function(r){setTimeout(r,800);});
-        var imgCanvas = await html2canvas(canvasHist, {scale:2,backgroundColor:'#ffffff',logging:false});
-        if(eraOculto) {
-          panel4.style.cssText = 'display:none';
-        }
+        // toDataURL directo desde el canvas de Chart.js — no necesita html2canvas
+        var imgDataUrl = canvasHist.toDataURL('image/png');
+        if(panel4) panel4.setAttribute('style', estiloOriginal);
         doc.addPage();
         var yG = 20;
         doc.setFillColor(240,242,245);
@@ -1335,8 +1329,10 @@ async function generarCierreDelDia() {
         doc.text('Historico: Solicitado vs Armado vs Despachado', m+3, yG+6);
         yG += 14;
         var imgW = w-m*2;
-        var imgH = Math.round(imgCanvas.height * imgW / imgCanvas.width);
-        doc.addImage(imgCanvas.toDataURL('image/png'), 'PNG', m, yG, imgW, Math.min(imgH, h-yG-25));
+        var imgH = Math.round(canvasHist.height * imgW / canvasHist.width);
+        doc.addImage(imgDataUrl, 'PNG', m, yG, imgW, Math.min(imgH, ph-yG-25));
+      } else {
+        if(panel4) panel4.setAttribute('style', estiloOriginal);
       }
     } catch(eH) { console.warn('Grafico PDF:', eH.message); }
     doc.save('cierre_'+(esDia?fecha:desde+'_'+hasta)+'.pdf');
