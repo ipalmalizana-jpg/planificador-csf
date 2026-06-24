@@ -2199,29 +2199,14 @@ async function cargarMetricas() {
     const labelFecha = modoPlan2==='todos' ? 'todos los días' : fechaPlan2;
     const pctArm = totalCajas>0?Math.round(armadas/totalCajas*100):0;
 
-    // Cargar despachado para el mismo período
+    // Cajas despachadas: desde plan_despacho por pedido_id de los pedidos en pantalla
     let totalDesp = 0;
     try {
-      let sals = [];
-      if(modoPlan2==='todos') {
-        // Traer solo salidas de despachos vinculados a pedidos del cache
-        const ids = pedidos.map(p=>p.id).filter(Boolean);
-        if(ids.length) {
-          const desps = await sb('plan_despacho','GET',null,'?pedido_id=in.('+ids.join(',')+')+&select=id');
-          const despIds = (desps||[]).map(d=>d.id);
-          if(despIds.length) {
-            sals = await sb('salidas_despacho','GET',null,'?despacho_id=in.('+despIds.join(',')+')+&select=cantidad');
-          }
-        }
-      } else {
-        // Traer salidas cuyo despacho tenga fecha igual al día filtrado
-        const desps = await sb('plan_despacho','GET',null,'?fecha=eq.'+fechaPlan2+'&select=id');
-        const despIds = (desps||[]).map(d=>d.id);
-        if(despIds.length) {
-          sals = await sb('salidas_despacho','GET',null,'?despacho_id=in.('+despIds.join(',')+')+&select=cantidad');
-        }
+      const idsPed = pedidos.filter(p=>p.estado!=='Cancelado').map(p=>p.id).filter(Boolean);
+      if(idsPed.length) {
+        const desps = await sb('plan_despacho','GET',null,'?pedido_id=in.('+idsPed.join(',')+')+&select=cantidad_despachada');
+        totalDesp = (desps||[]).reduce((s,d)=>s+(d.cantidad_despachada||0),0);
       }
-      totalDesp = (sals||[]).reduce((s,d)=>s+(d.cantidad||0),0);
     } catch(e2){ console.warn('metricas desp:', e2); }
 
     const pctDesp = armadas>0?Math.round(totalDesp/armadas*100):0;
@@ -3409,6 +3394,7 @@ async function cargarPlanDespacho() {
               </div>
               ${info.desp_id?`<button class="btn sm" data-action="ver-salidas-ped" data-id="${d.id}" style="font-size:11px">&#128203; Ver salidas</button>`:''}
             `}
+            <div id="salidas-ped-${d.id}" style="display:none;margin-top:8px"></div>
           </div>`;
         }).join('')}
       </div>`;
@@ -4374,11 +4360,54 @@ async function marcarDespachadoDesdePlan(pedidoId) {
 }
 
 async function verSalidasDesdePlan(pedidoId) {
+  const el = document.getElementById('salidas-ped-'+pedidoId);
+  if(!el) return;
+  if(el.style.display !== 'none') { el.style.display='none'; return; }
+  el.innerHTML = '<p style="font-size:12px;color:var(--text3);padding:6px 0">Cargando...</p>';
+  el.style.display = 'block';
   try {
+    // Buscar registro en plan_despacho por pedido_id
     var desps = await sb('plan_despacho','GET',null,'?pedido_id=eq.'+pedidoId+'&select=id');
-    if(!desps || !desps.length) { alert('Sin registros de despacho para este pedido.'); return; }
-    verSalidas(desps[0].id);
-  } catch(e) { alert('Error: '+e.message); }
+    if(!desps || !desps.length) {
+      el.innerHTML = '<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas aún.</p>';
+      return;
+    }
+    var despId = desps[0].id;
+    // Cargar salidas
+    var salidas = await sb('salidas_despacho','GET',null,'?despacho_id=eq.'+despId+'&order=creado_en.asc&select=*');
+    if(!salidas||!salidas.length) {
+      el.innerHTML = '<p style="font-size:12px;color:var(--text3);padding:6px 0">Sin salidas registradas.</p>';
+      return;
+    }
+    const isMobile = window.innerWidth < 640;
+    if(isMobile) {
+      el.innerHTML = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">'+
+        salidas.map(function(s) { return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+            '<span style="font-weight:700;color:var(--green);font-size:14px">'+(s.cantidad||0).toLocaleString('es-CL')+' u.</span>'+
+            '<span style="color:var(--text3);font-size:11px">'+new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})+'</span>'+
+          '</div>'+
+          (s.numero_guia?'<div style="margin-bottom:4px">📄 Guía: <span class="nv-tag">'+s.numero_guia+'</span></div>':'')+
+          (s.destino?'<div style="color:var(--text2);margin-bottom:2px">→ '+s.destino+'</div>':'')+
+          (s.foto_url?'<div style="margin-top:4px"><a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:12px">📷 Ver foto</a></div>':'')+
+          '<div style="color:var(--text3);margin-top:4px;font-size:11px">Por: '+(s.registrado_por||'--')+'</div>'+
+        '</div>'; }).join('')+
+      '</div>';
+    } else {
+      el.innerHTML = '<div style="overflow-x:auto;margin-top:4px"><table class="dt" style="font-size:12px;min-width:500px">'+
+        '<thead><tr><th>#</th><th>Cantidad</th><th>N° Guía</th><th>Destino</th><th>Foto</th><th>Registrado por</th><th>Hora</th></tr></thead>'+
+        '<tbody>'+salidas.map(function(s,i){ return '<tr>'+
+          '<td style="color:var(--text3)">'+(i+1)+'</td>'+
+          '<td style="font-weight:600;color:var(--green)">'+(s.cantidad||0).toLocaleString('es-CL')+' u.</td>'+
+          '<td>'+(s.numero_guia?'<span class="nv-tag">'+s.numero_guia+'</span>':'--')+'</td>'+
+          '<td style="color:var(--text2)">'+(s.destino||'--')+'</td>'+
+          '<td>'+(s.foto_url?'<a href="'+s.foto_url+'" target="_blank" style="color:var(--blue);font-size:12px">📷 Ver foto</a>':'--')+'</td>'+
+          '<td style="color:var(--text2)">'+(s.registrado_por||'--')+'</td>'+
+          '<td style="color:var(--text3)">'+new Date(s.creado_en).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})+'</td>'+
+        '</tr>'; }).join('')+
+        '</tbody></table></div>';
+    }
+  } catch(e) { el.innerHTML = '<p style="color:var(--red);font-size:12px">'+e.message+'</p>'; }
 }
 
 // -- Helpers ---------------------------------------------------
